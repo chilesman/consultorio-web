@@ -35,6 +35,7 @@ export default function AdminPage() {
 
   const [documents, setDocuments] = useState([]);
   const [docTitle, setDocTitle] = useState("");
+  const [docSubtitle, setDocSubtitle] = useState("");
   const [docCategory, setDocCategory] = useState("");
   const [docFile, setDocFile] = useState(null);
 
@@ -253,6 +254,7 @@ export default function AdminPage() {
     const { error: dbError } = await supabase.from("documents").insert([
       {
         title: docTitle,
+        subtitle: docSubtitle,
         category: docCategory,
         file_url: publicUrl,
       },
@@ -266,6 +268,7 @@ export default function AdminPage() {
 
     alert("Documento subido correctamente");
     setDocTitle("");
+    setDocSubtitle("");
     setDocCategory("");
     setDocFile(null);
     fetchDocuments();
@@ -333,7 +336,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Administrador</h1>
           <p className="text-gray-600 mt-2">
-            Aquí puedes editar tu perfil, servicios y documentos sin tocar código.
+            Edita perfil, servicios y documentos sin tocar código.
           </p>
         </div>
 
@@ -367,36 +370,6 @@ export default function AdminPage() {
             value={profile.university || ""}
             onChange={(e) =>
               setProfile({ ...profile, university: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Cédula profesional"
-            className="border p-3 rounded-lg"
-            value={profile.license || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, license: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Diplomados"
-            className="border p-3 rounded-lg"
-            value={profile.diplomas || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, diplomas: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Posgrados"
-            className="border p-3 rounded-lg"
-            value={profile.postgraduate || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, postgraduate: e.target.value })
             }
           />
 
@@ -457,10 +430,10 @@ export default function AdminPage() {
       <div className="mt-10 bg-white rounded-xl shadow p-6 border">
         <h2 className="text-xl font-bold">Subir documentos e imágenes</h2>
 
-        <div className="grid md:grid-cols-3 gap-4 mt-6">
+        <div className="grid md:grid-cols-4 gap-4 mt-6">
           <input
             type="text"
-            placeholder="Título del documento"
+            placeholder="Título"
             className="border p-3 rounded-lg"
             value={docTitle}
             onChange={(e) => setDocTitle(e.target.value)}
@@ -468,11 +441,24 @@ export default function AdminPage() {
 
           <input
             type="text"
-            placeholder="Categoría (titulo, cedula, diplomado, posgrado, foto)"
+            placeholder="Subtítulo (ej. Cédula maestría 1)"
+            className="border p-3 rounded-lg"
+            value={docSubtitle}
+            onChange={(e) => setDocSubtitle(e.target.value)}
+          />
+
+          <select
             className="border p-3 rounded-lg"
             value={docCategory}
             onChange={(e) => setDocCategory(e.target.value)}
-          />
+          >
+            <option value="">Selecciona categoría</option>
+            <option value="titulo">Título profesional</option>
+            <option value="cedula">Cédula profesional</option>
+            <option value="diplomado_certificacion">Diplomado / certificación</option>
+            <option value="posgrado">Posgrado</option>
+            <option value="foto_profesional">Foto profesional</option>
+          </select>
 
           <input
             type="file"
@@ -496,7 +482,8 @@ export default function AdminPage() {
             >
               <div>
                 <p className="font-semibold">{doc.title}</p>
-                <p className="text-sm text-gray-500">{doc.category}</p>
+                <p className="text-sm text-gray-500">{doc.subtitle}</p>
+                <p className="text-sm text-gray-400">{doc.category}</p>
                 <a
                   href={doc.file_url}
                   target="_blank"
