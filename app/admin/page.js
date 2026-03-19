@@ -33,6 +33,11 @@ export default function AdminPage() {
     schedule: "",
   });
 
+  const [documents, setDocuments] = useState([]);
+  const [docTitle, setDocTitle] = useState("");
+  const [docCategory, setDocCategory] = useState("");
+  const [docFile, setDocFile] = useState(null);
+
   useEffect(() => {
     async function getSession() {
       const {
@@ -44,6 +49,7 @@ export default function AdminPage() {
       if (session) {
         fetchServices();
         fetchProfile();
+        fetchDocuments();
       }
     }
 
@@ -103,6 +109,20 @@ export default function AdminPage() {
       alert("Error cargando perfil");
     } else if (data) {
       setProfile(data);
+    }
+  }
+
+  async function fetchDocuments() {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      alert("Error cargando documentos");
+    } else {
+      setDocuments(data || []);
     }
   }
 
@@ -204,6 +224,77 @@ export default function AdminPage() {
     }
   }
 
+  async function uploadDocument() {
+    if (!docTitle || !docCategory || !docFile) {
+      alert("Completa título, categoría y archivo");
+      return;
+    }
+
+    const fileExt = docFile.name.split(".").pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `documents/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(filePath, docFile);
+
+    if (uploadError) {
+      console.error(uploadError);
+      alert("Error al subir archivo");
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("documents")
+      .getPublicUrl(filePath);
+
+    const publicUrl = publicUrlData.publicUrl;
+
+    const { error: dbError } = await supabase.from("documents").insert([
+      {
+        title: docTitle,
+        category: docCategory,
+        file_url: publicUrl,
+      },
+    ]);
+
+    if (dbError) {
+      console.error(dbError);
+      alert("Archivo subido pero error al guardar en base de datos");
+      return;
+    }
+
+    alert("Documento subido correctamente");
+    setDocTitle("");
+    setDocCategory("");
+    setDocFile(null);
+    fetchDocuments();
+  }
+
+  async function deleteDocument(id, fileUrl) {
+    const confirmDelete = window.confirm(
+      "¿Seguro que quieres eliminar este documento?"
+    );
+
+    if (!confirmDelete) return;
+
+    const pathPart = fileUrl.split("/storage/v1/object/public/documents/")[1];
+
+    if (pathPart) {
+      await supabase.storage.from("documents").remove([pathPart]);
+    }
+
+    const { error } = await supabase.from("documents").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert("Error al eliminar documento");
+    } else {
+      alert("Documento eliminado");
+      fetchDocuments();
+    }
+  }
+
   if (!session) {
     return (
       <div className="max-w-md mx-auto p-10">
@@ -242,7 +333,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Administrador</h1>
           <p className="text-gray-600 mt-2">
-            Aquí puedes editar tu perfil y tus servicios sin tocar código.
+            Aquí puedes editar tu perfil, servicios y documentos sin tocar código.
           </p>
         </div>
 
@@ -360,6 +451,71 @@ export default function AdminPage() {
         >
           Guardar perfil
         </button>
+      </div>
+
+      {/* DOCUMENTOS */}
+      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
+        <h2 className="text-xl font-bold">Subir documentos e imágenes</h2>
+
+        <div className="grid md:grid-cols-3 gap-4 mt-6">
+          <input
+            type="text"
+            placeholder="Título del documento"
+            className="border p-3 rounded-lg"
+            value={docTitle}
+            onChange={(e) => setDocTitle(e.target.value)}
+          />
+
+          <input
+            type="text"
+            placeholder="Categoría (titulo, cedula, diplomado, posgrado, foto)"
+            className="border p-3 rounded-lg"
+            value={docCategory}
+            onChange={(e) => setDocCategory(e.target.value)}
+          />
+
+          <input
+            type="file"
+            className="border p-3 rounded-lg"
+            onChange={(e) => setDocFile(e.target.files[0])}
+          />
+        </div>
+
+        <button
+          onClick={uploadDocument}
+          className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
+        >
+          Subir documento
+        </button>
+
+        <div className="mt-8 space-y-4">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className="border rounded-xl p-4 flex justify-between items-center"
+            >
+              <div>
+                <p className="font-semibold">{doc.title}</p>
+                <p className="text-sm text-gray-500">{doc.category}</p>
+                <a
+                  href={doc.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 text-sm"
+                >
+                  Ver archivo
+                </a>
+              </div>
+
+              <button
+                onClick={() => deleteDocument(doc.id, doc.file_url)}
+                className="border border-red-600 text-red-600 px-4 py-2 rounded-lg"
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* NUEVO SERVICIO */}
