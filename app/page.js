@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase";
 
 export default function Page() {
   const supabase = createClient();
 
   const [services, setServices] = useState([]);
+  const [licenses, setLicenses] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [profile, setProfile] = useState({
     doctor_name: "Dr. José Antonio Reyes Hernández",
     bio: "",
     university: "",
-    license: "",
-    diplomas: "",
-    postgraduate: "",
     phone: "5533331304",
     email: "doc.jareyes@gmail.com",
     address:
@@ -49,9 +48,100 @@ export default function Page() {
       }
     }
 
+    async function fetchLicenses() {
+      const { data, error } = await supabase
+        .from("licenses")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("Error cargando cédulas:", error);
+      } else {
+        setLicenses(data || []);
+      }
+    }
+
+    async function fetchDocuments() {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.error("Error cargando documentos:", error);
+      } else {
+        setDocuments(data || []);
+      }
+    }
+
     fetchServices();
     fetchProfile();
+    fetchLicenses();
+    fetchDocuments();
   }, []);
+
+  const academicTitles = useMemo(
+    () => documents.filter((doc) => doc.category === "titulo_academico"),
+    [documents]
+  );
+
+  const diplomaCerts = useMemo(
+    () => documents.filter((doc) => doc.category === "diplomado_certificacion"),
+    [documents]
+  );
+
+  const clinicPhotos = useMemo(
+    () => documents.filter((doc) => doc.category === "foto_consultorio"),
+    [documents]
+  );
+
+  const publicityImages = useMemo(
+    () => documents.filter((doc) => doc.category === "publicidad"),
+    [documents]
+  );
+
+  function GallerySection({ title, description, items }) {
+    return (
+      <section className="mx-auto max-w-7xl p-10">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {description ? (
+          <p className="mt-3 max-w-3xl text-gray-600">{description}</p>
+        ) : null}
+
+        {items.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-dashed bg-white p-6 text-gray-500">
+            Aún no hay elementos en esta sección.
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((item) => (
+              <div key={item.id} className="overflow-hidden rounded-xl border bg-white shadow">
+                <img
+                  src={item.file_url}
+                  alt={item.title}
+                  className="h-64 w-full object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="font-semibold">{item.title}</h3>
+                  {item.subtitle ? (
+                    <p className="mt-1 text-sm text-gray-600">{item.subtitle}</p>
+                  ) : null}
+                  <a
+                    href={item.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-sm font-medium text-blue-600"
+                  >
+                    Ver imagen completa
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -87,7 +177,7 @@ export default function Page() {
             "Consulta médica integral, diagnóstico claro y seguimiento continuo."}
         </p>
 
-        <div className="mt-6 flex gap-4">
+        <div className="mt-6 flex flex-wrap gap-4">
           <a
             href="https://calendar.app.google/HU8UzZuocbHrX9p38"
             target="_blank"
@@ -141,28 +231,62 @@ export default function Page() {
             </div>
 
             <div className="rounded-xl border bg-slate-50 p-5">
-              <p className="font-semibold">Cédula profesional</p>
+              <p className="font-semibold">Horario</p>
               <p className="text-gray-600">
-                {profile.license || "Pendiente por agregar"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border bg-slate-50 p-5">
-              <p className="font-semibold">Diplomados</p>
-              <p className="text-gray-600">
-                {profile.diplomas || "Pendiente por agregar"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border bg-slate-50 p-5">
-              <p className="font-semibold">Posgrados / certificaciones</p>
-              <p className="text-gray-600">
-                {profile.postgraduate || "Pendiente por agregar"}
+                {profile.schedule || "Pendiente por agregar"}
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* CÉDULAS */}
+      <section className="mx-auto max-w-7xl p-10">
+        <h2 className="text-2xl font-bold">Cédulas profesionales</h2>
+
+        {licenses.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-dashed bg-white p-6 text-gray-500">
+            Aún no hay cédulas registradas.
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {licenses.map((license) => (
+              <div key={license.id} className="rounded-xl border bg-white p-5 shadow">
+                <p className="font-semibold">{license.label}</p>
+                <p className="mt-2 text-gray-600">{license.license_number}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* TÍTULOS ACADÉMICOS */}
+      <GallerySection
+        title="Títulos académicos"
+        description="Documentos que acreditan grados académicos como licenciatura, especialidad, maestrías u otros estudios formales."
+        items={academicTitles}
+      />
+
+      {/* DIPLOMADOS Y CERTIFICACIONES */}
+      <GallerySection
+        title="Diplomados y certificaciones"
+        description="Constancias, certificaciones y formación complementaria relevante para la práctica profesional."
+        items={diplomaCerts}
+      />
+
+      {/* FOTOS DEL CONSULTORIO */}
+      <GallerySection
+        title="Consultorio"
+        description="Imágenes del espacio de atención para que el paciente pueda conocer el entorno antes de su visita."
+        items={clinicPhotos}
+      />
+
+      {/* PUBLICIDAD */}
+      <GallerySection
+        title="Información y publicidad"
+        description="Material visual informativo o promocional relacionado con servicios, campañas o contenidos médicos."
+        items={publicityImages}
+      />
 
       {/* AGENDA */}
       <section id="agenda" className="mx-auto max-w-7xl p-10">
