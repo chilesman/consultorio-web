@@ -31,37 +31,29 @@ export default function AdminPage() {
     }
 
     getSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchServices();
-      } else {
-        setServices([]);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   async function login() {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
       alert("Error al iniciar sesión");
-    } else {
-      alert("Login correcto");
+      return;
+    }
+
+    if (data?.session) {
+      setSession(data.session);
+      window.location.reload();
     }
   }
 
   async function logout() {
     await supabase.auth.signOut();
     setSession(null);
+    window.location.reload();
   }
 
   async function fetchServices() {
