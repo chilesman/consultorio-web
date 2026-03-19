@@ -6,12 +6,16 @@ import { createClient } from "../../lib/supabase";
 export default function AdminPage() {
   const supabase = createClient();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [session, setSession] = useState(null);
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [licenses, setLicenses] = useState([]);
+
+  const [profile, setProfile] = useState({});
 
   const [newService, setNewService] = useState({
     name: "",
@@ -19,24 +23,10 @@ export default function AdminPage() {
     price: "",
   });
 
-  const [profile, setProfile] = useState({
-    id: null,
-    doctor_name: "",
-    bio: "",
-    university: "",
-    phone: "",
-    email: "",
-    address: "",
-    schedule: "",
-  });
-
-  const [licenses, setLicenses] = useState([]);
   const [newLicense, setNewLicense] = useState({
     label: "",
     license_number: "",
   });
-
-  const [documents, setDocuments] = useState([]);
 
   const [titleFile, setTitleFile] = useState(null);
   const [diplomaFile, setDiplomaFile] = useState(null);
@@ -44,25 +34,29 @@ export default function AdminPage() {
   const [publicityFile, setPublicityFile] = useState(null);
 
   useEffect(() => {
-    async function getSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      setSession(session);
-
-      if (session) {
-        await Promise.all([
-          fetchServices(),
-          fetchProfile(),
-          fetchLicenses(),
-          fetchDocuments(),
-        ]);
-      }
-    }
-
-    getSession();
+    init();
   }, []);
+
+  async function init() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    setSession(session);
+
+    if (session) {
+      fetchAll();
+    }
+  }
+
+  async function fetchAll() {
+    await Promise.all([
+      fetchServices(),
+      fetchDocuments(),
+      fetchLicenses(),
+      fetchProfile(),
+    ]);
+  }
 
   async function login() {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -71,54 +65,82 @@ export default function AdminPage() {
     });
 
     if (error) {
-      alert("Error al iniciar sesión");
+      alert(error.message);
       return;
     }
 
-    if (data?.session) {
-      setSession(data.session);
-      window.location.reload();
-    }
+    setSession(data.session);
+    fetchAll();
   }
 
   async function logout() {
     await supabase.auth.signOut();
-    setSession(null);
-    window.location.reload();
+    location.reload();
   }
+
+  // -------- SERVICES --------
 
   async function fetchServices() {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("services")
-      .select("*")
-      .order("id", { ascending: true });
-
-    if (error) {
-      console.error(error);
-      alert("Error cargando servicios");
-    } else {
-      setServices(data || []);
-    }
-
-    setLoading(false);
+    const { data } = await supabase.from("services").select("*");
+    setServices(data || []);
   }
 
+  async function addService() {
+    const { error } = await supabase.from("services").insert([
+      {
+        ...newService,
+        price: Number(newService.price),
+      },
+    ]);
+
+    if (!error) {
+      setNewService({ name: "", description: "", price: "" });
+      fetchServices();
+    }
+  }
+
+  async function updateService(id, field, value) {
+    setServices((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    );
+  }
+
+  async function saveService(service) {
+    await supabase
+      .from("services")
+      .update(service)
+      .eq("id", service.id);
+
+    fetchServices();
+  }
+
+  async function deleteService(id) {
+    await supabase.from("services").delete().eq("id", id);
+    fetchServices();
+  }
+
+  // -------- PROFILE --------
+
   async function fetchProfile() {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profile")
       .select("*")
       .limit(1)
       .single();
 
-    if (error) {
-      console.error(error);
-      alert("Error cargando perfil");
-    } else if (data) {
-      setProfile(data);
-    }
+    if (data) setProfile(data);
   }
+
+  async function saveProfile() {
+    await supabase
+      .from("profile")
+      .update(profile)
+      .eq("id", profile.id);
+
+    alert("Perfil actualizado");
+  }
+
+  // -------- LICENSES --------
 
   async function fetchLicenses() {
     const { data, error } = await supabase
@@ -127,146 +149,31 @@ export default function AdminPage() {
       .order("id", { ascending: true });
 
     if (error) {
-      console.error(error);
-      alert("Error cargando cédulas");
+      alert(error.message);
     } else {
       setLicenses(data || []);
     }
   }
 
-  async function fetchDocuments() {
-    const { data, error } = await supabase
-      .from("documents")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      alert("Error cargando imágenes");
-    } else {
-      setDocuments(data || []);
-    }
-  }
-
-  async function updateService(id, field, value) {
-    setServices((prev) =>
-      prev.map((service) =>
-        service.id === id ? { ...service, [field]: value } : service
-      )
-    );
-  }
-
-  async function saveService(service) {
-    const { error } = await supabase
-      .from("services")
-      .update({
-        name: service.name,
-        description: service.description,
-        price: Number(service.price),
-      })
-      .eq("id", service.id);
-
-    if (error) {
-      console.error(error);
-      alert("Error al guardar cambios");
-    } else {
-      alert("Servicio actualizado");
-    }
-  }
-
-  async function addService() {
-    if (!newService.name || !newService.price) {
-      alert("Completa al menos nombre y precio");
+  async function addLicense() {
+    if (!newLicense.label || !newLicense.license_number) {
+      alert("Completa los campos");
       return;
     }
 
-    const { error } = await supabase.from("services").insert([
+    const { error } = await supabase.from("licenses").insert([
       {
-        name: newService.name,
-        description: newService.description,
-        price: Number(newService.price),
+        label: newLicense.label.trim(),
+        license_number: newLicense.license_number.trim(),
       },
     ]);
 
     if (error) {
-      console.error(error);
-      alert("Error al agregar servicio");
+      alert(error.message);
     } else {
-      alert("Servicio agregado");
-      setNewService({ name: "", description: "", price: "" });
-      fetchServices();
-    }
-  }
-
-  async function deleteService(id) {
-    const confirmDelete = window.confirm(
-      "¿Seguro que quieres eliminar este servicio?"
-    );
-
-    if (!confirmDelete) return;
-
-    const { error } = await supabase.from("services").delete().eq("id", id);
-
-    if (error) {
-      console.error(error);
-      alert("Error al eliminar servicio");
-    } else {
-      alert("Servicio eliminado");
-      fetchServices();
-    }
-  }
-
-  async function saveProfile() {
-    if (!profile.id) {
-      alert("No se encontró el perfil");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profile")
-      .update({
-        doctor_name: profile.doctor_name,
-        bio: profile.bio,
-        university: profile.university,
-        phone: profile.phone,
-        email: profile.email,
-        address: profile.address,
-        schedule: profile.schedule,
-      })
-      .eq("id", profile.id);
-
-    if (error) {
-      console.error(error);
-      alert("Error al guardar perfil");
-    } else {
-      alert("Perfil actualizado");
-    }
-  }
-
-  async function addLicense() {
-    if (!newLicense.label || !newLicense.license_number) {
-      alert("Completa tipo y número de cédula");
-      return;
-    }
-
-    const { error } = await supabase.from("licenses").insert([newLicense]);
-
-    if (error) {
-      console.error(error);
-      alert("Error al agregar cédula");
-    } else {
-      alert("Cédula agregada");
       setNewLicense({ label: "", license_number: "" });
       fetchLicenses();
     }
-  }
-
-  async function updateLicense(id, field, value) {
-    setLicenses((prev) =>
-      prev.map((license) =>
-        license.id === id ? { ...license, [field]: value } : license
-      )
-    );
   }
 
   async function saveLicense(license) {
@@ -279,188 +186,91 @@ export default function AdminPage() {
       .eq("id", license.id);
 
     if (error) {
-      console.error(error);
-      alert("Error al guardar cédula");
+      alert(error.message);
     } else {
-      alert("Cédula actualizada");
       fetchLicenses();
     }
   }
 
   async function deleteLicense(id) {
-    const confirmDelete = window.confirm(
-      "¿Seguro que quieres eliminar esta cédula?"
-    );
-
-    if (!confirmDelete) return;
-
-    const { error } = await supabase.from("licenses").delete().eq("id", id);
-
-    if (error) {
-      console.error(error);
-      alert("Error al eliminar cédula");
-    } else {
-      alert("Cédula eliminada");
-      fetchLicenses();
-    }
+    await supabase.from("licenses").delete().eq("id", id);
+    fetchLicenses();
   }
 
-  async function uploadImage(file, category) {
-    if (!file) {
-      alert("Selecciona una imagen");
-      return;
-    }
+  function updateLicense(id, field, value) {
+    setLicenses((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+    );
+  }
 
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2)}.${fileExt}`;
-    const filePath = `${category}/${fileName}`;
+  // -------- IMAGES --------
 
-    const { error: uploadError } = await supabase.storage
+  async function fetchDocuments() {
+    const { data } = await supabase.from("documents").select("*");
+    setDocuments(data || []);
+  }
+
+  async function upload(file, category) {
+    if (!file) return;
+
+    const name = `${Date.now()}-${file.name}`;
+
+    await supabase.storage.from("documents").upload(name, file);
+
+    const { data } = supabase.storage
       .from("documents")
-      .upload(filePath, file);
+      .getPublicUrl(name);
 
-    if (uploadError) {
-      console.error(uploadError);
-      alert("Error al subir imagen");
-      return;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("documents")
-      .getPublicUrl(filePath);
-
-    const publicUrl = publicUrlData.publicUrl;
-
-    const { error: dbError } = await supabase.from("documents").insert([
+    await supabase.from("documents").insert([
       {
         category,
-        file_url: publicUrl,
+        file_url: data.publicUrl,
       },
     ]);
 
-    if (dbError) {
-      console.error(dbError);
-      alert("Imagen subida pero error al guardar en base de datos");
-      return;
-    }
-
-    alert("Imagen subida correctamente");
     fetchDocuments();
   }
 
-  async function deleteDocument(id, fileUrl) {
-    const confirmDelete = window.confirm(
-      "¿Seguro que quieres eliminar esta imagen?"
-    );
+  async function deleteImage(id, url) {
+    const path = url.split("/documents/")[1];
 
-    if (!confirmDelete) return;
+    await supabase.storage.from("documents").remove([path]);
 
-    const pathPart = fileUrl.split("/storage/v1/object/public/documents/")[1];
+    await supabase.from("documents").delete().eq("id", id);
 
-    if (pathPart) {
-      await supabase.storage.from("documents").remove([pathPart]);
-    }
-
-    const { error } = await supabase.from("documents").delete().eq("id", id);
-
-    if (error) {
-      console.error(error);
-      alert("Error al eliminar imagen");
-    } else {
-      alert("Imagen eliminada");
-      fetchDocuments();
-    }
+    fetchDocuments();
   }
 
-  const titleImages = documents.filter((d) => d.category === "titulo_academico");
-  const diplomaImages = documents.filter(
+  const titles = documents.filter((d) => d.category === "titulo_academico");
+  const diplomas = documents.filter(
     (d) => d.category === "diplomado_certificacion"
   );
-  const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
-  const publicityImages = documents.filter((d) => d.category === "publicidad");
+  const clinic = documents.filter((d) => d.category === "foto_consultorio");
+  const publicity = documents.filter((d) => d.category === "publicidad");
 
-  function ImageSection({ title, files, category, fileStateSetter }) {
-    return (
-      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">{title}</h2>
-
-        <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center">
-          <input
-            type="file"
-            className="border p-3 rounded-lg"
-            onChange={(e) => fileStateSetter(e.target.files[0])}
-          />
-          <button
-            onClick={() => {
-              if (category === "titulo_academico") uploadImage(titleFile, category);
-              if (category === "diplomado_certificacion") uploadImage(diplomaFile, category);
-              if (category === "foto_consultorio") uploadImage(clinicFile, category);
-              if (category === "publicidad") uploadImage(publicityFile, category);
-            }}
-            className="bg-green-600 text-white px-5 py-3 rounded-lg"
-          >
-            Subir imagen
-          </button>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {files.map((doc) => (
-            <div key={doc.id} className="overflow-hidden rounded-xl border bg-slate-50">
-              <img
-                src={doc.file_url}
-                alt={title}
-                className="h-56 w-full object-cover"
-              />
-              <div className="p-4">
-                <a
-                  href={doc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 text-sm"
-                >
-                  Ver imagen
-                </a>
-                <button
-                  onClick={() => deleteDocument(doc.id, doc.file_url)}
-                  className="ml-4 text-sm text-red-600"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // -------- UI --------
 
   if (!session) {
     return (
-      <div className="max-w-md mx-auto p-10">
-        <h1 className="text-2xl font-bold">Panel de administrador</h1>
-        <p className="mt-2 text-gray-600">
-          Inicia sesión para administrar tu sitio.
-        </p>
+      <div className="p-10 max-w-md mx-auto">
+        <h1 className="text-xl font-bold">Login</h1>
 
         <input
-          type="email"
           placeholder="Correo"
-          className="border p-3 w-full mt-6 rounded-lg"
+          className="border p-2 w-full mt-4"
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
           type="password"
-          placeholder="Contraseña"
-          className="border p-3 w-full mt-4 rounded-lg"
+          placeholder="Password"
+          className="border p-2 w-full mt-2"
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
           onClick={login}
-          className="bg-blue-600 text-white px-4 py-3 mt-4 w-full rounded-lg"
+          className="bg-blue-600 text-white w-full mt-4 p-2"
         >
           Entrar
         </button>
@@ -469,317 +279,113 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-10">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Administrador</h1>
-          <p className="text-gray-600 mt-2">
-            Edita perfil, cédulas, servicios e imágenes sin tocar código.
-          </p>
-        </div>
+    <div className="p-10 max-w-6xl mx-auto space-y-10">
+      <button onClick={logout} className="text-red-600">
+        Cerrar sesión
+      </button>
 
-        <button
-          onClick={logout}
-          className="border px-4 py-2 rounded-lg text-red-600"
-        >
-          Cerrar sesión
-        </button>
-      </div>
+      {/* PROFILE */}
+      <div>
+        <h2 className="font-bold">Perfil</h2>
 
-      {/* PERFIL */}
-      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">Perfil profesional y contacto</h2>
-
-        <div className="grid md:grid-cols-2 gap-4 mt-6">
-          <input
-            type="text"
-            placeholder="Nombre del médico"
-            className="border p-3 rounded-lg"
-            value={profile.doctor_name || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, doctor_name: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Universidad"
-            className="border p-3 rounded-lg"
-            value={profile.university || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, university: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Teléfono"
-            className="border p-3 rounded-lg"
-            value={profile.phone || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, phone: e.target.value })
-            }
-          />
-
-          <input
-            type="email"
-            placeholder="Correo"
-            className="border p-3 rounded-lg"
-            value={profile.email || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, email: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Horario"
-            className="border p-3 rounded-lg"
-            value={profile.schedule || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, schedule: e.target.value })
-            }
-          />
-        </div>
+        <input
+          className="border p-2 w-full mt-2"
+          value={profile.doctor_name || ""}
+          onChange={(e) =>
+            setProfile({ ...profile, doctor_name: e.target.value })
+          }
+        />
 
         <textarea
-          placeholder="Semblanza profesional"
-          className="border p-3 rounded-lg w-full mt-4 min-h-28"
+          className="border p-2 w-full mt-2"
           value={profile.bio || ""}
-          onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+          onChange={(e) =>
+            setProfile({ ...profile, bio: e.target.value })
+          }
         />
 
-        <textarea
-          placeholder="Dirección"
-          className="border p-3 rounded-lg w-full mt-4 min-h-24"
-          value={profile.address || ""}
-          onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-        />
-
-        <button
-          onClick={saveProfile}
-          className="bg-blue-600 text-white px-5 py-3 mt-4 rounded-lg"
-        >
-          Guardar perfil
+        <button onClick={saveProfile} className="bg-blue-600 text-white p-2 mt-2">
+          Guardar
         </button>
       </div>
 
-      {/* CÉDULAS */}
-      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">Cédulas profesionales</h2>
+      {/* LICENSES */}
+      <div>
+        <h2 className="font-bold">Cédulas</h2>
 
-        <div className="grid md:grid-cols-2 gap-4 mt-6">
-          <input
-            type="text"
-            placeholder="Tipo (Licenciatura, Especialidad, Maestría 1...)"
-            className="border p-3 rounded-lg"
-            value={newLicense.label}
-            onChange={(e) =>
-              setNewLicense({ ...newLicense, label: e.target.value })
-            }
-          />
+        <input
+          placeholder="Tipo"
+          className="border p-2 mt-2"
+          value={newLicense.label}
+          onChange={(e) =>
+            setNewLicense({ ...newLicense, label: e.target.value })
+          }
+        />
 
-          <input
-            type="text"
-            placeholder="Número de cédula"
-            className="border p-3 rounded-lg"
-            value={newLicense.license_number}
-            onChange={(e) =>
-              setNewLicense({
-                ...newLicense,
-                license_number: e.target.value,
-              })
-            }
-          />
-        </div>
+        <input
+          placeholder="Número"
+          className="border p-2 mt-2"
+          value={newLicense.license_number}
+          onChange={(e) =>
+            setNewLicense({
+              ...newLicense,
+              license_number: e.target.value,
+            })
+          }
+        />
 
-        <button
-          onClick={addLicense}
-          className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
-        >
-          Agregar cédula
+        <button onClick={addLicense} className="bg-green-600 text-white p-2 mt-2">
+          Agregar
         </button>
 
-        <div className="mt-8 space-y-4">
-          {licenses.map((license) => (
-            <div
-              key={license.id}
-              className="bg-slate-50 border rounded-xl p-4"
-            >
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  className="border p-3 rounded-lg"
-                  value={license.label || ""}
-                  onChange={(e) =>
-                    updateLicense(license.id, "label", e.target.value)
-                  }
-                />
+        {licenses.map((l) => (
+          <div key={l.id} className="border p-2 mt-2">
+            <input
+              value={l.label}
+              onChange={(e) =>
+                updateLicense(l.id, "label", e.target.value)
+              }
+            />
 
-                <input
-                  type="text"
-                  className="border p-3 rounded-lg"
-                  value={license.license_number || ""}
-                  onChange={(e) =>
-                    updateLicense(license.id, "license_number", e.target.value)
-                  }
-                />
-              </div>
+            <input
+              value={l.license_number}
+              onChange={(e) =>
+                updateLicense(l.id, "license_number", e.target.value)
+              }
+            />
 
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => saveLicense(license)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                >
-                  Guardar
-                </button>
+            <button onClick={() => saveLicense(l)}>Guardar</button>
+            <button onClick={() => deleteLicense(l.id)}>Eliminar</button>
+          </div>
+        ))}
+      </div>
 
-                <button
-                  onClick={() => deleteLicense(license.id)}
-                  className="border border-red-600 text-red-600 px-4 py-2 rounded-lg"
-                >
+      {/* IMAGE SECTIONS */}
+      {[
+        ["Títulos", titles, setTitleFile, titleFile, "titulo_academico"],
+        ["Diplomados", diplomas, setDiplomaFile, diplomaFile, "diplomado_certificacion"],
+        ["Consultorio", clinic, setClinicFile, clinicFile, "foto_consultorio"],
+        ["Publicidad", publicity, setPublicityFile, publicityFile, "publicidad"],
+      ].map(([title, list, setter, file, category]) => (
+        <div key={title}>
+          <h2 className="font-bold">{title}</h2>
+
+          <input type="file" onChange={(e) => setter(e.target.files[0])} />
+
+          <button onClick={() => upload(file, category)}>Subir</button>
+
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {list.map((img) => (
+              <div key={img.id}>
+                <img src={img.file_url} />
+                <button onClick={() => deleteImage(img.id, img.file_url)}>
                   Eliminar
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <ImageSection
-        title="Títulos académicos"
-        files={titleImages}
-        category="titulo_academico"
-        fileStateSetter={setTitleFile}
-      />
-
-      <ImageSection
-        title="Diplomados / certificaciones"
-        files={diplomaImages}
-        category="diplomado_certificacion"
-        fileStateSetter={setDiplomaFile}
-      />
-
-      <ImageSection
-        title="Fotos del consultorio"
-        files={clinicImages}
-        category="foto_consultorio"
-        fileStateSetter={setClinicFile}
-      />
-
-      <ImageSection
-        title="Publicidad"
-        files={publicityImages}
-        category="publicidad"
-        fileStateSetter={setPublicityFile}
-      />
-
-      {/* NUEVO SERVICIO */}
-      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">Agregar nuevo servicio</h2>
-
-        <div className="grid md:grid-cols-3 gap-4 mt-4">
-          <input
-            type="text"
-            placeholder="Nombre del servicio"
-            className="border p-3 rounded-lg"
-            value={newService.name}
-            onChange={(e) =>
-              setNewService({ ...newService, name: e.target.value })
-            }
-          />
-
-          <input
-            type="text"
-            placeholder="Descripción"
-            className="border p-3 rounded-lg"
-            value={newService.description}
-            onChange={(e) =>
-              setNewService({ ...newService, description: e.target.value })
-            }
-          />
-
-          <input
-            type="number"
-            placeholder="Precio"
-            className="border p-3 rounded-lg"
-            value={newService.price}
-            onChange={(e) =>
-              setNewService({ ...newService, price: e.target.value })
-            }
-          />
-        </div>
-
-        <button
-          onClick={addService}
-          className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
-        >
-          Agregar servicio
-        </button>
-      </div>
-
-      {/* SERVICIOS */}
-      <div className="mt-10">
-        <h2 className="text-xl font-bold mb-4">Servicios actuales</h2>
-
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <div className="space-y-4">
-            {services.map((service) => (
-              <div
-                key={service.id}
-                className="bg-white border rounded-xl p-6 shadow"
-              >
-                <div className="grid md:grid-cols-3 gap-4">
-                  <input
-                    type="text"
-                    className="border p-3 rounded-lg"
-                    value={service.name || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "name", e.target.value)
-                    }
-                  />
-
-                  <input
-                    type="text"
-                    className="border p-3 rounded-lg"
-                    value={service.description || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "description", e.target.value)
-                    }
-                  />
-
-                  <input
-                    type="number"
-                    className="border p-3 rounded-lg"
-                    value={service.price || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "price", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={() => saveService(service)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                  >
-                    Guardar cambios
-                  </button>
-
-                  <button
-                    onClick={() => deleteService(service.id)}
-                    className="border border-red-600 text-red-600 px-4 py-2 rounded-lg"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
