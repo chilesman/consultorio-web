@@ -9,12 +9,28 @@ export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [session, setSession] = useState(null);
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const [newService, setNewService] = useState({
     name: "",
     description: "",
     price: "",
+  });
+
+  const [profile, setProfile] = useState({
+    id: null,
+    doctor_name: "",
+    bio: "",
+    university: "",
+    license: "",
+    diplomas: "",
+    postgraduate: "",
+    phone: "",
+    email: "",
+    address: "",
+    schedule: "",
   });
 
   useEffect(() => {
@@ -27,6 +43,7 @@ export default function AdminPage() {
 
       if (session) {
         fetchServices();
+        fetchProfile();
       }
     }
 
@@ -72,6 +89,21 @@ export default function AdminPage() {
     }
 
     setLoading(false);
+  }
+
+  async function fetchProfile() {
+    const { data, error } = await supabase
+      .from("profile")
+      .select("*")
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error(error);
+      alert("Error cargando perfil");
+    } else if (data) {
+      setProfile(data);
+    }
   }
 
   async function updateService(id, field, value) {
@@ -142,12 +174,42 @@ export default function AdminPage() {
     }
   }
 
+  async function saveProfile() {
+    if (!profile.id) {
+      alert("No se encontró el perfil");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("profile")
+      .update({
+        doctor_name: profile.doctor_name,
+        bio: profile.bio,
+        university: profile.university,
+        license: profile.license,
+        diplomas: profile.diplomas,
+        postgraduate: profile.postgraduate,
+        phone: profile.phone,
+        email: profile.email,
+        address: profile.address,
+        schedule: profile.schedule,
+      })
+      .eq("id", profile.id);
+
+    if (error) {
+      console.error(error);
+      alert("Error al guardar perfil");
+    } else {
+      alert("Perfil actualizado");
+    }
+  }
+
   if (!session) {
     return (
       <div className="max-w-md mx-auto p-10">
         <h1 className="text-2xl font-bold">Panel de administrador</h1>
         <p className="mt-2 text-gray-600">
-          Inicia sesión para administrar servicios y precios.
+          Inicia sesión para administrar tu sitio.
         </p>
 
         <input
@@ -180,7 +242,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Administrador</h1>
           <p className="text-gray-600 mt-2">
-            Aquí puedes editar precios y servicios sin modificar código.
+            Aquí puedes editar tu perfil y tus servicios sin tocar código.
           </p>
         </div>
 
@@ -192,6 +254,115 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* PERFIL */}
+      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
+        <h2 className="text-xl font-bold">Perfil profesional y contacto</h2>
+
+        <div className="grid md:grid-cols-2 gap-4 mt-6">
+          <input
+            type="text"
+            placeholder="Nombre del médico"
+            className="border p-3 rounded-lg"
+            value={profile.doctor_name || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, doctor_name: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Universidad"
+            className="border p-3 rounded-lg"
+            value={profile.university || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, university: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Cédula profesional"
+            className="border p-3 rounded-lg"
+            value={profile.license || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, license: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Diplomados"
+            className="border p-3 rounded-lg"
+            value={profile.diplomas || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, diplomas: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Posgrados"
+            className="border p-3 rounded-lg"
+            value={profile.postgraduate || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, postgraduate: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Teléfono"
+            className="border p-3 rounded-lg"
+            value={profile.phone || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, phone: e.target.value })
+            }
+          />
+
+          <input
+            type="email"
+            placeholder="Correo"
+            className="border p-3 rounded-lg"
+            value={profile.email || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, email: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Horario"
+            className="border p-3 rounded-lg"
+            value={profile.schedule || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, schedule: e.target.value })
+            }
+          />
+        </div>
+
+        <textarea
+          placeholder="Semblanza profesional"
+          className="border p-3 rounded-lg w-full mt-4 min-h-28"
+          value={profile.bio || ""}
+          onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+        />
+
+        <textarea
+          placeholder="Dirección"
+          className="border p-3 rounded-lg w-full mt-4 min-h-24"
+          value={profile.address || ""}
+          onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+        />
+
+        <button
+          onClick={saveProfile}
+          className="bg-blue-600 text-white px-5 py-3 mt-4 rounded-lg"
+        >
+          Guardar perfil
+        </button>
+      </div>
+
+      {/* NUEVO SERVICIO */}
       <div className="mt-10 bg-white rounded-xl shadow p-6 border">
         <h2 className="text-xl font-bold">Agregar nuevo servicio</h2>
 
@@ -235,6 +406,7 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* SERVICIOS */}
       <div className="mt-10">
         <h2 className="text-xl font-bold mb-4">Servicios actuales</h2>
 
