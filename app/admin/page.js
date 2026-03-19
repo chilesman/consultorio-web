@@ -37,10 +37,11 @@ export default function AdminPage() {
   });
 
   const [documents, setDocuments] = useState([]);
-  const [docTitle, setDocTitle] = useState("");
-  const [docSubtitle, setDocSubtitle] = useState("");
-  const [docCategory, setDocCategory] = useState("");
-  const [docFile, setDocFile] = useState(null);
+
+  const [titleFile, setTitleFile] = useState(null);
+  const [diplomaFile, setDiplomaFile] = useState(null);
+  const [clinicFile, setClinicFile] = useState(null);
+  const [publicityFile, setPublicityFile] = useState(null);
 
   useEffect(() => {
     async function getSession() {
@@ -51,10 +52,12 @@ export default function AdminPage() {
       setSession(session);
 
       if (session) {
-        fetchServices();
-        fetchProfile();
-        fetchDocuments();
-        fetchLicenses();
+        await Promise.all([
+          fetchServices(),
+          fetchProfile(),
+          fetchLicenses(),
+          fetchDocuments(),
+        ]);
       }
     }
 
@@ -139,7 +142,7 @@ export default function AdminPage() {
 
     if (error) {
       console.error(error);
-      alert("Error cargando documentos");
+      alert("Error cargando imágenes");
     } else {
       setDocuments(data || []);
     }
@@ -280,6 +283,7 @@ export default function AdminPage() {
       alert("Error al guardar cédula");
     } else {
       alert("Cédula actualizada");
+      fetchLicenses();
     }
   }
 
@@ -301,23 +305,25 @@ export default function AdminPage() {
     }
   }
 
-  async function uploadDocument() {
-    if (!docTitle || !docCategory || !docFile) {
-      alert("Completa título, categoría y archivo");
+  async function uploadImage(file, category) {
+    if (!file) {
+      alert("Selecciona una imagen");
       return;
     }
 
-    const fileExt = docFile.name.split(".").pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `documents/${fileName}`;
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${fileExt}`;
+    const filePath = `${category}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("documents")
-      .upload(filePath, docFile);
+      .upload(filePath, file);
 
     if (uploadError) {
       console.error(uploadError);
-      alert("Error al subir archivo");
+      alert("Error al subir imagen");
       return;
     }
 
@@ -329,30 +335,24 @@ export default function AdminPage() {
 
     const { error: dbError } = await supabase.from("documents").insert([
       {
-        title: docTitle,
-        subtitle: docSubtitle,
-        category: docCategory,
+        category,
         file_url: publicUrl,
       },
     ]);
 
     if (dbError) {
       console.error(dbError);
-      alert("Archivo subido pero error al guardar en base de datos");
+      alert("Imagen subida pero error al guardar en base de datos");
       return;
     }
 
-    alert("Documento subido correctamente");
-    setDocTitle("");
-    setDocSubtitle("");
-    setDocCategory("");
-    setDocFile(null);
+    alert("Imagen subida correctamente");
     fetchDocuments();
   }
 
   async function deleteDocument(id, fileUrl) {
     const confirmDelete = window.confirm(
-      "¿Seguro que quieres eliminar este documento?"
+      "¿Seguro que quieres eliminar esta imagen?"
     );
 
     if (!confirmDelete) return;
@@ -367,11 +367,73 @@ export default function AdminPage() {
 
     if (error) {
       console.error(error);
-      alert("Error al eliminar documento");
+      alert("Error al eliminar imagen");
     } else {
-      alert("Documento eliminado");
+      alert("Imagen eliminada");
       fetchDocuments();
     }
+  }
+
+  const titleImages = documents.filter((d) => d.category === "titulo_academico");
+  const diplomaImages = documents.filter(
+    (d) => d.category === "diplomado_certificacion"
+  );
+  const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
+  const publicityImages = documents.filter((d) => d.category === "publicidad");
+
+  function ImageSection({ title, files, category, fileStateSetter }) {
+    return (
+      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
+        <h2 className="text-xl font-bold">{title}</h2>
+
+        <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center">
+          <input
+            type="file"
+            className="border p-3 rounded-lg"
+            onChange={(e) => fileStateSetter(e.target.files[0])}
+          />
+          <button
+            onClick={() => {
+              if (category === "titulo_academico") uploadImage(titleFile, category);
+              if (category === "diplomado_certificacion") uploadImage(diplomaFile, category);
+              if (category === "foto_consultorio") uploadImage(clinicFile, category);
+              if (category === "publicidad") uploadImage(publicityFile, category);
+            }}
+            className="bg-green-600 text-white px-5 py-3 rounded-lg"
+          >
+            Subir imagen
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {files.map((doc) => (
+            <div key={doc.id} className="overflow-hidden rounded-xl border bg-slate-50">
+              <img
+                src={doc.file_url}
+                alt={title}
+                className="h-56 w-full object-cover"
+              />
+              <div className="p-4">
+                <a
+                  href={doc.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 text-sm"
+                >
+                  Ver imagen
+                </a>
+                <button
+                  onClick={() => deleteDocument(doc.id, doc.file_url)}
+                  className="ml-4 text-sm text-red-600"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!session) {
@@ -412,7 +474,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Administrador</h1>
           <p className="text-gray-600 mt-2">
-            Edita perfil, cédulas, servicios y documentos sin tocar código.
+            Edita perfil, cédulas, servicios e imágenes sin tocar código.
           </p>
         </div>
 
@@ -584,83 +646,33 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* DOCUMENTOS / IMÁGENES */}
-      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">Subir imágenes</h2>
+      <ImageSection
+        title="Títulos académicos"
+        files={titleImages}
+        category="titulo_academico"
+        fileStateSetter={setTitleFile}
+      />
 
-        <div className="grid md:grid-cols-4 gap-4 mt-6">
-          <input
-            type="text"
-            placeholder="Título"
-            className="border p-3 rounded-lg"
-            value={docTitle}
-            onChange={(e) => setDocTitle(e.target.value)}
-          />
+      <ImageSection
+        title="Diplomados / certificaciones"
+        files={diplomaImages}
+        category="diplomado_certificacion"
+        fileStateSetter={setDiplomaFile}
+      />
 
-          <input
-            type="text"
-            placeholder="Subtítulo"
-            className="border p-3 rounded-lg"
-            value={docSubtitle}
-            onChange={(e) => setDocSubtitle(e.target.value)}
-          />
+      <ImageSection
+        title="Fotos del consultorio"
+        files={clinicImages}
+        category="foto_consultorio"
+        fileStateSetter={setClinicFile}
+      />
 
-          <select
-            className="border p-3 rounded-lg"
-            value={docCategory}
-            onChange={(e) => setDocCategory(e.target.value)}
-          >
-            <option value="">Selecciona categoría</option>
-            <option value="titulo_academico">Títulos académicos</option>
-            <option value="diplomado_certificacion">Diplomados / certificaciones</option>
-            <option value="foto_consultorio">Fotos del consultorio</option>
-            <option value="publicidad">Publicidad</option>
-          </select>
-
-          <input
-            type="file"
-            className="border p-3 rounded-lg"
-            onChange={(e) => setDocFile(e.target.files[0])}
-          />
-        </div>
-
-        <button
-          onClick={uploadDocument}
-          className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
-        >
-          Subir imagen
-        </button>
-
-        <div className="mt-8 space-y-4">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="border rounded-xl p-4 flex justify-between items-center"
-            >
-              <div>
-                <p className="font-semibold">{doc.title}</p>
-                <p className="text-sm text-gray-500">{doc.subtitle}</p>
-                <p className="text-sm text-gray-400">{doc.category}</p>
-                <a
-                  href={doc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 text-sm"
-                >
-                  Ver archivo
-                </a>
-              </div>
-
-              <button
-                onClick={() => deleteDocument(doc.id, doc.file_url)}
-                className="border border-red-600 text-red-600 px-4 py-2 rounded-lg"
-              >
-                Eliminar
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ImageSection
+        title="Publicidad"
+        files={publicityImages}
+        category="publicidad"
+        fileStateSetter={setPublicityFile}
+      />
 
       {/* NUEVO SERVICIO */}
       <div className="mt-10 bg-white rounded-xl shadow p-6 border">
