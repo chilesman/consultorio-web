@@ -27,6 +27,9 @@ export default function Page() {
         .select("*")
         .order("id", { ascending: true });
 
+      console.log("SERVICES DATA:", data);
+      console.log("SERVICES ERROR:", error);
+
       if (error) {
         console.error("Error cargando servicios:", error);
       } else {
@@ -41,6 +44,9 @@ export default function Page() {
         .limit(1)
         .single();
 
+      console.log("PROFILE DATA:", data);
+      console.log("PROFILE ERROR:", error);
+
       if (error) {
         console.error("Error cargando perfil:", error);
       } else if (data) {
@@ -53,6 +59,9 @@ export default function Page() {
         .from("licenses")
         .select("*")
         .order("id", { ascending: true });
+
+      console.log("LICENSES DATA:", data);
+      console.log("LICENSES ERROR:", error);
 
       if (error) {
         console.error("Error cargando cédulas:", error);
@@ -67,6 +76,9 @@ export default function Page() {
         .select("*")
         .order("id", { ascending: false });
 
+      console.log("DOCUMENTS DATA:", data);
+      console.log("DOCUMENTS ERROR:", error);
+
       if (error) {
         console.error("Error cargando imágenes:", error);
       } else {
@@ -78,7 +90,7 @@ export default function Page() {
     fetchProfile();
     fetchLicenses();
     fetchDocuments();
-  }, []);
+  }, [supabase]);
 
   const titleImages = useMemo(
     () => documents.filter((doc) => doc.category === "titulo_academico"),
@@ -202,13 +214,19 @@ export default function Page() {
         <h2 className="text-2xl font-bold">Servicios</h2>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {services.map((s) => (
-            <div key={s.id} className="rounded-xl bg-white p-6 shadow">
-              <h3 className="font-semibold">{s.name}</h3>
-              <p className="mt-2 text-gray-600">{s.description}</p>
-              <p className="mt-4 font-bold">${s.price} MXN</p>
+          {services.length === 0 ? (
+            <div className="rounded-xl border border-dashed bg-white p-6 text-gray-500 md:col-span-3">
+              Aún no hay servicios disponibles.
             </div>
-          ))}
+          ) : (
+            services.map((s) => (
+              <div key={s.id} className="rounded-xl bg-white p-6 shadow">
+                <h3 className="font-semibold">{s.name}</h3>
+                <p className="mt-2 text-gray-600">{s.description}</p>
+                <p className="mt-4 font-bold">${s.price} MXN</p>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
