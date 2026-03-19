@@ -24,13 +24,16 @@ export default function AdminPage() {
     doctor_name: "",
     bio: "",
     university: "",
-    license: "",
-    diplomas: "",
-    postgraduate: "",
     phone: "",
     email: "",
     address: "",
     schedule: "",
+  });
+
+  const [licenses, setLicenses] = useState([]);
+  const [newLicense, setNewLicense] = useState({
+    label: "",
+    license_number: "",
   });
 
   const [documents, setDocuments] = useState([]);
@@ -51,6 +54,7 @@ export default function AdminPage() {
         fetchServices();
         fetchProfile();
         fetchDocuments();
+        fetchLicenses();
       }
     }
 
@@ -92,7 +96,7 @@ export default function AdminPage() {
       console.error(error);
       alert("Error cargando servicios");
     } else {
-      setServices(data);
+      setServices(data || []);
     }
 
     setLoading(false);
@@ -110,6 +114,20 @@ export default function AdminPage() {
       alert("Error cargando perfil");
     } else if (data) {
       setProfile(data);
+    }
+  }
+
+  async function fetchLicenses() {
+    const { data, error } = await supabase
+      .from("licenses")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      alert("Error cargando cédulas");
+    } else {
+      setLicenses(data || []);
     }
   }
 
@@ -207,9 +225,6 @@ export default function AdminPage() {
         doctor_name: profile.doctor_name,
         bio: profile.bio,
         university: profile.university,
-        license: profile.license,
-        diplomas: profile.diplomas,
-        postgraduate: profile.postgraduate,
         phone: profile.phone,
         email: profile.email,
         address: profile.address,
@@ -222,6 +237,67 @@ export default function AdminPage() {
       alert("Error al guardar perfil");
     } else {
       alert("Perfil actualizado");
+    }
+  }
+
+  async function addLicense() {
+    if (!newLicense.label || !newLicense.license_number) {
+      alert("Completa tipo y número de cédula");
+      return;
+    }
+
+    const { error } = await supabase.from("licenses").insert([newLicense]);
+
+    if (error) {
+      console.error(error);
+      alert("Error al agregar cédula");
+    } else {
+      alert("Cédula agregada");
+      setNewLicense({ label: "", license_number: "" });
+      fetchLicenses();
+    }
+  }
+
+  async function updateLicense(id, field, value) {
+    setLicenses((prev) =>
+      prev.map((license) =>
+        license.id === id ? { ...license, [field]: value } : license
+      )
+    );
+  }
+
+  async function saveLicense(license) {
+    const { error } = await supabase
+      .from("licenses")
+      .update({
+        label: license.label,
+        license_number: license.license_number,
+      })
+      .eq("id", license.id);
+
+    if (error) {
+      console.error(error);
+      alert("Error al guardar cédula");
+    } else {
+      alert("Cédula actualizada");
+    }
+  }
+
+  async function deleteLicense(id) {
+    const confirmDelete = window.confirm(
+      "¿Seguro que quieres eliminar esta cédula?"
+    );
+
+    if (!confirmDelete) return;
+
+    const { error } = await supabase.from("licenses").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert("Error al eliminar cédula");
+    } else {
+      alert("Cédula eliminada");
+      fetchLicenses();
     }
   }
 
@@ -336,7 +412,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold">Administrador</h1>
           <p className="text-gray-600 mt-2">
-            Edita perfil, servicios y documentos sin tocar código.
+            Edita perfil, cédulas, servicios y documentos sin tocar código.
           </p>
         </div>
 
@@ -426,9 +502,91 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* DOCUMENTOS */}
+      {/* CÉDULAS */}
       <div className="mt-10 bg-white rounded-xl shadow p-6 border">
-        <h2 className="text-xl font-bold">Subir documentos e imágenes</h2>
+        <h2 className="text-xl font-bold">Cédulas profesionales</h2>
+
+        <div className="grid md:grid-cols-2 gap-4 mt-6">
+          <input
+            type="text"
+            placeholder="Tipo (Licenciatura, Especialidad, Maestría 1...)"
+            className="border p-3 rounded-lg"
+            value={newLicense.label}
+            onChange={(e) =>
+              setNewLicense({ ...newLicense, label: e.target.value })
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Número de cédula"
+            className="border p-3 rounded-lg"
+            value={newLicense.license_number}
+            onChange={(e) =>
+              setNewLicense({
+                ...newLicense,
+                license_number: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <button
+          onClick={addLicense}
+          className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
+        >
+          Agregar cédula
+        </button>
+
+        <div className="mt-8 space-y-4">
+          {licenses.map((license) => (
+            <div
+              key={license.id}
+              className="bg-slate-50 border rounded-xl p-4"
+            >
+              <div className="grid md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  className="border p-3 rounded-lg"
+                  value={license.label || ""}
+                  onChange={(e) =>
+                    updateLicense(license.id, "label", e.target.value)
+                  }
+                />
+
+                <input
+                  type="text"
+                  className="border p-3 rounded-lg"
+                  value={license.license_number || ""}
+                  onChange={(e) =>
+                    updateLicense(license.id, "license_number", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => saveLicense(license)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  Guardar
+                </button>
+
+                <button
+                  onClick={() => deleteLicense(license.id)}
+                  className="border border-red-600 text-red-600 px-4 py-2 rounded-lg"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* DOCUMENTOS / IMÁGENES */}
+      <div className="mt-10 bg-white rounded-xl shadow p-6 border">
+        <h2 className="text-xl font-bold">Subir imágenes</h2>
 
         <div className="grid md:grid-cols-4 gap-4 mt-6">
           <input
@@ -441,7 +599,7 @@ export default function AdminPage() {
 
           <input
             type="text"
-            placeholder="Subtítulo (ej. Cédula maestría 1)"
+            placeholder="Subtítulo"
             className="border p-3 rounded-lg"
             value={docSubtitle}
             onChange={(e) => setDocSubtitle(e.target.value)}
@@ -453,11 +611,10 @@ export default function AdminPage() {
             onChange={(e) => setDocCategory(e.target.value)}
           >
             <option value="">Selecciona categoría</option>
-            <option value="titulo">Título profesional</option>
-            <option value="cedula">Cédula profesional</option>
-            <option value="diplomado_certificacion">Diplomado / certificación</option>
-            <option value="posgrado">Posgrado</option>
-            <option value="foto_profesional">Foto profesional</option>
+            <option value="titulo_academico">Títulos académicos</option>
+            <option value="diplomado_certificacion">Diplomados / certificaciones</option>
+            <option value="foto_consultorio">Fotos del consultorio</option>
+            <option value="publicidad">Publicidad</option>
           </select>
 
           <input
@@ -471,7 +628,7 @@ export default function AdminPage() {
           onClick={uploadDocument}
           className="bg-green-600 text-white px-5 py-3 mt-4 rounded-lg"
         >
-          Subir documento
+          Subir imagen
         </button>
 
         <div className="mt-8 space-y-4">
