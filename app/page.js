@@ -68,7 +68,7 @@ export default function Page() {
         .order("id", { ascending: false });
 
       if (error) {
-        console.error("Error cargando documentos:", error);
+        console.error("Error cargando imágenes:", error);
       } else {
         setDocuments(data || []);
       }
@@ -80,17 +80,17 @@ export default function Page() {
     fetchDocuments();
   }, []);
 
-  const academicTitles = useMemo(
+  const titleImages = useMemo(
     () => documents.filter((doc) => doc.category === "titulo_academico"),
     [documents]
   );
 
-  const diplomaCerts = useMemo(
+  const diplomaImages = useMemo(
     () => documents.filter((doc) => doc.category === "diplomado_certificacion"),
     [documents]
   );
 
-  const clinicPhotos = useMemo(
+  const clinicImages = useMemo(
     () => documents.filter((doc) => doc.category === "foto_consultorio"),
     [documents]
   );
@@ -100,7 +100,7 @@ export default function Page() {
     [documents]
   );
 
-  function GallerySection({ title, description, items }) {
+  function ImageGallery({ title, description, items }) {
     return (
       <section className="mx-auto max-w-7xl p-10">
         <h2 className="text-2xl font-bold">{title}</h2>
@@ -110,27 +110,26 @@ export default function Page() {
 
         {items.length === 0 ? (
           <div className="mt-6 rounded-xl border border-dashed bg-white p-6 text-gray-500">
-            Aún no hay elementos en esta sección.
+            Aún no hay imágenes en este apartado.
           </div>
         ) : (
           <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
-              <div key={item.id} className="overflow-hidden rounded-xl border bg-white shadow">
+              <div
+                key={item.id}
+                className="overflow-hidden rounded-xl border bg-white shadow"
+              >
                 <img
                   src={item.file_url}
-                  alt={item.title}
+                  alt={title}
                   className="h-64 w-full object-cover"
                 />
                 <div className="p-4">
-                  <h3 className="font-semibold">{item.title}</h3>
-                  {item.subtitle ? (
-                    <p className="mt-1 text-sm text-gray-600">{item.subtitle}</p>
-                  ) : null}
                   <a
                     href={item.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-block text-sm font-medium text-blue-600"
+                    className="text-sm font-medium text-blue-600"
                   >
                     Ver imagen completa
                   </a>
@@ -251,7 +250,10 @@ export default function Page() {
         ) : (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {licenses.map((license) => (
-              <div key={license.id} className="rounded-xl border bg-white p-5 shadow">
+              <div
+                key={license.id}
+                className="rounded-xl border bg-white p-5 shadow"
+              >
                 <p className="font-semibold">{license.label}</p>
                 <p className="mt-2 text-gray-600">{license.license_number}</p>
               </div>
@@ -261,30 +263,30 @@ export default function Page() {
       </section>
 
       {/* TÍTULOS ACADÉMICOS */}
-      <GallerySection
+      <ImageGallery
         title="Títulos académicos"
         description="Documentos que acreditan grados académicos como licenciatura, especialidad, maestrías u otros estudios formales."
-        items={academicTitles}
+        items={titleImages}
       />
 
-      {/* DIPLOMADOS Y CERTIFICACIONES */}
-      <GallerySection
+      {/* DIPLOMADOS / CERTIFICACIONES */}
+      <ImageGallery
         title="Diplomados y certificaciones"
-        description="Constancias, certificaciones y formación complementaria relevante para la práctica profesional."
-        items={diplomaCerts}
+        description="Formación complementaria, constancias y certificaciones relevantes para la práctica profesional."
+        items={diplomaImages}
       />
 
-      {/* FOTOS DEL CONSULTORIO */}
-      <GallerySection
+      {/* CONSULTORIO */}
+      <ImageGallery
         title="Consultorio"
-        description="Imágenes del espacio de atención para que el paciente pueda conocer el entorno antes de su visita."
-        items={clinicPhotos}
+        description="Imágenes del espacio de atención para que el paciente conozca el entorno antes de su visita."
+        items={clinicImages}
       />
 
       {/* PUBLICIDAD */}
-      <GallerySection
-        title="Información y publicidad"
-        description="Material visual informativo o promocional relacionado con servicios, campañas o contenidos médicos."
+      <ImageGallery
+        title="Publicidad e información visual"
+        description="Material visual relacionado con servicios, campañas o contenidos informativos."
         items={publicityImages}
       />
 
@@ -343,7 +345,9 @@ export default function Page() {
       <section className="bg-blue-600 p-10 text-white">
         <div className="mx-auto max-w-7xl">
           <h2 className="text-2xl font-bold">Contacto</h2>
-          <p className="mt-4">Teléfono y WhatsApp: {profile.phone || "5533331304"}</p>
+          <p className="mt-4">
+            Teléfono y WhatsApp: {profile.phone || "5533331304"}
+          </p>
           <p>Correo: {profile.email || "doc.jareyes@gmail.com"}</p>
           <p className="mt-2">
             {profile.schedule ||
