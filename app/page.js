@@ -42,14 +42,6 @@ function Stars({ rating }) {
   );
 }
 
-function TrustBadge({ children }) {
-  return (
-    <span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-      {children}
-    </span>
-  );
-}
-
 function InfoCard({ title, description }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
@@ -228,13 +220,6 @@ export default function Page() {
               </a>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <TrustBadge>Cédula profesional</TrustBadge>
-              <TrustBadge>Atención presencial</TrustBadge>
-              <TrustBadge>Seguimiento médico</TrustBadge>
-              <TrustBadge>Agenda fácil</TrustBadge>
-            </div>
-
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
                 <p className="text-sm font-semibold text-slate-900">
@@ -319,26 +304,6 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Reseñas disponibles
-                </p>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
-                  {reviews.length}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Cédulas registradas
-                </p>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
-                  {licenses.length}
-                </p>
               </div>
             </div>
           </div>
