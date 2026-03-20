@@ -182,18 +182,159 @@ function ReviewStatusBadge({ status }) {
   );
 }
 
-function FilterButton({ active, children, ...props }) {
+function ReviewEditor({ review, updateReview, saveReview, deleteReviewPermanently }) {
   return (
-    <button
-      {...props}
-      className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-        active
-          ? "bg-slate-900 text-white"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-      }`}
-    >
-      {children}
-    </button>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input
+            value={review.patient_name || ""}
+            onChange={(e) =>
+              updateReview(review.id, "patient_name", e.target.value)
+            }
+          />
+
+          <div>
+            <p className="mb-2 text-sm font-medium text-slate-700">
+              Calificación
+            </p>
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => updateReview(review.id, "rating", star)}
+                  className={`text-3xl transition ${
+                    Number(review.rating) >= star
+                      ? "text-yellow-500"
+                      : "text-slate-300"
+                  }`}
+                  aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <Textarea
+          className="min-h-24"
+          value={review.review_text || ""}
+          onChange={(e) =>
+            updateReview(review.id, "review_text", e.target.value)
+          }
+        />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="mb-2 text-sm font-medium text-slate-700">Estado</p>
+            <select
+              value={review.review_status || "pending"}
+              onChange={(e) =>
+                updateReview(review.id, "review_status", e.target.value)
+              }
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+            >
+              <option value="pending">Pendiente</option>
+              <option value="verified">Verificada</option>
+              <option value="rejected">Rechazada</option>
+            </select>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-medium text-slate-700">
+              Tipo de verificación
+            </p>
+            <select
+              value={review.verification_type || "manual"}
+              onChange={(e) =>
+                updateReview(review.id, "verification_type", e.target.value)
+              }
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+            >
+              <option value="manual">Manual</option>
+              <option value="agenda">Cita agendada</option>
+              <option value="consulta">Consulta asistida</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <ReviewStatusBadge status={review.review_status || "pending"} />
+
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
+              {review.verification_type === "consulta"
+                ? "Consulta asistida"
+                : review.verification_type === "agenda"
+                ? "Cita agendada"
+                : "Manual"}
+            </span>
+
+            {review.is_published ? (
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
+                Visible
+              </span>
+            ) : (
+              <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
+                No visible
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <SecondaryButton onClick={() => saveReview(review)}>
+              Guardar
+            </SecondaryButton>
+            <DangerButton onClick={() => deleteReviewPermanently(review.id)}>
+              Borrar permanentemente
+            </DangerButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewSection({
+  title,
+  subtitle,
+  reviews,
+  updateReview,
+  saveReview,
+  deleteReviewPermanently,
+}) {
+  return (
+    <div className="mt-8">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-xl font-bold text-slate-900">{title}</h3>
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+          {reviews.length}
+        </div>
+      </div>
+
+      {reviews.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+          No hay reseñas en este apartado.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <ReviewEditor
+              key={review.id}
+              review={review}
+              updateReview={updateReview}
+              saveReview={saveReview}
+              deleteReviewPermanently={deleteReviewPermanently}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -208,7 +349,6 @@ export default function AdminPage() {
   const [documents, setDocuments] = useState([]);
   const [licenses, setLicenses] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [reviewFilter, setReviewFilter] = useState("all");
 
   const [profile, setProfile] = useState({
     id: null,
@@ -617,24 +757,24 @@ export default function AdminPage() {
   const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
   const publicityImages = documents.filter((d) => d.category === "publicidad");
 
-  const verifiedCount = reviews.filter(
-    (review) => (review.review_status || "pending") === "verified"
-  ).length;
+  const verifiedReviews = useMemo(
+    () => reviews.filter((review) => (review.review_status || "pending") === "verified"),
+    [reviews]
+  );
 
-  const pendingCount = reviews.filter(
-    (review) => (review.review_status || "pending") === "pending"
-  ).length;
+  const pendingReviews = useMemo(
+    () => reviews.filter((review) => (review.review_status || "pending") === "pending"),
+    [reviews]
+  );
 
-  const rejectedCount = reviews.filter(
-    (review) => (review.review_status || "pending") === "rejected"
-  ).length;
+  const rejectedReviews = useMemo(
+    () => reviews.filter((review) => (review.review_status || "pending") === "rejected"),
+    [reviews]
+  );
 
-  const filteredReviews = useMemo(() => {
-    if (reviewFilter === "all") return reviews;
-    return reviews.filter(
-      (review) => (review.review_status || "pending") === reviewFilter
-    );
-  }, [reviews, reviewFilter]);
+  const verifiedCount = verifiedReviews.length;
+  const pendingCount = pendingReviews.length;
+  const rejectedCount = rejectedReviews.length;
 
   if (!session) {
     return (
@@ -860,7 +1000,7 @@ export default function AdminPage() {
 
           <Card
             title="Reseñas"
-            subtitle="Gestiona reseñas por estado: verificadas, pendientes, rechazadas y con opción de borrado permanente."
+            subtitle="Gestiona reseñas por apartados: pendientes, verificadas y rechazadas, con opción de borrado permanente."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -950,173 +1090,32 @@ export default function AdminPage() {
               Agregar reseña
             </AccentButton>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <FilterButton
-                active={reviewFilter === "all"}
-                onClick={() => setReviewFilter("all")}
-              >
-                Todas ({reviews.length})
-              </FilterButton>
+            <ReviewSection
+              title="Pendientes"
+              subtitle="Reseñas enviadas por pacientes que aún no se verifican ni publican."
+              reviews={pendingReviews}
+              updateReview={updateReview}
+              saveReview={saveReview}
+              deleteReviewPermanently={deleteReviewPermanently}
+            />
 
-              <FilterButton
-                active={reviewFilter === "pending"}
-                onClick={() => setReviewFilter("pending")}
-              >
-                Pendientes ({pendingCount})
-              </FilterButton>
+            <ReviewSection
+              title="Verificadas"
+              subtitle="Reseñas confirmadas y publicadas en la página."
+              reviews={verifiedReviews}
+              updateReview={updateReview}
+              saveReview={saveReview}
+              deleteReviewPermanently={deleteReviewPermanently}
+            />
 
-              <FilterButton
-                active={reviewFilter === "verified"}
-                onClick={() => setReviewFilter("verified")}
-              >
-                Verificadas ({verifiedCount})
-              </FilterButton>
-
-              <FilterButton
-                active={reviewFilter === "rejected"}
-                onClick={() => setReviewFilter("rejected")}
-              >
-                Rechazadas ({rejectedCount})
-              </FilterButton>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {filteredReviews.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                  No hay reseñas en este filtro.
-                </div>
-              ) : (
-                filteredReviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <div className="grid gap-4">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <Input
-                          value={review.patient_name || ""}
-                          onChange={(e) =>
-                            updateReview(review.id, "patient_name", e.target.value)
-                          }
-                        />
-
-                        <div>
-                          <p className="mb-2 text-sm font-medium text-slate-700">
-                            Calificación
-                          </p>
-                          <div className="flex items-center gap-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                key={star}
-                                type="button"
-                                onClick={() =>
-                                  updateReview(review.id, "rating", star)
-                                }
-                                className={`text-3xl transition ${
-                                  Number(review.rating) >= star
-                                    ? "text-yellow-500"
-                                    : "text-slate-300"
-                                }`}
-                                aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
-                              >
-                                ★
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Textarea
-                        className="min-h-24"
-                        value={review.review_text || ""}
-                        onChange={(e) =>
-                          updateReview(review.id, "review_text", e.target.value)
-                        }
-                      />
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <p className="mb-2 text-sm font-medium text-slate-700">
-                            Estado
-                          </p>
-                          <select
-                            value={review.review_status || "pending"}
-                            onChange={(e) =>
-                              updateReview(
-                                review.id,
-                                "review_status",
-                                e.target.value
-                              )
-                            }
-                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
-                          >
-                            <option value="pending">Pendiente</option>
-                            <option value="verified">Verificada</option>
-                            <option value="rejected">Rechazada</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <p className="mb-2 text-sm font-medium text-slate-700">
-                            Tipo de verificación
-                          </p>
-                          <select
-                            value={review.verification_type || "manual"}
-                            onChange={(e) =>
-                              updateReview(
-                                review.id,
-                                "verification_type",
-                                e.target.value
-                              )
-                            }
-                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
-                          >
-                            <option value="manual">Manual</option>
-                            <option value="agenda">Cita agendada</option>
-                            <option value="consulta">Consulta asistida</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <ReviewStatusBadge status={review.review_status || "pending"} />
-
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
-                            {review.verification_type === "consulta"
-                              ? "Consulta asistida"
-                              : review.verification_type === "agenda"
-                              ? "Cita agendada"
-                              : "Manual"}
-                          </span>
-
-                          {review.is_published ? (
-                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
-                              Visible
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
-                              No visible
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <SecondaryButton onClick={() => saveReview(review)}>
-                            Guardar
-                          </SecondaryButton>
-                          <DangerButton
-                            onClick={() => deleteReviewPermanently(review.id)}
-                          >
-                            Borrar permanentemente
-                          </DangerButton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <ReviewSection
+              title="Rechazadas"
+              subtitle="Reseñas descartadas que no se muestran en la página pública."
+              reviews={rejectedReviews}
+              updateReview={updateReview}
+              saveReview={saveReview}
+              deleteReviewPermanently={deleteReviewPermanently}
+            />
           </Card>
 
           <Card
