@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../lib/supabase";
 
 function Card({ title, subtitle, children }) {
@@ -182,6 +182,21 @@ function ReviewStatusBadge({ status }) {
   );
 }
 
+function FilterButton({ active, children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+        active
+          ? "bg-slate-900 text-white"
+          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AdminPage() {
   const supabase = createClient();
 
@@ -193,6 +208,7 @@ export default function AdminPage() {
   const [documents, setDocuments] = useState([]);
   const [licenses, setLicenses] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [reviewFilter, setReviewFilter] = useState("all");
 
   const [profile, setProfile] = useState({
     id: null,
@@ -613,6 +629,13 @@ export default function AdminPage() {
     (review) => (review.review_status || "pending") === "rejected"
   ).length;
 
+  const filteredReviews = useMemo(() => {
+    if (reviewFilter === "all") return reviews;
+    return reviews.filter(
+      (review) => (review.review_status || "pending") === reviewFilter
+    );
+  }, [reviews, reviewFilter]);
+
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
@@ -927,13 +950,43 @@ export default function AdminPage() {
               Agregar reseña
             </AccentButton>
 
+            <div className="mt-8 flex flex-wrap gap-3">
+              <FilterButton
+                active={reviewFilter === "all"}
+                onClick={() => setReviewFilter("all")}
+              >
+                Todas ({reviews.length})
+              </FilterButton>
+
+              <FilterButton
+                active={reviewFilter === "pending"}
+                onClick={() => setReviewFilter("pending")}
+              >
+                Pendientes ({pendingCount})
+              </FilterButton>
+
+              <FilterButton
+                active={reviewFilter === "verified"}
+                onClick={() => setReviewFilter("verified")}
+              >
+                Verificadas ({verifiedCount})
+              </FilterButton>
+
+              <FilterButton
+                active={reviewFilter === "rejected"}
+                onClick={() => setReviewFilter("rejected")}
+              >
+                Rechazadas ({rejectedCount})
+              </FilterButton>
+            </div>
+
             <div className="mt-6 space-y-4">
-              {reviews.length === 0 ? (
+              {filteredReviews.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                  Aún no hay reseñas registradas.
+                  No hay reseñas en este filtro.
                 </div>
               ) : (
-                reviews.map((review) => (
+                filteredReviews.map((review) => (
                   <div
                     key={review.id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
