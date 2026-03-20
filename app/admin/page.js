@@ -158,6 +158,30 @@ function ImageAdminSection({
   );
 }
 
+function ReviewStatusBadge({ status }) {
+  if (status === "verified") {
+    return (
+      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
+        Verificada
+      </span>
+    );
+  }
+
+  if (status === "rejected") {
+    return (
+      <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700">
+        Rechazada
+      </span>
+    );
+  }
+
+  return (
+    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+      Pendiente
+    </span>
+  );
+}
+
 export default function AdminPage() {
   const supabase = createClient();
 
@@ -196,9 +220,10 @@ export default function AdminPage() {
     patient_name: "",
     review_text: "",
     rating: 5,
-    verified: true,
-    is_published: true,
+    verified: false,
+    is_published: false,
     verification_type: "manual",
+    review_status: "pending",
   });
 
   const [titleFile, setTitleFile] = useState(null);
@@ -453,20 +478,49 @@ export default function AdminPage() {
     setReviews(data || []);
   }
 
+  function normalizeReviewByStatus(review) {
+    const status = review.review_status || "pending";
+
+    if (status === "verified") {
+      return {
+        ...review,
+        verified: true,
+        is_published: true,
+      };
+    }
+
+    if (status === "rejected") {
+      return {
+        ...review,
+        verified: false,
+        is_published: false,
+      };
+    }
+
+    return {
+      ...review,
+      verified: false,
+      is_published: false,
+    };
+  }
+
   async function addReview() {
     if (!newReview.patient_name || !newReview.review_text) {
       alert("Completa nombre y reseña");
       return;
     }
 
+    const reviewToInsert = normalizeReviewByStatus(newReview);
+
     const { error } = await supabase.from("reviews").insert([
       {
-        patient_name: newReview.patient_name,
-        review_text: newReview.review_text,
-        rating: Number(newReview.rating),
-        verified: newReview.verified,
-        is_published: newReview.is_published,
-        verification_type: newReview.verification_type,
+        patient_name: reviewToInsert.patient_name,
+        review_text: reviewToInsert.review_text,
+        rating: Number(reviewToInsert.rating),
+        verified: reviewToInsert.verified,
+        is_published: reviewToInsert.is_published,
+        verification_type: reviewToInsert.verification_type,
+        review_status: reviewToInsert.review_status,
       },
     ]);
 
@@ -477,9 +531,10 @@ export default function AdminPage() {
         patient_name: "",
         review_text: "",
         rating: 5,
-        verified: true,
-        is_published: true,
+        verified: false,
+        is_published: false,
         verification_type: "manual",
+        review_status: "pending",
       });
       fetchReviews();
     }
@@ -487,22 +542,34 @@ export default function AdminPage() {
 
   function updateReview(id, field, value) {
     setReviews((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        const updated = { ...r, [field]: value };
+
+        if (field === "review_status") {
+          return normalizeReviewByStatus(updated);
+        }
+
+        return updated;
+      })
     );
   }
 
   async function saveReview(review) {
+    const reviewToSave = normalizeReviewByStatus(review);
+
     const { error } = await supabase
       .from("reviews")
       .update({
-        patient_name: review.patient_name,
-        review_text: review.review_text,
-        rating: Number(review.rating),
-        verified: review.verified,
-        is_published: review.is_published,
-        verification_type: review.verification_type,
+        patient_name: reviewToSave.patient_name,
+        review_text: reviewToSave.review_text,
+        rating: Number(reviewToSave.rating),
+        verified: reviewToSave.verified,
+        is_published: reviewToSave.is_published,
+        verification_type: reviewToSave.verification_type,
+        review_status: reviewToSave.review_status,
       })
-      .eq("id", review.id);
+      .eq("id", reviewToSave.id);
 
     if (error) {
       alert(error.message);
@@ -511,7 +578,13 @@ export default function AdminPage() {
     }
   }
 
-  async function deleteReview(id) {
+  async function deleteReviewPermanently(id) {
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar permanentemente esta reseña?"
+    );
+
+    if (!confirmed) return;
+
     const { error } = await supabase.from("reviews").delete().eq("id", id);
 
     if (error) {
@@ -527,6 +600,18 @@ export default function AdminPage() {
   );
   const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
   const publicityImages = documents.filter((d) => d.category === "publicidad");
+
+  const verifiedCount = reviews.filter(
+    (review) => (review.review_status || "pending") === "verified"
+  ).length;
+
+  const pendingCount = reviews.filter(
+    (review) => (review.review_status || "pending") === "pending"
+  ).length;
+
+  const rejectedCount = reviews.filter(
+    (review) => (review.review_status || "pending") === "rejected"
+  ).length;
 
   if (!session) {
     return (
@@ -577,15 +662,14 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-4 md:grid-cols-5">
+        <div className="mb-8 grid gap-4 md:grid-cols-7">
           <Stat label="Servicios" value={services.length} />
           <Stat label="Cédulas" value={licenses.length} />
           <Stat label="Imágenes" value={documents.length} />
           <Stat label="Reseñas" value={reviews.length} />
-          <Stat
-            label="Publicadas"
-            value={reviews.filter((review) => review.is_published).length}
-          />
+          <Stat label="Verificadas" value={verifiedCount} />
+          <Stat label="Pendientes" value={pendingCount} />
+          <Stat label="Rechazadas" value={rejectedCount} />
         </div>
 
         <div className="space-y-8">
@@ -753,7 +837,7 @@ export default function AdminPage() {
 
           <Card
             title="Reseñas"
-            subtitle="Agrega reseñas, define si están verificadas y decide cuáles se publican en la página."
+            subtitle="Gestiona reseñas por estado: verificadas, pendientes, rechazadas y con opción de borrado permanente."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -797,28 +881,26 @@ export default function AdminPage() {
               }
             />
 
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <label className="flex items-center gap-3 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={newReview.verified}
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  Estado de la reseña
+                </p>
+                <select
+                  value={newReview.review_status}
                   onChange={(e) =>
-                    setNewReview({ ...newReview, verified: e.target.checked })
+                    setNewReview({
+                      ...newReview,
+                      review_status: e.target.value,
+                    })
                   }
-                />
-                Marcar como reseña verificada
-              </label>
-
-              <label className="flex items-center gap-3 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={newReview.is_published}
-                  onChange={(e) =>
-                    setNewReview({ ...newReview, is_published: e.target.checked })
-                  }
-                />
-                Publicar en la página
-              </label>
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                >
+                  <option value="pending">Pendiente</option>
+                  <option value="verified">Verificada</option>
+                  <option value="rejected">Rechazada</option>
+                </select>
+              </div>
 
               <div>
                 <p className="mb-2 text-sm font-medium text-slate-700">
@@ -899,32 +981,27 @@ export default function AdminPage() {
                         }
                       />
 
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <label className="flex items-center gap-3 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={!!review.verified}
-                            onChange={(e) =>
-                              updateReview(review.id, "verified", e.target.checked)
-                            }
-                          />
-                          Reseña verificada
-                        </label>
-
-                        <label className="flex items-center gap-3 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={!!review.is_published}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-slate-700">
+                            Estado
+                          </p>
+                          <select
+                            value={review.review_status || "pending"}
                             onChange={(e) =>
                               updateReview(
                                 review.id,
-                                "is_published",
-                                e.target.checked
+                                "review_status",
+                                e.target.value
                               )
                             }
-                          />
-                          Mostrar en página
-                        </label>
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                          >
+                            <option value="pending">Pendiente</option>
+                            <option value="verified">Verificada</option>
+                            <option value="rejected">Rechazada</option>
+                          </select>
+                        </div>
 
                         <div>
                           <p className="mb-2 text-sm font-medium text-slate-700">
@@ -950,37 +1027,35 @@ export default function AdminPage() {
 
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          {review.verified ? (
-                            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
-                              Verificada
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
-                              No verificada
-                            </span>
-                          )}
+                          <ReviewStatusBadge status={review.review_status || "pending"} />
+
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
+                            {review.verification_type === "consulta"
+                              ? "Consulta asistida"
+                              : review.verification_type === "agenda"
+                              ? "Cita agendada"
+                              : "Manual"}
+                          </span>
 
                           {review.is_published ? (
                             <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
-                              Publicada
+                              Visible
                             </span>
                           ) : (
-                            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
-                              Oculta
+                            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
+                              No visible
                             </span>
                           )}
-
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
-                            {review.verification_type || "manual"}
-                          </span>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
                           <SecondaryButton onClick={() => saveReview(review)}>
                             Guardar
                           </SecondaryButton>
-                          <DangerButton onClick={() => deleteReview(review.id)}>
-                            Eliminar
+                          <DangerButton
+                            onClick={() => deleteReviewPermanently(review.id)}
+                          >
+                            Borrar permanentemente
                           </DangerButton>
                         </div>
                       </div>
