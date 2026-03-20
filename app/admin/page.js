@@ -104,7 +104,14 @@ function Stat({ label, value }) {
   );
 }
 
-function ImageAdminSection({ title, subtitle, items, onFileChange, onUpload, onDelete }) {
+function ImageAdminSection({
+  title,
+  subtitle,
+  items,
+  onFileChange,
+  onUpload,
+  onDelete,
+}) {
   return (
     <Card title={title} subtitle={subtitle}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -721,16 +728,29 @@ export default function AdminPage() {
                   setNewReview({ ...newReview, patient_name: e.target.value })
                 }
               />
-              <Input
-                type="number"
-                min="1"
-                max="5"
-                placeholder="Calificación"
-                value={newReview.rating}
-                onChange={(e) =>
-                  setNewReview({ ...newReview, rating: e.target.value })
-                }
-              />
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  Calificación
+                </p>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setNewReview({ ...newReview, rating: star })}
+                      className={`text-3xl transition ${
+                        Number(newReview.rating) >= star
+                          ? "text-yellow-500"
+                          : "text-slate-300"
+                      }`}
+                      aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <Textarea
@@ -773,10 +793,25 @@ export default function AdminPage() {
                         <p className="font-semibold text-slate-900">
                           {review.patient_name}
                         </p>
-                        <p className="text-sm text-slate-500">
-                          Calificación: {review.rating}/5{" "}
-                          {review.verified ? "· Verificada" : ""}
-                        </p>
+                        <div className="mt-1 flex items-center gap-1 text-yellow-500">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span
+                              key={star}
+                              className={
+                                Number(review.rating) >= star
+                                  ? "text-yellow-500"
+                                  : "text-slate-300"
+                              }
+                            >
+                              ★
+                            </span>
+                          ))}
+                          {review.verified ? (
+                            <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                              Verificada
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <DangerButton onClick={() => deleteReview(review.id)}>
                         Eliminar
