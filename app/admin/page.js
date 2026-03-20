@@ -137,7 +137,7 @@ function ImageAdminSection({
                 alt={title}
                 className="h-52 w-full object-cover"
               />
-              <div className="flex items-center justify-between p-4">
+              <div className="flex items-center justify-between gap-3 p-4">
                 <a
                   href={img.file_url}
                   target="_blank"
@@ -199,6 +199,7 @@ export default function AdminPage() {
     verified: true,
   });
 
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [titleFile, setTitleFile] = useState(null);
   const [diplomaFile, setDiplomaFile] = useState(null);
   const [clinicFile, setClinicFile] = useState(null);
@@ -255,6 +256,7 @@ export default function AdminPage() {
       .from("services")
       .select("*")
       .order("id", { ascending: true });
+
     setServices(data || []);
   }
 
@@ -280,7 +282,11 @@ export default function AdminPage() {
   async function saveService(service) {
     const { error } = await supabase
       .from("services")
-      .update(service)
+      .update({
+        name: service.name,
+        description: service.description,
+        price: Number(service.price),
+      })
       .eq("id", service.id);
 
     if (error) {
@@ -489,6 +495,7 @@ export default function AdminPage() {
     }
   }
 
+  const profilePhotos = documents.filter((d) => d.category === "foto_profesional");
   const titleImages = documents.filter((d) => d.category === "titulo_academico");
   const diplomaImages = documents.filter(
     (d) => d.category === "diplomado_certificacion"
@@ -502,7 +509,8 @@ export default function AdminPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
           <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes y reseñas.
+            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes
+            y reseñas.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -536,7 +544,8 @@ export default function AdminPage() {
               Panel de administración
             </h1>
             <p className="mt-2 text-sm text-slate-500">
-              Gestiona el contenido de tu sitio de forma clara y ordenada.
+              Gestiona el contenido de tu sitio con enfoque en confianza,
+              claridad y conversión.
             </p>
           </div>
 
@@ -545,18 +554,19 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-4 md:grid-cols-5">
+        <div className="mb-8 grid gap-4 md:grid-cols-6">
           <Stat label="Servicios" value={services.length} />
           <Stat label="Cédulas" value={licenses.length} />
           <Stat label="Imágenes" value={documents.length} />
           <Stat label="Reseñas" value={reviews.length} />
           <Stat label="Consultorio" value={clinicImages.length} />
+          <Stat label="Foto profesional" value={profilePhotos.length} />
         </div>
 
         <div className="space-y-8">
           <Card
             title="Perfil profesional"
-            subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
+            subtitle="Este contenido impacta directamente la conversión de la home. Mantén una bio clara, humana y profesional."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -598,15 +608,15 @@ export default function AdminPage() {
             </div>
 
             <Textarea
-              className="mt-4 min-h-28"
-              placeholder="Semblanza profesional"
+              className="mt-4 min-h-32"
+              placeholder="Semblanza profesional. Ejemplo: Brindo atención médica con enfoque humano, diagnóstico claro y seguimiento cercano para ayudar a cada paciente a entender su problema de salud y recibir un tratamiento adecuado."
               value={profile.bio || ""}
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             />
 
             <Textarea
               className="mt-4 min-h-24"
-              placeholder="Dirección"
+              placeholder="Dirección completa"
               value={profile.address || ""}
               onChange={(e) =>
                 setProfile({ ...profile, address: e.target.value })
@@ -617,6 +627,15 @@ export default function AdminPage() {
               Guardar perfil
             </AccentButton>
           </Card>
+
+          <ImageAdminSection
+            title="Foto profesional"
+            subtitle="Esta imagen es clave para la portada. Sube una foto profesional con buena luz, fondo limpio y apariencia médica confiable."
+            items={profilePhotos}
+            onFileChange={setProfilePhotoFile}
+            onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
+            onDelete={deleteImage}
+          />
 
           <Card
             title="Cédulas profesionales"
@@ -664,7 +683,11 @@ export default function AdminPage() {
                       <Input
                         value={license.license_number || ""}
                         onChange={(e) =>
-                          updateLicense(license.id, "license_number", e.target.value)
+                          updateLicense(
+                            license.id,
+                            "license_number",
+                            e.target.value
+                          )
                         }
                       />
                       <SecondaryButton onClick={() => saveLicense(license)}>
@@ -700,7 +723,7 @@ export default function AdminPage() {
 
           <ImageAdminSection
             title="Fotos del consultorio"
-            subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
+            subtitle="Estas imágenes ayudan mucho a la confianza del paciente. Usa fotos limpias, bien iluminadas y ordenadas."
             items={clinicImages}
             onFileChange={setClinicFile}
             onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
@@ -709,7 +732,7 @@ export default function AdminPage() {
 
           <ImageAdminSection
             title="Publicidad"
-            subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
+            subtitle="Gestiona material visual promocional o informativo relacionado con campañas y servicios."
             items={publicityImages}
             onFileChange={setPublicityFile}
             onUpload={() => uploadImage(publicityFile, "publicidad")}
@@ -718,7 +741,7 @@ export default function AdminPage() {
 
           <Card
             title="Reseñas"
-            subtitle="Agrega reseñas y marca cuáles deben aparecer como verificadas."
+            subtitle="Las reseñas son uno de los elementos que más influyen en la decisión del paciente. Prioriza testimonios claros, humanos y creíbles."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -755,7 +778,7 @@ export default function AdminPage() {
 
             <Textarea
               className="mt-4 min-h-24"
-              placeholder="Texto de la reseña"
+              placeholder='Texto de la reseña. Ejemplo: "Me explicó todo con claridad, me sentí en confianza y el seguimiento fue excelente."'
               value={newReview.review_text}
               onChange={(e) =>
                 setNewReview({ ...newReview, review_text: e.target.value })
@@ -813,10 +836,12 @@ export default function AdminPage() {
                           ) : null}
                         </div>
                       </div>
+
                       <DangerButton onClick={() => deleteReview(review.id)}>
                         Eliminar
                       </DangerButton>
                     </div>
+
                     <p className="mt-3 text-sm leading-7 text-slate-700">
                       {review.review_text}
                     </p>
@@ -828,7 +853,7 @@ export default function AdminPage() {
 
           <Card
             title="Servicios"
-            subtitle="Agrega nuevos servicios o modifica los actuales, con sus precios y descripciones."
+            subtitle="Agrega servicios con nombres claros, descripciones breves y precios fáciles de entender."
           >
             <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
               <Input
@@ -877,7 +902,11 @@ export default function AdminPage() {
                       <Input
                         value={service.description || ""}
                         onChange={(e) =>
-                          updateService(service.id, "description", e.target.value)
+                          updateService(
+                            service.id,
+                            "description",
+                            e.target.value
+                          )
                         }
                       />
                       <Input
