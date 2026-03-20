@@ -62,6 +62,45 @@ function FAQItem({ question, answer }) {
   );
 }
 
+function ReviewCard({ review }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-cyan-50/40 p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-lg font-semibold text-slate-900">
+            {review.patient_name}
+          </p>
+          <div className="mt-2">
+            <Stars rating={review.rating} />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          {review.verified ? (
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
+              Verificada
+            </span>
+          ) : null}
+
+          {review.verified && review.verification_type ? (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-700">
+              {review.verification_type === "consulta"
+                ? "Consulta asistida"
+                : review.verification_type === "agenda"
+                ? "Cita agendada"
+                : "Manual"}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <p className="mt-5 text-sm leading-7 text-slate-700">
+        {review.review_text}
+      </p>
+    </div>
+  );
+}
+
 export default function Page() {
   const supabase = createClient();
 
@@ -69,6 +108,7 @@ export default function Page() {
   const [licenses, setLicenses] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [profile, setProfile] = useState({
     doctor_name: "Dr. José Antonio Reyes Hernández",
     bio: "",
@@ -126,7 +166,16 @@ export default function Page() {
     [documents]
   );
 
-  const topReviews = useMemo(() => reviews.slice(0, 3), [reviews]);
+  const publishedReviews = useMemo(
+    () => reviews.filter((review) => review.is_published !== false),
+    [reviews]
+  );
+
+  const topReviews = useMemo(
+    () => publishedReviews.slice(0, 3),
+    [publishedReviews]
+  );
+
   const featuredServices = useMemo(() => services.slice(0, 6), [services]);
 
   const whatsappUrl = `https://wa.me/52${profile.phone || "5533331304"}`;
@@ -393,40 +442,60 @@ export default function Page() {
             subtitle="Experiencias compartidas por pacientes que reflejan atención, claridad y confianza."
           />
 
-          {topReviews.length === 0 ? (
+          {publishedReviews.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
               Aún no hay reseñas disponibles.
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {topReviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-cyan-50/40 p-6 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-4">
+            <>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {topReviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
+                ))}
+              </div>
+
+              {publishedReviews.length > 3 ? (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllReviews((prev) => !prev)}
+                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    {showAllReviews
+                      ? "Ocultar historial de reseñas"
+                      : `Ver todas las reseñas (${publishedReviews.length})`}
+                  </button>
+                </div>
+              ) : null}
+
+              {showAllReviews ? (
+                <div className="mt-12">
+                  <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                      <p className="text-lg font-semibold text-slate-900">
-                        {review.patient_name}
+                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">
+                        Historial completo de reseñas
+                      </h3>
+                      <p className="mt-2 text-slate-600">
+                        Aquí puedes consultar todas las opiniones publicadas de
+                        pacientes.
                       </p>
-                      <div className="mt-2">
-                        <Stars rating={review.rating} />
-                      </div>
                     </div>
 
-                    {review.verified ? (
-                      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
-                        Verificada
-                      </span>
-                    ) : null}
+                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                      {publishedReviews.length} reseña
+                      {publishedReviews.length === 1 ? "" : "s"} publicada
+                      {publishedReviews.length === 1 ? "" : "s"}
+                    </div>
                   </div>
 
-                  <p className="mt-5 text-sm leading-7 text-slate-700">
-                    {review.review_text}
-                  </p>
+                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {publishedReviews.map((review) => (
+                      <ReviewCard key={`all-${review.id}`} review={review} />
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              ) : null}
+            </>
           )}
         </div>
       </section>
