@@ -98,6 +98,11 @@ export default function Page() {
     loadData();
   }, [supabase]);
 
+  const profilePhoto = useMemo(
+    () => documents.find((doc) => doc.category === "foto_profesional"),
+    [documents]
+  );
+
   const titleImages = useMemo(
     () => documents.filter((doc) => doc.category === "titulo_academico"),
     [documents]
@@ -120,6 +125,16 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      {/* BOTÓN FLOTANTE WHATSAPP */}
+      <a
+        href={`https://wa.me/52${profile.phone || "5533331304"}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-green-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:scale-105 hover:bg-green-600"
+      >
+        WhatsApp
+      </a>
+
       {/* HEADER */}
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -158,7 +173,7 @@ export default function Page() {
         <div className="absolute -left-16 top-10 h-48 w-48 rounded-full bg-cyan-200/40 blur-3xl" />
         <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-emerald-200/30 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
             <p className="inline-flex rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-800 shadow-sm">
               Atención médica con enfoque humano
@@ -215,34 +230,46 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-lg backdrop-blur">
-            <h3 className="text-2xl font-bold text-slate-900">
-              Información del consultorio
-            </h3>
+          <div className="grid gap-6">
+            <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-lg backdrop-blur">
+              <h3 className="text-2xl font-bold text-slate-900">
+                Información del consultorio
+              </h3>
 
-            <div className="mt-6 space-y-5">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Dirección
-                </p>
-                <p className="mt-2 text-slate-800">{profile.address}</p>
-              </div>
+              <div className="mt-6 space-y-5">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Dirección
+                  </p>
+                  <p className="mt-2 text-slate-800">{profile.address}</p>
+                </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Contacto
-                </p>
-                <p className="mt-2 text-slate-800">{profile.phone}</p>
-                <p className="text-slate-800">{profile.email}</p>
-              </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Contacto
+                  </p>
+                  <p className="mt-2 text-slate-800">{profile.phone}</p>
+                  <p className="text-slate-800">{profile.email}</p>
+                </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Horario de atención
-                </p>
-                <p className="mt-2 text-slate-800">{profile.schedule}</p>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Horario de atención
+                  </p>
+                  <p className="mt-2 text-slate-800">{profile.schedule}</p>
+                </div>
               </div>
             </div>
+
+            {profilePhoto ? (
+              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
+                <img
+                  src={profilePhoto.file_url}
+                  alt="Foto profesional"
+                  className="h-[420px] w-full object-cover"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
