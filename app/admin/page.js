@@ -3,19 +3,99 @@
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase";
 
+function Card({ title, subtitle, children }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+      {subtitle ? (
+        <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
+      ) : null}
+      <div className="mt-6">{children}</div>
+    </div>
+  );
+}
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className={`w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 ${
+        props.className || ""
+      }`}
+    />
+  );
+}
+
+function Textarea(props) {
+  return (
+    <textarea
+      {...props}
+      className={`w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 ${
+        props.className || ""
+      }`}
+    />
+  );
+}
+
+function PrimaryButton({ children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={`rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800 ${
+        props.className || ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={`rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 ${
+        props.className || ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function DangerButton({ children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={`rounded-xl border border-red-300 px-4 py-2 font-semibold text-red-600 hover:bg-red-50 ${
+        props.className || ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AdminPage() {
   const supabase = createClient();
 
   const [session, setSession] = useState(null);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [services, setServices] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [licenses, setLicenses] = useState([]);
-
-  const [profile, setProfile] = useState({});
+  const [profile, setProfile] = useState({
+    id: null,
+    doctor_name: "",
+    bio: "",
+    university: "",
+    phone: "",
+    email: "",
+    address: "",
+    schedule: "",
+  });
 
   const [newService, setNewService] = useState({
     name: "",
@@ -78,10 +158,12 @@ export default function AdminPage() {
     location.reload();
   }
 
-  // -------- SERVICES --------
-
   async function fetchServices() {
-    const { data } = await supabase.from("services").select("*");
+    const { data } = await supabase
+      .from("services")
+      .select("*")
+      .order("id", { ascending: true });
+
     setServices(data || []);
   }
 
@@ -96,30 +178,39 @@ export default function AdminPage() {
     if (!error) {
       setNewService({ name: "", description: "", price: "" });
       fetchServices();
+    } else {
+      alert(error.message);
     }
   }
 
-  async function updateService(id, field, value) {
+  function updateService(id, field, value) {
     setServices((prev) =>
       prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
   }
 
   async function saveService(service) {
-    await supabase
+    const { error } = await supabase
       .from("services")
       .update(service)
       .eq("id", service.id);
 
-    fetchServices();
+    if (error) {
+      alert(error.message);
+    } else {
+      fetchServices();
+    }
   }
 
   async function deleteService(id) {
-    await supabase.from("services").delete().eq("id", id);
-    fetchServices();
-  }
+    const { error } = await supabase.from("services").delete().eq("id", id);
 
-  // -------- PROFILE --------
+    if (error) {
+      alert(error.message);
+    } else {
+      fetchServices();
+    }
+  }
 
   async function fetchProfile() {
     const { data } = await supabase
@@ -132,15 +223,17 @@ export default function AdminPage() {
   }
 
   async function saveProfile() {
-    await supabase
+    const { error } = await supabase
       .from("profile")
       .update(profile)
       .eq("id", profile.id);
 
-    alert("Perfil actualizado");
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Perfil actualizado");
+    }
   }
-
-  // -------- LICENSES --------
 
   async function fetchLicenses() {
     const { data, error } = await supabase
@@ -157,7 +250,7 @@ export default function AdminPage() {
 
   async function addLicense() {
     if (!newLicense.label || !newLicense.license_number) {
-      alert("Completa los campos");
+      alert("Completa tipo y número de cédula");
       return;
     }
 
@@ -174,6 +267,12 @@ export default function AdminPage() {
       setNewLicense({ label: "", license_number: "" });
       fetchLicenses();
     }
+  }
+
+  function updateLicense(id, field, value) {
+    setLicenses((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+    );
   }
 
   async function saveLicense(license) {
@@ -193,199 +292,390 @@ export default function AdminPage() {
   }
 
   async function deleteLicense(id) {
-    await supabase.from("licenses").delete().eq("id", id);
-    fetchLicenses();
-  }
+    const { error } = await supabase.from("licenses").delete().eq("id", id);
 
-  function updateLicense(id, field, value) {
-    setLicenses((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
-    );
+    if (error) {
+      alert(error.message);
+    } else {
+      fetchLicenses();
+    }
   }
-
-  // -------- IMAGES --------
 
   async function fetchDocuments() {
-    const { data } = await supabase.from("documents").select("*");
+    const { data } = await supabase
+      .from("documents")
+      .select("*")
+      .order("id", { ascending: false });
+
     setDocuments(data || []);
   }
 
-  async function upload(file, category) {
-    if (!file) return;
+  async function uploadImage(file, category) {
+    if (!file) {
+      alert("Selecciona una imagen");
+      return;
+    }
 
-    const name = `${Date.now()}-${file.name}`;
+    const fileName = `${Date.now()}-${file.name}`;
 
-    await supabase.storage.from("documents").upload(name, file);
-
-    const { data } = supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("documents")
-      .getPublicUrl(name);
+      .upload(fileName, file);
 
-    await supabase.from("documents").insert([
+    if (uploadError) {
+      alert(uploadError.message);
+      return;
+    }
+
+    const { data } = supabase.storage.from("documents").getPublicUrl(fileName);
+
+    const { error: insertError } = await supabase.from("documents").insert([
       {
         category,
         file_url: data.publicUrl,
       },
     ]);
 
-    fetchDocuments();
+    if (insertError) {
+      alert(insertError.message);
+    } else {
+      fetchDocuments();
+    }
   }
 
   async function deleteImage(id, url) {
     const path = url.split("/documents/")[1];
 
-    await supabase.storage.from("documents").remove([path]);
+    if (path) {
+      await supabase.storage.from("documents").remove([path]);
+    }
 
     await supabase.from("documents").delete().eq("id", id);
-
     fetchDocuments();
   }
 
-  const titles = documents.filter((d) => d.category === "titulo_academico");
-  const diplomas = documents.filter(
+  const titleImages = documents.filter((d) => d.category === "titulo_academico");
+  const diplomaImages = documents.filter(
     (d) => d.category === "diplomado_certificacion"
   );
-  const clinic = documents.filter((d) => d.category === "foto_consultorio");
-  const publicity = documents.filter((d) => d.category === "publicidad");
+  const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
+  const publicityImages = documents.filter((d) => d.category === "publicidad");
 
-  // -------- UI --------
+  function ImageAdminSection({ title, items, onFileChange, onUpload }) {
+    return (
+      <Card
+        title={title}
+        subtitle="Sube imágenes y administra el contenido visual de este apartado."
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+          <Input type="file" onChange={(e) => onFileChange(e.target.files[0])} />
+          <PrimaryButton type="button" onClick={onUpload}>
+            Subir imagen
+          </PrimaryButton>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+            Aún no hay imágenes cargadas.
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {items.map((img) => (
+              <div
+                key={img.id}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+              >
+                <img
+                  src={img.file_url}
+                  alt={title}
+                  className="h-52 w-full object-cover"
+                />
+                <div className="flex items-center justify-between p-4">
+                  <a
+                    href={img.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Ver
+                  </a>
+                  <DangerButton onClick={() => deleteImage(img.id, img.file_url)}>
+                    Eliminar
+                  </DangerButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    );
+  }
 
   if (!session) {
     return (
-      <div className="p-10 max-w-md mx-auto">
-        <h1 className="text-xl font-bold">Login</h1>
+      <div className="min-h-screen bg-slate-100 px-6 py-16">
+        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            Accede para administrar tu perfil, cédulas, imágenes y servicios.
+          </p>
 
-        <input
-          placeholder="Correo"
-          className="border p-2 w-full mt-4"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="border p-2 w-full mt-2"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          onClick={login}
-          className="bg-blue-600 text-white w-full mt-4 p-2"
-        >
-          Entrar
-        </button>
+          <div className="mt-6 space-y-4">
+            <Input
+              type="email"
+              placeholder="Correo"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <PrimaryButton className="w-full" onClick={login}>
+              Entrar
+            </PrimaryButton>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-10 max-w-6xl mx-auto space-y-10">
-      <button onClick={logout} className="text-red-600">
-        Cerrar sesión
-      </button>
-
-      {/* PROFILE */}
-      <div>
-        <h2 className="font-bold">Perfil</h2>
-
-        <input
-          className="border p-2 w-full mt-2"
-          value={profile.doctor_name || ""}
-          onChange={(e) =>
-            setProfile({ ...profile, doctor_name: e.target.value })
-          }
-        />
-
-        <textarea
-          className="border p-2 w-full mt-2"
-          value={profile.bio || ""}
-          onChange={(e) =>
-            setProfile({ ...profile, bio: e.target.value })
-          }
-        />
-
-        <button onClick={saveProfile} className="bg-blue-600 text-white p-2 mt-2">
-          Guardar
-        </button>
-      </div>
-
-      {/* LICENSES */}
-      <div>
-        <h2 className="font-bold">Cédulas</h2>
-
-        <input
-          placeholder="Tipo"
-          className="border p-2 mt-2"
-          value={newLicense.label}
-          onChange={(e) =>
-            setNewLicense({ ...newLicense, label: e.target.value })
-          }
-        />
-
-        <input
-          placeholder="Número"
-          className="border p-2 mt-2"
-          value={newLicense.license_number}
-          onChange={(e) =>
-            setNewLicense({
-              ...newLicense,
-              license_number: e.target.value,
-            })
-          }
-        />
-
-        <button onClick={addLicense} className="bg-green-600 text-white p-2 mt-2">
-          Agregar
-        </button>
-
-        {licenses.map((l) => (
-          <div key={l.id} className="border p-2 mt-2">
-            <input
-              value={l.label}
-              onChange={(e) =>
-                updateLicense(l.id, "label", e.target.value)
-              }
-            />
-
-            <input
-              value={l.license_number}
-              onChange={(e) =>
-                updateLicense(l.id, "license_number", e.target.value)
-              }
-            />
-
-            <button onClick={() => saveLicense(l)}>Guardar</button>
-            <button onClick={() => deleteLicense(l.id)}>Eliminar</button>
+    <div className="min-h-screen bg-slate-100">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Administración del sitio
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Gestiona tu contenido sin modificar código.
+            </p>
           </div>
-        ))}
-      </div>
 
-      {/* IMAGE SECTIONS */}
-      {[
-        ["Títulos", titles, setTitleFile, titleFile, "titulo_academico"],
-        ["Diplomados", diplomas, setDiplomaFile, diplomaFile, "diplomado_certificacion"],
-        ["Consultorio", clinic, setClinicFile, clinicFile, "foto_consultorio"],
-        ["Publicidad", publicity, setPublicityFile, publicityFile, "publicidad"],
-      ].map(([title, list, setter, file, category]) => (
-        <div key={title}>
-          <h2 className="font-bold">{title}</h2>
+          <DangerButton onClick={logout}>Cerrar sesión</DangerButton>
+        </div>
+      </header>
 
-          <input type="file" onChange={(e) => setter(e.target.files[0])} />
+      <main className="mx-auto max-w-7xl space-y-8 px-6 py-8">
+        <Card
+          title="Perfil profesional"
+          subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              placeholder="Nombre del médico"
+              value={profile.doctor_name || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, doctor_name: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Universidad"
+              value={profile.university || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, university: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Teléfono"
+              value={profile.phone || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Correo"
+              value={profile.email || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, email: e.target.value })
+              }
+            />
+            <Input
+              className="md:col-span-2"
+              placeholder="Horario"
+              value={profile.schedule || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, schedule: e.target.value })
+              }
+            />
+          </div>
 
-          <button onClick={() => upload(file, category)}>Subir</button>
+          <Textarea
+            className="mt-4 min-h-28"
+            placeholder="Semblanza profesional"
+            value={profile.bio || ""}
+            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+          />
 
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            {list.map((img) => (
-              <div key={img.id}>
-                <img src={img.file_url} />
-                <button onClick={() => deleteImage(img.id, img.file_url)}>
-                  Eliminar
-                </button>
+          <Textarea
+            className="mt-4 min-h-24"
+            placeholder="Dirección"
+            value={profile.address || ""}
+            onChange={(e) =>
+              setProfile({ ...profile, address: e.target.value })
+            }
+          />
+
+          <PrimaryButton className="mt-4" onClick={saveProfile}>
+            Guardar perfil
+          </PrimaryButton>
+        </Card>
+
+        <Card
+          title="Cédulas profesionales"
+          subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado."
+        >
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+            <Input
+              placeholder="Tipo (Licenciatura, Especialidad, Maestría 1...)"
+              value={newLicense.label}
+              onChange={(e) =>
+                setNewLicense({ ...newLicense, label: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Número de cédula"
+              value={newLicense.license_number}
+              onChange={(e) =>
+                setNewLicense({
+                  ...newLicense,
+                  license_number: e.target.value,
+                })
+              }
+            />
+            <PrimaryButton onClick={addLicense}>Agregar</PrimaryButton>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {licenses.map((license) => (
+              <div
+                key={license.id}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                  <Input
+                    value={license.label || ""}
+                    onChange={(e) =>
+                      updateLicense(license.id, "label", e.target.value)
+                    }
+                  />
+                  <Input
+                    value={license.license_number || ""}
+                    onChange={(e) =>
+                      updateLicense(license.id, "license_number", e.target.value)
+                    }
+                  />
+                  <SecondaryButton onClick={() => saveLicense(license)}>
+                    Guardar
+                  </SecondaryButton>
+                  <DangerButton onClick={() => deleteLicense(license.id)}>
+                    Eliminar
+                  </DangerButton>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      ))}
+        </Card>
+
+        <ImageAdminSection
+          title="Títulos académicos"
+          items={titleImages}
+          onFileChange={setTitleFile}
+          onUpload={() => uploadImage(titleFile, "titulo_academico")}
+        />
+
+        <ImageAdminSection
+          title="Diplomados y certificaciones"
+          items={diplomaImages}
+          onFileChange={setDiplomaFile}
+          onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
+        />
+
+        <ImageAdminSection
+          title="Fotos del consultorio"
+          items={clinicImages}
+          onFileChange={setClinicFile}
+          onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
+        />
+
+        <ImageAdminSection
+          title="Publicidad"
+          items={publicityImages}
+          onFileChange={setPublicityFile}
+          onUpload={() => uploadImage(publicityFile, "publicidad")}
+        />
+
+        <Card
+          title="Servicios"
+          subtitle="Agrega nuevos servicios o modifica los existentes con sus precios y descripciones."
+        >
+          <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
+            <Input
+              placeholder="Nombre del servicio"
+              value={newService.name}
+              onChange={(e) =>
+                setNewService({ ...newService, name: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Descripción"
+              value={newService.description}
+              onChange={(e) =>
+                setNewService({ ...newService, description: e.target.value })
+              }
+            />
+            <Input
+              type="number"
+              placeholder="Precio"
+              value={newService.price}
+              onChange={(e) =>
+                setNewService({ ...newService, price: e.target.value })
+              }
+            />
+            <PrimaryButton onClick={addService}>Agregar</PrimaryButton>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {services.map((service) => (
+              <div
+                key={service.id}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto_auto] md:items-center">
+                  <Input
+                    value={service.name || ""}
+                    onChange={(e) =>
+                      updateService(service.id, "name", e.target.value)
+                    }
+                  />
+                  <Input
+                    value={service.description || ""}
+                    onChange={(e) =>
+                      updateService(service.id, "description", e.target.value)
+                    }
+                  />
+                  <Input
+                    type="number"
+                    value={service.price || ""}
+                    onChange={(e) =>
+                      updateService(service.id, "price", e.target.value)
+                    }
+                  />
+                  <SecondaryButton onClick={() => saveService(service)}>
+                    Guardar
+                  </SecondaryButton>
+                  <DangerButton onClick={() => deleteService(service.id)}>
+                    Eliminar
+                  </DangerButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </main>
     </div>
   );
 }
