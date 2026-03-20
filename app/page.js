@@ -23,6 +23,23 @@ function SectionHeader({ eyebrow, title, subtitle }) {
   );
 }
 
+function Stars({ rating }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          className={
+            Number(rating) >= star ? "text-yellow-500 text-xl" : "text-slate-300 text-xl"
+          }
+        >
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function ImageGallery({ title, subtitle, items }) {
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
@@ -68,6 +85,7 @@ export default function Page() {
   const [services, setServices] = useState([]);
   const [licenses, setLicenses] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [profile, setProfile] = useState({
     doctor_name: "Dr. José Antonio Reyes Hernández",
     bio: "",
@@ -81,18 +99,25 @@ export default function Page() {
 
   useEffect(() => {
     async function loadData() {
-      const [servicesRes, profileRes, licensesRes, documentsRes] =
-        await Promise.all([
-          supabase.from("services").select("*").order("id", { ascending: true }),
-          supabase.from("profile").select("*").limit(1).single(),
-          supabase.from("licenses").select("*").order("id", { ascending: true }),
-          supabase.from("documents").select("*").order("id", { ascending: false }),
-        ]);
+      const [
+        servicesRes,
+        profileRes,
+        licensesRes,
+        documentsRes,
+        reviewsRes,
+      ] = await Promise.all([
+        supabase.from("services").select("*").order("id", { ascending: true }),
+        supabase.from("profile").select("*").limit(1).single(),
+        supabase.from("licenses").select("*").order("id", { ascending: true }),
+        supabase.from("documents").select("*").order("id", { ascending: false }),
+        supabase.from("reviews").select("*").order("id", { ascending: false }),
+      ]);
 
       if (!servicesRes.error) setServices(servicesRes.data || []);
       if (!profileRes.error && profileRes.data) setProfile(profileRes.data);
       if (!licensesRes.error) setLicenses(licensesRes.data || []);
       if (!documentsRes.error) setDocuments(documentsRes.data || []);
+      if (!reviewsRes.error) setReviews(reviewsRes.data || []);
     }
 
     loadData();
@@ -125,7 +150,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* BOTÓN FLOTANTE WHATSAPP */}
       <a
         href={`https://wa.me/52${profile.phone || "5533331304"}`}
         target="_blank"
@@ -135,7 +159,6 @@ export default function Page() {
         WhatsApp
       </a>
 
-      {/* HEADER */}
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
@@ -167,7 +190,6 @@ export default function Page() {
         </div>
       </header>
 
-      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-100 via-sky-50 to-emerald-50" />
         <div className="absolute -left-16 top-10 h-48 w-48 rounded-full bg-cyan-200/40 blur-3xl" />
@@ -274,7 +296,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* SERVICIOS */}
       <section className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
           eyebrow="Servicios"
@@ -314,7 +335,6 @@ export default function Page() {
         )}
       </section>
 
-      {/* PERFIL */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionHeader
@@ -336,7 +356,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* CÉDULAS */}
       <section className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
           eyebrow="Formación"
@@ -367,6 +386,52 @@ export default function Page() {
         )}
       </section>
 
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-16">
+          <SectionHeader
+            eyebrow="Confianza"
+            title="Opiniones de pacientes"
+            subtitle="Experiencias compartidas por pacientes que reflejan atención, claridad y confianza."
+          />
+
+          {reviews.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
+              Aún no hay reseñas disponibles.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-cyan-50/40 p-6 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {review.patient_name}
+                      </p>
+                      <div className="mt-2">
+                        <Stars rating={review.rating} />
+                      </div>
+                    </div>
+
+                    {review.verified ? (
+                      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
+                        Paciente verificado
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="mt-5 text-sm leading-7 text-slate-700">
+                    {review.review_text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       <ImageGallery
         title="Títulos académicos"
         subtitle="Documentación de grados académicos como licenciatura, especialidad, maestrías u otros estudios formales."
@@ -391,7 +456,6 @@ export default function Page() {
         items={publicityImages}
       />
 
-      {/* AGENDA */}
       <section id="agenda" className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
           eyebrow="Citas"
@@ -422,7 +486,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* UBICACIÓN */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionHeader
@@ -446,7 +509,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* CONTACTO */}
       <footer className="bg-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-bold">Contacto</h2>
