@@ -137,7 +137,7 @@ function ImageAdminSection({
                 alt={title}
                 className="h-52 w-full object-cover"
               />
-              <div className="flex items-center justify-between gap-3 p-4">
+              <div className="flex items-center justify-between p-4">
                 <a
                   href={img.file_url}
                   target="_blank"
@@ -197,9 +197,10 @@ export default function AdminPage() {
     review_text: "",
     rating: 5,
     verified: true,
+    is_published: true,
+    verification_type: "manual",
   });
 
-  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [titleFile, setTitleFile] = useState(null);
   const [diplomaFile, setDiplomaFile] = useState(null);
   const [clinicFile, setClinicFile] = useState(null);
@@ -256,7 +257,6 @@ export default function AdminPage() {
       .from("services")
       .select("*")
       .order("id", { ascending: true });
-
     setServices(data || []);
   }
 
@@ -282,11 +282,7 @@ export default function AdminPage() {
   async function saveService(service) {
     const { error } = await supabase
       .from("services")
-      .update({
-        name: service.name,
-        description: service.description,
-        price: Number(service.price),
-      })
+      .update(service)
       .eq("id", service.id);
 
     if (error) {
@@ -469,6 +465,8 @@ export default function AdminPage() {
         review_text: newReview.review_text,
         rating: Number(newReview.rating),
         verified: newReview.verified,
+        is_published: newReview.is_published,
+        verification_type: newReview.verification_type,
       },
     ]);
 
@@ -480,7 +478,35 @@ export default function AdminPage() {
         review_text: "",
         rating: 5,
         verified: true,
+        is_published: true,
+        verification_type: "manual",
       });
+      fetchReviews();
+    }
+  }
+
+  function updateReview(id, field, value) {
+    setReviews((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+    );
+  }
+
+  async function saveReview(review) {
+    const { error } = await supabase
+      .from("reviews")
+      .update({
+        patient_name: review.patient_name,
+        review_text: review.review_text,
+        rating: Number(review.rating),
+        verified: review.verified,
+        is_published: review.is_published,
+        verification_type: review.verification_type,
+      })
+      .eq("id", review.id);
+
+    if (error) {
+      alert(error.message);
+    } else {
       fetchReviews();
     }
   }
@@ -495,7 +521,6 @@ export default function AdminPage() {
     }
   }
 
-  const profilePhotos = documents.filter((d) => d.category === "foto_profesional");
   const titleImages = documents.filter((d) => d.category === "titulo_academico");
   const diplomaImages = documents.filter(
     (d) => d.category === "diplomado_certificacion"
@@ -509,8 +534,7 @@ export default function AdminPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
           <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes
-            y reseñas.
+            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes y reseñas.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -544,8 +568,7 @@ export default function AdminPage() {
               Panel de administración
             </h1>
             <p className="mt-2 text-sm text-slate-500">
-              Gestiona el contenido de tu sitio con enfoque en confianza,
-              claridad y conversión.
+              Gestiona el contenido de tu sitio de forma clara y ordenada.
             </p>
           </div>
 
@@ -554,19 +577,21 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-4 md:grid-cols-6">
+        <div className="mb-8 grid gap-4 md:grid-cols-5">
           <Stat label="Servicios" value={services.length} />
           <Stat label="Cédulas" value={licenses.length} />
           <Stat label="Imágenes" value={documents.length} />
           <Stat label="Reseñas" value={reviews.length} />
-          <Stat label="Consultorio" value={clinicImages.length} />
-          <Stat label="Foto profesional" value={profilePhotos.length} />
+          <Stat
+            label="Publicadas"
+            value={reviews.filter((review) => review.is_published).length}
+          />
         </div>
 
         <div className="space-y-8">
           <Card
             title="Perfil profesional"
-            subtitle="Este contenido impacta directamente la conversión de la home. Mantén una bio clara, humana y profesional."
+            subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -608,15 +633,15 @@ export default function AdminPage() {
             </div>
 
             <Textarea
-              className="mt-4 min-h-32"
-              placeholder="Semblanza profesional. Ejemplo: Brindo atención médica con enfoque humano, diagnóstico claro y seguimiento cercano para ayudar a cada paciente a entender su problema de salud y recibir un tratamiento adecuado."
+              className="mt-4 min-h-28"
+              placeholder="Semblanza profesional"
               value={profile.bio || ""}
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             />
 
             <Textarea
               className="mt-4 min-h-24"
-              placeholder="Dirección completa"
+              placeholder="Dirección"
               value={profile.address || ""}
               onChange={(e) =>
                 setProfile({ ...profile, address: e.target.value })
@@ -627,15 +652,6 @@ export default function AdminPage() {
               Guardar perfil
             </AccentButton>
           </Card>
-
-          <ImageAdminSection
-            title="Foto profesional"
-            subtitle="Esta imagen es clave para la portada. Sube una foto profesional con buena luz, fondo limpio y apariencia médica confiable."
-            items={profilePhotos}
-            onFileChange={setProfilePhotoFile}
-            onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
-            onDelete={deleteImage}
-          />
 
           <Card
             title="Cédulas profesionales"
@@ -683,11 +699,7 @@ export default function AdminPage() {
                       <Input
                         value={license.license_number || ""}
                         onChange={(e) =>
-                          updateLicense(
-                            license.id,
-                            "license_number",
-                            e.target.value
-                          )
+                          updateLicense(license.id, "license_number", e.target.value)
                         }
                       />
                       <SecondaryButton onClick={() => saveLicense(license)}>
@@ -723,7 +735,7 @@ export default function AdminPage() {
 
           <ImageAdminSection
             title="Fotos del consultorio"
-            subtitle="Estas imágenes ayudan mucho a la confianza del paciente. Usa fotos limpias, bien iluminadas y ordenadas."
+            subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
             items={clinicImages}
             onFileChange={setClinicFile}
             onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
@@ -732,7 +744,7 @@ export default function AdminPage() {
 
           <ImageAdminSection
             title="Publicidad"
-            subtitle="Gestiona material visual promocional o informativo relacionado con campañas y servicios."
+            subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
             items={publicityImages}
             onFileChange={setPublicityFile}
             onUpload={() => uploadImage(publicityFile, "publicidad")}
@@ -741,7 +753,7 @@ export default function AdminPage() {
 
           <Card
             title="Reseñas"
-            subtitle="Las reseñas son uno de los elementos que más influyen en la decisión del paciente. Prioriza testimonios claros, humanos y creíbles."
+            subtitle="Agrega reseñas, define si están verificadas y decide cuáles se publican en la página."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <Input
@@ -778,23 +790,56 @@ export default function AdminPage() {
 
             <Textarea
               className="mt-4 min-h-24"
-              placeholder='Texto de la reseña. Ejemplo: "Me explicó todo con claridad, me sentí en confianza y el seguimiento fue excelente."'
+              placeholder="Texto de la reseña"
               value={newReview.review_text}
               onChange={(e) =>
                 setNewReview({ ...newReview, review_text: e.target.value })
               }
             />
 
-            <label className="mt-4 flex items-center gap-3 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={newReview.verified}
-                onChange={(e) =>
-                  setNewReview({ ...newReview, verified: e.target.checked })
-                }
-              />
-              Marcar como reseña verificada
-            </label>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <label className="flex items-center gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={newReview.verified}
+                  onChange={(e) =>
+                    setNewReview({ ...newReview, verified: e.target.checked })
+                  }
+                />
+                Marcar como reseña verificada
+              </label>
+
+              <label className="flex items-center gap-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={newReview.is_published}
+                  onChange={(e) =>
+                    setNewReview({ ...newReview, is_published: e.target.checked })
+                  }
+                />
+                Publicar en la página
+              </label>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  Tipo de verificación
+                </p>
+                <select
+                  value={newReview.verification_type}
+                  onChange={(e) =>
+                    setNewReview({
+                      ...newReview,
+                      verification_type: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                >
+                  <option value="manual">Manual</option>
+                  <option value="agenda">Cita agendada</option>
+                  <option value="consulta">Consulta asistida</option>
+                </select>
+              </div>
+            </div>
 
             <AccentButton className="mt-4" onClick={addReview}>
               Agregar reseña
@@ -811,40 +856,135 @@ export default function AdminPage() {
                     key={review.id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {review.patient_name}
-                        </p>
-                        <div className="mt-1 flex items-center gap-1 text-yellow-500">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <span
-                              key={star}
-                              className={
-                                Number(review.rating) >= star
-                                  ? "text-yellow-500"
-                                  : "text-slate-300"
-                              }
-                            >
-                              ★
-                            </span>
-                          ))}
-                          {review.verified ? (
-                            <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-cyan-700">
-                              Verificada
-                            </span>
-                          ) : null}
+                    <div className="grid gap-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Input
+                          value={review.patient_name || ""}
+                          onChange={(e) =>
+                            updateReview(review.id, "patient_name", e.target.value)
+                          }
+                        />
+
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-slate-700">
+                            Calificación
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() =>
+                                  updateReview(review.id, "rating", star)
+                                }
+                                className={`text-3xl transition ${
+                                  Number(review.rating) >= star
+                                    ? "text-yellow-500"
+                                    : "text-slate-300"
+                                }`}
+                                aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
+                              >
+                                ★
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
-                      <DangerButton onClick={() => deleteReview(review.id)}>
-                        Eliminar
-                      </DangerButton>
-                    </div>
+                      <Textarea
+                        className="min-h-24"
+                        value={review.review_text || ""}
+                        onChange={(e) =>
+                          updateReview(review.id, "review_text", e.target.value)
+                        }
+                      />
 
-                    <p className="mt-3 text-sm leading-7 text-slate-700">
-                      {review.review_text}
-                    </p>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <label className="flex items-center gap-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={!!review.verified}
+                            onChange={(e) =>
+                              updateReview(review.id, "verified", e.target.checked)
+                            }
+                          />
+                          Reseña verificada
+                        </label>
+
+                        <label className="flex items-center gap-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={!!review.is_published}
+                            onChange={(e) =>
+                              updateReview(
+                                review.id,
+                                "is_published",
+                                e.target.checked
+                              )
+                            }
+                          />
+                          Mostrar en página
+                        </label>
+
+                        <div>
+                          <p className="mb-2 text-sm font-medium text-slate-700">
+                            Tipo de verificación
+                          </p>
+                          <select
+                            value={review.verification_type || "manual"}
+                            onChange={(e) =>
+                              updateReview(
+                                review.id,
+                                "verification_type",
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                          >
+                            <option value="manual">Manual</option>
+                            <option value="agenda">Cita agendada</option>
+                            <option value="consulta">Consulta asistida</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {review.verified ? (
+                            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
+                              Verificada
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
+                              No verificada
+                            </span>
+                          )}
+
+                          {review.is_published ? (
+                            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
+                              Publicada
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+                              Oculta
+                            </span>
+                          )}
+
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
+                            {review.verification_type || "manual"}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <SecondaryButton onClick={() => saveReview(review)}>
+                            Guardar
+                          </SecondaryButton>
+                          <DangerButton onClick={() => deleteReview(review.id)}>
+                            Eliminar
+                          </DangerButton>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
@@ -853,7 +993,7 @@ export default function AdminPage() {
 
           <Card
             title="Servicios"
-            subtitle="Agrega servicios con nombres claros, descripciones breves y precios fáciles de entender."
+            subtitle="Agrega nuevos servicios o modifica los actuales, con sus precios y descripciones."
           >
             <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
               <Input
@@ -902,11 +1042,7 @@ export default function AdminPage() {
                       <Input
                         value={service.description || ""}
                         onChange={(e) =>
-                          updateService(
-                            service.id,
-                            "description",
-                            e.target.value
-                          )
+                          updateService(service.id, "description", e.target.value)
                         }
                       />
                       <Input
