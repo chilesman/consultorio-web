@@ -316,14 +316,14 @@ export default function Page() {
               Consulta médica privada en Nezahualcóyotl
             </p>
 
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
-              Atención médica confiable, clara y humana para ti y tu familia
+            <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
+              Atención médica clara y confiable para resolver tu problema de salud con seguimiento real
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-              Consulta médica integral con diagnóstico, tratamiento y
-              seguimiento. Agenda de forma rápida por WhatsApp o reserva en
-              línea en pocos minutos.
+              Consulta privada con valoración integral, explicación sencilla,
+              tratamiento y acompañamiento. Agenda fácil por WhatsApp o reserva
+              en línea en pocos minutos.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -395,7 +395,7 @@ export default function Page() {
 
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
-                    Atención médica
+                    Consulta privada
                   </p>
                   <h2 className="mt-2 text-2xl font-bold text-slate-900">
                     {doctorName}
@@ -403,10 +403,10 @@ export default function Page() {
 
                   <p className="mt-4 text-sm leading-7 text-slate-600">
                     {profile.bio ||
-                      "Brindo atención médica con enfoque humano, diagnóstico claro y seguimiento cercano para ayudar a cada paciente a entender su problema de salud y recibir un tratamiento adecuado."}
+                      "Atención médica con enfoque humano, explicación clara y seguimiento cercano para ayudarte a entender tu problema de salud y recibir el tratamiento adecuado."}
                   </p>
 
-                  <div className="mt-6 space-y-4">
+                  <div className="mt-6 grid gap-3">
                     <div className="rounded-2xl bg-slate-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Dirección
@@ -427,6 +427,15 @@ export default function Page() {
                       </p>
                       <p className="mt-2 text-slate-800">{profile.phone}</p>
                       <p className="text-slate-800">{profile.email}</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50 p-4">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Atención con cita
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Agenda por WhatsApp o en línea y recibe orientación médica clara desde tu consulta.
+                      </p>
                     </div>
                   </div>
                 </div>
