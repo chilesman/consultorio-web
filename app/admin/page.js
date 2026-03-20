@@ -161,6 +161,8 @@ export default function AdminPage() {
   const [services, setServices] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [licenses, setLicenses] = useState([]);
+  const [reviews, setReviews] = useState([]);
+
   const [profile, setProfile] = useState({
     id: null,
     doctor_name: "",
@@ -181,6 +183,13 @@ export default function AdminPage() {
   const [newLicense, setNewLicense] = useState({
     label: "",
     license_number: "",
+  });
+
+  const [newReview, setNewReview] = useState({
+    patient_name: "",
+    review_text: "",
+    rating: 5,
+    verified: true,
   });
 
   const [titleFile, setTitleFile] = useState(null);
@@ -210,6 +219,7 @@ export default function AdminPage() {
       fetchDocuments(),
       fetchLicenses(),
       fetchProfile(),
+      fetchReviews(),
     ]);
   }
 
@@ -238,16 +248,12 @@ export default function AdminPage() {
       .from("services")
       .select("*")
       .order("id", { ascending: true });
-
     setServices(data || []);
   }
 
   async function addService() {
     const { error } = await supabase.from("services").insert([
-      {
-        ...newService,
-        price: Number(newService.price),
-      },
+      { ...newService, price: Number(newService.price) },
     ]);
 
     if (error) {
@@ -429,6 +435,53 @@ export default function AdminPage() {
     fetchDocuments();
   }
 
+  async function fetchReviews() {
+    const { data } = await supabase
+      .from("reviews")
+      .select("*")
+      .order("id", { ascending: false });
+
+    setReviews(data || []);
+  }
+
+  async function addReview() {
+    if (!newReview.patient_name || !newReview.review_text) {
+      alert("Completa nombre y reseña");
+      return;
+    }
+
+    const { error } = await supabase.from("reviews").insert([
+      {
+        patient_name: newReview.patient_name,
+        review_text: newReview.review_text,
+        rating: Number(newReview.rating),
+        verified: newReview.verified,
+      },
+    ]);
+
+    if (error) {
+      alert(error.message);
+    } else {
+      setNewReview({
+        patient_name: "",
+        review_text: "",
+        rating: 5,
+        verified: true,
+      });
+      fetchReviews();
+    }
+  }
+
+  async function deleteReview(id) {
+    const { error } = await supabase.from("reviews").delete().eq("id", id);
+
+    if (error) {
+      alert(error.message);
+    } else {
+      fetchReviews();
+    }
+  }
+
   const titleImages = documents.filter((d) => d.category === "titulo_academico");
   const diplomaImages = documents.filter(
     (d) => d.category === "diplomado_certificacion"
@@ -442,7 +495,7 @@ export default function AdminPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
           <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inicia sesión para gestionar tu perfil, servicios, cédulas e imágenes.
+            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes y reseñas.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -485,10 +538,11 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-4 md:grid-cols-4">
+        <div className="mb-8 grid gap-4 md:grid-cols-5">
           <Stat label="Servicios" value={services.length} />
           <Stat label="Cédulas" value={licenses.length} />
           <Stat label="Imágenes" value={documents.length} />
+          <Stat label="Reseñas" value={reviews.length} />
           <Stat label="Consultorio" value={clinicImages.length} />
         </div>
 
@@ -654,6 +708,88 @@ export default function AdminPage() {
             onUpload={() => uploadImage(publicityFile, "publicidad")}
             onDelete={deleteImage}
           />
+
+          <Card
+            title="Reseñas"
+            subtitle="Agrega reseñas y marca cuáles deben aparecer como verificadas."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Nombre del paciente"
+                value={newReview.patient_name}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, patient_name: e.target.value })
+                }
+              />
+              <Input
+                type="number"
+                min="1"
+                max="5"
+                placeholder="Calificación"
+                value={newReview.rating}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, rating: e.target.value })
+                }
+              />
+            </div>
+
+            <Textarea
+              className="mt-4 min-h-24"
+              placeholder="Texto de la reseña"
+              value={newReview.review_text}
+              onChange={(e) =>
+                setNewReview({ ...newReview, review_text: e.target.value })
+              }
+            />
+
+            <label className="mt-4 flex items-center gap-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={newReview.verified}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, verified: e.target.checked })
+                }
+              />
+              Marcar como reseña verificada
+            </label>
+
+            <AccentButton className="mt-4" onClick={addReview}>
+              Agregar reseña
+            </AccentButton>
+
+            <div className="mt-6 space-y-4">
+              {reviews.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                  Aún no hay reseñas registradas.
+                </div>
+              ) : (
+                reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {review.patient_name}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          Calificación: {review.rating}/5{" "}
+                          {review.verified ? "· Verificada" : ""}
+                        </p>
+                      </div>
+                      <DangerButton onClick={() => deleteReview(review.id)}>
+                        Eliminar
+                      </DangerButton>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">
+                      {review.review_text}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
 
           <Card
             title="Servicios"
