@@ -3,14 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase";
 
-function SectionHeader({ title, subtitle }) {
+function SectionHeader({ eyebrow, title, subtitle }) {
   return (
-    <div className="mb-8">
-      <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+    <div className="mb-10">
+      {eyebrow ? (
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
         {title}
       </h2>
       {subtitle ? (
-        <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+        <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
           {subtitle}
         </p>
       ) : null}
@@ -20,11 +25,11 @@ function SectionHeader({ title, subtitle }) {
 
 function ImageGallery({ title, subtitle, items }) {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-14">
+    <section className="mx-auto max-w-7xl px-6 py-16">
       <SectionHeader title={title} subtitle={subtitle} />
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-500">
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-slate-500 shadow-sm">
           Aún no hay contenido disponible en este apartado.
         </div>
       ) : (
@@ -32,7 +37,7 @@ function ImageGallery({ title, subtitle, items }) {
           {items.map((item) => (
             <div
               key={item.id}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+              className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             >
               <img
                 src={item.file_url}
@@ -44,7 +49,7 @@ function ImageGallery({ title, subtitle, items }) {
                   href={item.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                  className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
                 >
                   Ver imagen completa
                 </a>
@@ -76,17 +81,13 @@ export default function Page() {
 
   useEffect(() => {
     async function loadData() {
-      const [
-        servicesRes,
-        profileRes,
-        licensesRes,
-        documentsRes,
-      ] = await Promise.all([
-        supabase.from("services").select("*").order("id", { ascending: true }),
-        supabase.from("profile").select("*").limit(1).single(),
-        supabase.from("licenses").select("*").order("id", { ascending: true }),
-        supabase.from("documents").select("*").order("id", { ascending: false }),
-      ]);
+      const [servicesRes, profileRes, licensesRes, documentsRes] =
+        await Promise.all([
+          supabase.from("services").select("*").order("id", { ascending: true }),
+          supabase.from("profile").select("*").limit(1).single(),
+          supabase.from("licenses").select("*").order("id", { ascending: true }),
+          supabase.from("documents").select("*").order("id", { ascending: false }),
+        ]);
 
       if (!servicesRes.error) setServices(servicesRes.data || []);
       if (!profileRes.error && profileRes.data) setProfile(profileRes.data);
@@ -120,7 +121,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* HEADER */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
             <p className="text-xl font-bold text-slate-900">
@@ -143,24 +144,28 @@ export default function Page() {
 
             <a
               href="#agenda"
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+              className="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800"
             >
-              Agendar
+              Agendar cita
             </a>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-100 via-sky-50 to-emerald-50" />
+        <div className="absolute -left-16 top-10 h-48 w-48 rounded-full bg-cyan-200/40 blur-3xl" />
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-emerald-200/30 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
-            <p className="inline-flex rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
-              Consultorio privado
+            <p className="inline-flex rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-800 shadow-sm">
+              Atención médica con enfoque humano
             </p>
 
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
-              Atención médica profesional, clara y cercana
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
+              Confianza, claridad y seguimiento en cada consulta
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
@@ -173,42 +178,69 @@ export default function Page() {
                 href="https://calendar.app.google/HU8UzZuocbHrX9p38"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
+                className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
               >
-                Agendar cita
+                Reservar cita
               </a>
 
               <a
                 href={`https://wa.me/52${profile.phone || "5533331304"}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-white"
+                className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 hover:bg-slate-100"
               >
                 Contactar por WhatsApp
               </a>
             </div>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">Atención clara</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Explicaciones comprensibles y orientación útil.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">Seguimiento</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Enfoque en evolución clínica y continuidad.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">Prevención</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Valoración integral y medicina preventiva.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900">
-              Información de consulta
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-8 shadow-lg backdrop-blur">
+            <h3 className="text-2xl font-bold text-slate-900">
+              Información del consultorio
             </h3>
 
-            <div className="mt-6 space-y-4 text-sm text-slate-600">
-              <div>
-                <p className="font-semibold text-slate-900">Ubicación</p>
-                <p>{profile.address}</p>
+            <div className="mt-6 space-y-5">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Dirección
+                </p>
+                <p className="mt-2 text-slate-800">{profile.address}</p>
               </div>
 
-              <div>
-                <p className="font-semibold text-slate-900">Horario</p>
-                <p>{profile.schedule}</p>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Contacto
+                </p>
+                <p className="mt-2 text-slate-800">{profile.phone}</p>
+                <p className="text-slate-800">{profile.email}</p>
               </div>
 
-              <div>
-                <p className="font-semibold text-slate-900">Contacto</p>
-                <p>{profile.phone}</p>
-                <p>{profile.email}</p>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Horario de atención
+                </p>
+                <p className="mt-2 text-slate-800">{profile.schedule}</p>
               </div>
             </div>
           </div>
@@ -216,22 +248,29 @@ export default function Page() {
       </section>
 
       {/* SERVICIOS */}
-      <section className="mx-auto max-w-7xl px-6 py-14">
+      <section className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
-          title="Servicios"
-          subtitle="Atención orientada a diagnóstico, seguimiento y prevención, con un enfoque práctico y profesional."
+          eyebrow="Servicios"
+          title="Atención médica orientada a soluciones"
+          subtitle="Servicios diseñados para brindar valoración, seguimiento y apoyo clínico con un trato profesional y cercano."
         />
 
         {services.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-500">
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-slate-500 shadow-sm">
             Aún no hay servicios registrados.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => (
+            {services.map((service, index) => (
               <div
                 key={service.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+                className={`rounded-3xl border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${
+                  index % 3 === 0
+                    ? "border-cyan-100 bg-cyan-50/60"
+                    : index % 3 === 1
+                    ? "border-emerald-100 bg-emerald-50/60"
+                    : "border-sky-100 bg-sky-50/60"
+                }`}
               >
                 <h3 className="text-xl font-semibold text-slate-900">
                   {service.name}
@@ -250,28 +289,20 @@ export default function Page() {
 
       {/* PERFIL */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-14">
+        <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionHeader
+            eyebrow="Conóceme"
             title="Perfil profesional"
             subtitle="Trayectoria, formación académica y datos relevantes para que el paciente conozca mejor al médico y su práctica."
           />
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+          <div className="grid gap-6 md:grid-cols-1">
+            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-cyan-50/50 p-7 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Universidad
               </p>
-              <p className="mt-3 text-lg text-slate-800">
+              <p className="mt-3 text-2xl font-medium text-slate-900">
                 {profile.university || "Pendiente por agregar"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Horario
-              </p>
-              <p className="mt-3 text-lg text-slate-800">
-                {profile.schedule || "Pendiente por agregar"}
               </p>
             </div>
           </div>
@@ -279,24 +310,25 @@ export default function Page() {
       </section>
 
       {/* CÉDULAS */}
-      <section className="mx-auto max-w-7xl px-6 py-14">
+      <section className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
+          eyebrow="Formación"
           title="Cédulas profesionales"
           subtitle="Registro de cédulas correspondientes a los distintos grados académicos y profesionales."
         />
 
         {licenses.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-500">
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-slate-500 shadow-sm">
             Aún no hay cédulas registradas.
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {licenses.map((license) => (
               <div
                 key={license.id}
                 className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
                   {license.label}
                 </p>
                 <p className="mt-3 text-lg font-medium text-slate-900">
@@ -333,45 +365,49 @@ export default function Page() {
       />
 
       {/* AGENDA */}
-      <section id="agenda" className="mx-auto max-w-7xl px-6 py-14">
+      <section id="agenda" className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
+          eyebrow="Citas"
           title="Agenda tu cita"
-          subtitle="Selecciona el horario disponible o contacta directamente por WhatsApp."
+          subtitle="Elige tu horario disponible o ponte en contacto directamente por WhatsApp."
         />
 
-        <div className="flex flex-wrap gap-4">
-          <a
-            href="https://calendar.app.google/HU8UzZuocbHrX9p38"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
-          >
-            Agendar ahora
-          </a>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="flex flex-wrap gap-4">
+            <a
+              href="https://calendar.app.google/HU8UzZuocbHrX9p38"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white hover:bg-cyan-800"
+            >
+              Agendar ahora
+            </a>
 
-          <a
-            href={`https://wa.me/52${profile.phone || "5533331304"}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-white"
-          >
-            Agendar por WhatsApp
-          </a>
+            <a
+              href={`https://wa.me/52${profile.phone || "5533331304"}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Agendar por WhatsApp
+            </a>
+          </div>
         </div>
       </section>
 
       {/* UBICACIÓN */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-14">
+        <div className="mx-auto max-w-7xl px-6 py-16">
           <SectionHeader
-            title="Ubicación"
+            eyebrow="Ubicación"
+            title="Cómo llegar"
             subtitle="Dirección del consultorio y mapa de referencia para facilitar tu visita."
           />
 
           <p className="text-base text-slate-700">{profile.address}</p>
 
           <iframe
-            className="mt-6 rounded-2xl border border-slate-200"
+            className="mt-6 rounded-3xl border border-slate-200 shadow-sm"
             src="https://www.google.com/maps?q=avenida+chimalhuacan+285&output=embed"
             width="100%"
             height="340"
@@ -388,25 +424,27 @@ export default function Page() {
         <div className="mx-auto max-w-7xl px-6 py-12">
           <h2 className="text-2xl font-bold">Contacto</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <div className="rounded-2xl bg-slate-800 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Teléfono
               </p>
-              <p className="mt-2">{profile.phone || "5533331304"}</p>
+              <p className="mt-2 text-white">{profile.phone || "5533331304"}</p>
             </div>
 
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <div className="rounded-2xl bg-slate-800 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Correo
               </p>
-              <p className="mt-2">{profile.email || "doc.jareyes@gmail.com"}</p>
+              <p className="mt-2 text-white">
+                {profile.email || "doc.jareyes@gmail.com"}
+              </p>
             </div>
 
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <div className="rounded-2xl bg-slate-800 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Horario
               </p>
-              <p className="mt-2">
+              <p className="mt-2 text-white">
                 {profile.schedule ||
                   "Lunes a jueves de 10:00 a 17:00 · Viernes de 10:00 a 15:00"}
               </p>

@@ -5,13 +5,17 @@ import { createClient } from "../../lib/supabase";
 
 function Card({ title, subtitle, children }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-      {subtitle ? (
-        <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p>
-      ) : null}
-      <div className="mt-6">{children}</div>
-    </div>
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+        {subtitle ? (
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -19,7 +23,7 @@ function Input(props) {
   return (
     <input
       {...props}
-      className={`w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 ${
+      className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100 ${
         props.className || ""
       }`}
     />
@@ -30,7 +34,7 @@ function Textarea(props) {
   return (
     <textarea
       {...props}
-      className={`w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 ${
+      className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100 ${
         props.className || ""
       }`}
     />
@@ -41,7 +45,20 @@ function PrimaryButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800 ${
+      className={`rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800 ${
+        props.className || ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function AccentButton({ children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={`rounded-2xl bg-cyan-700 px-5 py-3 font-semibold text-white transition hover:bg-cyan-800 ${
         props.className || ""
       }`}
     >
@@ -54,7 +71,7 @@ function SecondaryButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 ${
+      className={`rounded-2xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100 ${
         props.className || ""
       }`}
     >
@@ -67,12 +84,70 @@ function DangerButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-xl border border-red-300 px-4 py-2 font-semibold text-red-600 hover:bg-red-50 ${
+      className={`rounded-2xl border border-red-300 px-4 py-2 font-semibold text-red-600 transition hover:bg-red-50 ${
         props.className || ""
       }`}
     >
       {children}
     </button>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </p>
+      <p className="mt-3 text-2xl font-bold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function ImageAdminSection({ title, subtitle, items, onFileChange, onUpload, onDelete }) {
+  return (
+    <Card title={title} subtitle={subtitle}>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <Input type="file" onChange={(e) => onFileChange(e.target.files[0])} />
+        <AccentButton type="button" onClick={onUpload}>
+          Subir imagen
+        </AccentButton>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+          Aún no hay imágenes en este apartado.
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {items.map((img) => (
+            <div
+              key={img.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+            >
+              <img
+                src={img.file_url}
+                alt={title}
+                className="h-52 w-full object-cover"
+              />
+              <div className="flex items-center justify-between p-4">
+                <a
+                  href={img.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                >
+                  Ver imagen
+                </a>
+                <DangerButton onClick={() => onDelete(img.id, img.file_url)}>
+                  Eliminar
+                </DangerButton>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -175,11 +250,11 @@ export default function AdminPage() {
       },
     ]);
 
-    if (!error) {
+    if (error) {
+      alert(error.message);
+    } else {
       setNewService({ name: "", description: "", price: "" });
       fetchServices();
-    } else {
-      alert(error.message);
     }
   }
 
@@ -361,63 +436,13 @@ export default function AdminPage() {
   const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
   const publicityImages = documents.filter((d) => d.category === "publicidad");
 
-  function ImageAdminSection({ title, items, onFileChange, onUpload }) {
-    return (
-      <Card
-        title={title}
-        subtitle="Sube imágenes y administra el contenido visual de este apartado."
-      >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <Input type="file" onChange={(e) => onFileChange(e.target.files[0])} />
-          <PrimaryButton type="button" onClick={onUpload}>
-            Subir imagen
-          </PrimaryButton>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-            Aún no hay imágenes cargadas.
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((img) => (
-              <div
-                key={img.id}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-              >
-                <img
-                  src={img.file_url}
-                  alt={title}
-                  className="h-52 w-full object-cover"
-                />
-                <div className="flex items-center justify-between p-4">
-                  <a
-                    href={img.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-slate-700"
-                  >
-                    Ver
-                  </a>
-                  <DangerButton onClick={() => deleteImage(img.id, img.file_url)}>
-                    Eliminar
-                  </DangerButton>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    );
-  }
-
   if (!session) {
     return (
-      <div className="min-h-screen bg-slate-100 px-6 py-16">
-        <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
+        <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
           <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Accede para administrar tu perfil, cédulas, imágenes y servicios.
+            Inicia sesión para gestionar tu perfil, servicios, cédulas e imágenes.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -444,14 +469,14 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Administración del sitio
+            <h1 className="text-3xl font-bold text-slate-900">
+              Panel de administración
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Gestiona tu contenido sin modificar código.
+            <p className="mt-2 text-sm text-slate-500">
+              Gestiona el contenido de tu sitio de forma clara y ordenada.
             </p>
           </div>
 
@@ -459,222 +484,251 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-8 px-6 py-8">
-        <Card
-          title="Perfil profesional"
-          subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              placeholder="Nombre del médico"
-              value={profile.doctor_name || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, doctor_name: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Universidad"
-              value={profile.university || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, university: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Teléfono"
-              value={profile.phone || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, phone: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Correo"
-              value={profile.email || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, email: e.target.value })
-              }
-            />
-            <Input
-              className="md:col-span-2"
-              placeholder="Horario"
-              value={profile.schedule || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, schedule: e.target.value })
-              }
-            />
-          </div>
+      <main className="mx-auto max-w-7xl px-6 py-8">
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
+          <Stat label="Servicios" value={services.length} />
+          <Stat label="Cédulas" value={licenses.length} />
+          <Stat label="Imágenes" value={documents.length} />
+          <Stat label="Consultorio" value={clinicImages.length} />
+        </div>
 
-          <Textarea
-            className="mt-4 min-h-28"
-            placeholder="Semblanza profesional"
-            value={profile.bio || ""}
-            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+        <div className="space-y-8">
+          <Card
+            title="Perfil profesional"
+            subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Nombre del médico"
+                value={profile.doctor_name || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, doctor_name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Universidad"
+                value={profile.university || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, university: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Teléfono"
+                value={profile.phone || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, phone: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Correo"
+                value={profile.email || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, email: e.target.value })
+                }
+              />
+              <Input
+                className="md:col-span-2"
+                placeholder="Horario"
+                value={profile.schedule || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, schedule: e.target.value })
+                }
+              />
+            </div>
+
+            <Textarea
+              className="mt-4 min-h-28"
+              placeholder="Semblanza profesional"
+              value={profile.bio || ""}
+              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+            />
+
+            <Textarea
+              className="mt-4 min-h-24"
+              placeholder="Dirección"
+              value={profile.address || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, address: e.target.value })
+              }
+            />
+
+            <AccentButton className="mt-4" onClick={saveProfile}>
+              Guardar perfil
+            </AccentButton>
+          </Card>
+
+          <Card
+            title="Cédulas profesionales"
+            subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado académico."
+          >
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+              <Input
+                placeholder="Tipo (Licenciatura, Especialidad, Maestría...)"
+                value={newLicense.label}
+                onChange={(e) =>
+                  setNewLicense({ ...newLicense, label: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Número de cédula"
+                value={newLicense.license_number}
+                onChange={(e) =>
+                  setNewLicense({
+                    ...newLicense,
+                    license_number: e.target.value,
+                  })
+                }
+              />
+              <AccentButton onClick={addLicense}>Agregar</AccentButton>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {licenses.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                  Aún no hay cédulas registradas.
+                </div>
+              ) : (
+                licenses.map((license) => (
+                  <div
+                    key={license.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                      <Input
+                        value={license.label || ""}
+                        onChange={(e) =>
+                          updateLicense(license.id, "label", e.target.value)
+                        }
+                      />
+                      <Input
+                        value={license.license_number || ""}
+                        onChange={(e) =>
+                          updateLicense(license.id, "license_number", e.target.value)
+                        }
+                      />
+                      <SecondaryButton onClick={() => saveLicense(license)}>
+                        Guardar
+                      </SecondaryButton>
+                      <DangerButton onClick={() => deleteLicense(license.id)}>
+                        Eliminar
+                      </DangerButton>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <ImageAdminSection
+            title="Títulos académicos"
+            subtitle="Sube imágenes de títulos de licenciatura, especialidad, maestrías u otros grados formales."
+            items={titleImages}
+            onFileChange={setTitleFile}
+            onUpload={() => uploadImage(titleFile, "titulo_academico")}
+            onDelete={deleteImage}
           />
 
-          <Textarea
-            className="mt-4 min-h-24"
-            placeholder="Dirección"
-            value={profile.address || ""}
-            onChange={(e) =>
-              setProfile({ ...profile, address: e.target.value })
-            }
+          <ImageAdminSection
+            title="Diplomados y certificaciones"
+            subtitle="Sube constancias, certificados o diplomados relevantes para tu práctica profesional."
+            items={diplomaImages}
+            onFileChange={setDiplomaFile}
+            onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
+            onDelete={deleteImage}
           />
 
-          <PrimaryButton className="mt-4" onClick={saveProfile}>
-            Guardar perfil
-          </PrimaryButton>
-        </Card>
+          <ImageAdminSection
+            title="Fotos del consultorio"
+            subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
+            items={clinicImages}
+            onFileChange={setClinicFile}
+            onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
+            onDelete={deleteImage}
+          />
 
-        <Card
-          title="Cédulas profesionales"
-          subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado."
-        >
-          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-            <Input
-              placeholder="Tipo (Licenciatura, Especialidad, Maestría 1...)"
-              value={newLicense.label}
-              onChange={(e) =>
-                setNewLicense({ ...newLicense, label: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Número de cédula"
-              value={newLicense.license_number}
-              onChange={(e) =>
-                setNewLicense({
-                  ...newLicense,
-                  license_number: e.target.value,
-                })
-              }
-            />
-            <PrimaryButton onClick={addLicense}>Agregar</PrimaryButton>
-          </div>
+          <ImageAdminSection
+            title="Publicidad"
+            subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
+            items={publicityImages}
+            onFileChange={setPublicityFile}
+            onUpload={() => uploadImage(publicityFile, "publicidad")}
+            onDelete={deleteImage}
+          />
 
-          <div className="mt-6 space-y-4">
-            {licenses.map((license) => (
-              <div
-                key={license.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
-              >
-                <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
-                  <Input
-                    value={license.label || ""}
-                    onChange={(e) =>
-                      updateLicense(license.id, "label", e.target.value)
-                    }
-                  />
-                  <Input
-                    value={license.license_number || ""}
-                    onChange={(e) =>
-                      updateLicense(license.id, "license_number", e.target.value)
-                    }
-                  />
-                  <SecondaryButton onClick={() => saveLicense(license)}>
-                    Guardar
-                  </SecondaryButton>
-                  <DangerButton onClick={() => deleteLicense(license.id)}>
-                    Eliminar
-                  </DangerButton>
+          <Card
+            title="Servicios"
+            subtitle="Agrega nuevos servicios o modifica los actuales, con sus precios y descripciones."
+          >
+            <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
+              <Input
+                placeholder="Nombre del servicio"
+                value={newService.name}
+                onChange={(e) =>
+                  setNewService({ ...newService, name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Descripción"
+                value={newService.description}
+                onChange={(e) =>
+                  setNewService({ ...newService, description: e.target.value })
+                }
+              />
+              <Input
+                type="number"
+                placeholder="Precio"
+                value={newService.price}
+                onChange={(e) =>
+                  setNewService({ ...newService, price: e.target.value })
+                }
+              />
+              <AccentButton onClick={addService}>Agregar</AccentButton>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {services.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                  Aún no hay servicios registrados.
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <ImageAdminSection
-          title="Títulos académicos"
-          items={titleImages}
-          onFileChange={setTitleFile}
-          onUpload={() => uploadImage(titleFile, "titulo_academico")}
-        />
-
-        <ImageAdminSection
-          title="Diplomados y certificaciones"
-          items={diplomaImages}
-          onFileChange={setDiplomaFile}
-          onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
-        />
-
-        <ImageAdminSection
-          title="Fotos del consultorio"
-          items={clinicImages}
-          onFileChange={setClinicFile}
-          onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
-        />
-
-        <ImageAdminSection
-          title="Publicidad"
-          items={publicityImages}
-          onFileChange={setPublicityFile}
-          onUpload={() => uploadImage(publicityFile, "publicidad")}
-        />
-
-        <Card
-          title="Servicios"
-          subtitle="Agrega nuevos servicios o modifica los existentes con sus precios y descripciones."
-        >
-          <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
-            <Input
-              placeholder="Nombre del servicio"
-              value={newService.name}
-              onChange={(e) =>
-                setNewService({ ...newService, name: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Descripción"
-              value={newService.description}
-              onChange={(e) =>
-                setNewService({ ...newService, description: e.target.value })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Precio"
-              value={newService.price}
-              onChange={(e) =>
-                setNewService({ ...newService, price: e.target.value })
-              }
-            />
-            <PrimaryButton onClick={addService}>Agregar</PrimaryButton>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            {services.map((service) => (
-              <div
-                key={service.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
-              >
-                <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto_auto] md:items-center">
-                  <Input
-                    value={service.name || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "name", e.target.value)
-                    }
-                  />
-                  <Input
-                    value={service.description || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "description", e.target.value)
-                    }
-                  />
-                  <Input
-                    type="number"
-                    value={service.price || ""}
-                    onChange={(e) =>
-                      updateService(service.id, "price", e.target.value)
-                    }
-                  />
-                  <SecondaryButton onClick={() => saveService(service)}>
-                    Guardar
-                  </SecondaryButton>
-                  <DangerButton onClick={() => deleteService(service.id)}>
-                    Eliminar
-                  </DangerButton>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+              ) : (
+                services.map((service) => (
+                  <div
+                    key={service.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto_auto] md:items-center">
+                      <Input
+                        value={service.name || ""}
+                        onChange={(e) =>
+                          updateService(service.id, "name", e.target.value)
+                        }
+                      />
+                      <Input
+                        value={service.description || ""}
+                        onChange={(e) =>
+                          updateService(service.id, "description", e.target.value)
+                        }
+                      />
+                      <Input
+                        type="number"
+                        value={service.price || ""}
+                        onChange={(e) =>
+                          updateService(service.id, "price", e.target.value)
+                        }
+                      />
+                      <SecondaryButton onClick={() => saveService(service)}>
+                        Guardar
+                      </SecondaryButton>
+                      <DangerButton onClick={() => deleteService(service.id)}>
+                        Eliminar
+                      </DangerButton>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
       </main>
     </div>
   );
