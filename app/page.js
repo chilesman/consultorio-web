@@ -427,46 +427,6 @@ export default function Page() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-4 px-6 py-8 md:grid-cols-4">
-          <div className="rounded-2xl bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Consulta profesional
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Valoración médica integral y orientación clara.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Atención cercana
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Trato humano con enfoque en confianza y claridad.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Seguimiento real
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Acompañamiento según evolución y necesidades del paciente.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Agenda sencilla
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Reserva por WhatsApp o en línea en pocos pasos.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section className="mx-auto max-w-7xl px-6 py-16">
         <SectionHeader
           eyebrow="Atención"
