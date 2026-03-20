@@ -246,6 +246,15 @@ export default function Page() {
 
   const featuredServices = useMemo(() => services.slice(0, 6), [services]);
 
+  const averageRating = useMemo(() => {
+    if (publishedVerifiedReviews.length === 0) return 0;
+    const sum = publishedVerifiedReviews.reduce(
+      (acc, review) => acc + Number(review.rating || 0),
+      0
+    );
+    return (sum / publishedVerifiedReviews.length).toFixed(1);
+  }, [publishedVerifiedReviews]);
+
   const whatsappUrl = `https://wa.me/52${profile.phone || "5533331304"}`;
   const bookingUrl = "https://calendar.app.google/HU8UzZuocbHrX9p38";
 
@@ -470,19 +479,32 @@ export default function Page() {
             subtitle="Las nuevas reseñas se envían a revisión y solo se publican cuando son verificadas."
           />
 
-          {publishedVerifiedReviews.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
-              Aún no hay reseñas disponibles.
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {topReviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
+          <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm md:p-8">
+            <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+              <div className="rounded-3xl bg-slate-900 p-6 text-white">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+                  Reseñas verificadas
+                </p>
+
+                <div className="mt-4 flex items-end gap-3">
+                  <span className="text-5xl font-bold">
+                    {publishedVerifiedReviews.length > 0 ? averageRating : "0.0"}
+                  </span>
+                  <span className="pb-1 text-sm text-slate-300">de 5</span>
+                </div>
+
+                <div className="mt-4">
+                  <Stars rating={Math.round(Number(averageRating) || 0)} />
+                </div>
+
+                <p className="mt-4 text-sm leading-7 text-slate-300">
+                  {publishedVerifiedReviews.length} reseña
+                  {publishedVerifiedReviews.length === 1 ? "" : "s"} publicada
+                  {publishedVerifiedReviews.length === 1 ? "" : "s"} y verificadas.
+                </p>
               </div>
 
-              <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap gap-4 lg:justify-end">
                 <button
                   type="button"
                   onClick={() => setShowAllReviews((prev) => !prev)}
@@ -501,48 +523,61 @@ export default function Page() {
                   Escribir reseña
                 </button>
               </div>
+            </div>
 
-              {showAllReviews ? (
-                <div className="mt-12">
-                  <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                    <div>
-                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">
-                        Historial completo de reseñas
-                      </h3>
-                      <p className="mt-2 text-slate-600">
-                        Aquí puedes consultar todas las opiniones verificadas y
-                        publicadas de pacientes.
-                      </p>
-                    </div>
+            <div className="mt-10 border-t border-slate-200 pt-10">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight text-slate-900">
+                    Reseñas destacadas
+                  </h3>
+                  <p className="mt-2 text-slate-600">
+                    Opiniones visibles y verificadas de pacientes.
+                  </p>
+                </div>
+              </div>
 
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                      {publishedVerifiedReviews.length} reseña
-                      {publishedVerifiedReviews.length === 1 ? "" : "s"} verificada
-                      {publishedVerifiedReviews.length === 1 ? "" : "s"}
-                    </div>
+              {publishedVerifiedReviews.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
+                  Aún no hay reseñas disponibles.
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {topReviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {showAllReviews && publishedVerifiedReviews.length > 0 ? (
+              <div className="mt-12 border-t border-slate-200 pt-10">
+                <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold tracking-tight text-slate-900">
+                      Historial completo de reseñas
+                    </h3>
+                    <p className="mt-2 text-slate-600">
+                      Todas las reseñas verificadas y publicadas, ordenadas del
+                      registro más reciente al más antiguo.
+                    </p>
                   </div>
 
-                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {publishedVerifiedReviews.map((review) => (
-                      <ReviewCard key={`all-${review.id}`} review={review} />
-                    ))}
+                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                    {publishedVerifiedReviews.length} reseña
+                    {publishedVerifiedReviews.length === 1 ? "" : "s"} verificada
+                    {publishedVerifiedReviews.length === 1 ? "" : "s"}
                   </div>
                 </div>
-              ) : null}
-            </>
-          )}
 
-          {publishedVerifiedReviews.length === 0 ? (
-            <div className="mt-8 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setOpenReviewModal(true)}
-                className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800"
-              >
-                Escribir reseña
-              </button>
-            </div>
-          ) : null}
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {publishedVerifiedReviews.map((review) => (
+                    <ReviewCard key={`all-${review.id}`} review={review} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
       </section>
 
