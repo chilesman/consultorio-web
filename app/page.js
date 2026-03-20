@@ -42,6 +42,26 @@ function Stars({ rating }) {
   );
 }
 
+function RatingSelector({ rating, onChange }) {
+  return (
+    <div className="flex items-center gap-2">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          className={`text-3xl transition ${
+            Number(rating) >= star ? "text-yellow-500" : "text-slate-300"
+          }`}
+          aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function InfoCard({ title, description }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
@@ -109,6 +129,8 @@ export default function Page() {
   const [documents, setDocuments] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [openReviewModal, setOpenReviewModal] = useState(false);
+  const [sendingReview, setSendingReview] = useState(false);
   const [profile, setProfile] = useState({
     doctor_name: "Dr. José Antonio Reyes Hernández",
     bio: "",
@@ -118,6 +140,12 @@ export default function Page() {
     address:
       "Avenida Chimalhuacán 285, segundo piso, Nezahualcóyotl, Estado de México, México.",
     schedule: "Lunes a jueves de 10:00 a 17:00 · Viernes de 10:00 a 15:00",
+  });
+
+  const [reviewForm, setReviewForm] = useState({
+    patient_name: "",
+    review_text: "",
+    rating: 5,
   });
 
   useEffect(() => {
@@ -146,6 +174,42 @@ export default function Page() {
     loadData();
   }, [supabase]);
 
+  async function submitReview() {
+    if (!reviewForm.patient_name.trim() || !reviewForm.review_text.trim()) {
+      alert("Completa tu nombre y tu reseña.");
+      return;
+    }
+
+    setSendingReview(true);
+
+    const { error } = await supabase.from("reviews").insert([
+      {
+        patient_name: reviewForm.patient_name.trim(),
+        review_text: reviewForm.review_text.trim(),
+        rating: Number(reviewForm.rating),
+        verified: false,
+        is_published: false,
+        verification_type: "manual",
+        review_status: "pending",
+      },
+    ]);
+
+    setSendingReview(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Tu reseña fue enviada y quedará pendiente de verificación antes de publicarse.");
+    setReviewForm({
+      patient_name: "",
+      review_text: "",
+      rating: 5,
+    });
+    setOpenReviewModal(false);
+  }
+
   const profilePhoto = useMemo(
     () => documents.find((doc) => doc.category === "foto_profesional"),
     [documents]
@@ -166,14 +230,18 @@ export default function Page() {
     [documents]
   );
 
-  const publishedReviews = useMemo(
-    () => reviews.filter((review) => review.is_published !== false),
+  const publishedVerifiedReviews = useMemo(
+    () =>
+      reviews.filter(
+        (review) =>
+          review.is_published === true && review.review_status === "verified"
+      ),
     [reviews]
   );
 
   const topReviews = useMemo(
-    () => publishedReviews.slice(0, 3),
-    [publishedReviews]
+    () => publishedVerifiedReviews.slice(0, 3),
+    [publishedVerifiedReviews]
   );
 
   const featuredServices = useMemo(() => services.slice(0, 6), [services]);
@@ -439,10 +507,10 @@ export default function Page() {
           <SectionHeader
             eyebrow="Confianza"
             title="Opiniones de pacientes"
-            subtitle="Experiencias compartidas por pacientes que reflejan atención, claridad y confianza."
+            subtitle="Las nuevas reseñas se envían a revisión y solo se publican cuando son verificadas."
           />
 
-          {publishedReviews.length === 0 ? (
+          {publishedVerifiedReviews.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
               Aún no hay reseñas disponibles.
             </div>
@@ -454,19 +522,25 @@ export default function Page() {
                 ))}
               </div>
 
-              {publishedReviews.length > 3 ? (
-                <div className="mt-8 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowAllReviews((prev) => !prev)}
-                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    {showAllReviews
-                      ? "Ocultar historial de reseñas"
-                      : `Ver todas las reseñas (${publishedReviews.length})`}
-                  </button>
-                </div>
-              ) : null}
+              <div className="mt-8 flex flex-wrap justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAllReviews((prev) => !prev)}
+                  className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  {showAllReviews
+                    ? "Ocultar historial de reseñas"
+                    : `Ver todas las reseñas (${publishedVerifiedReviews.length})`}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOpenReviewModal(true)}
+                  className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800"
+                >
+                  Escribir reseña
+                </button>
+              </div>
 
               {showAllReviews ? (
                 <div className="mt-12">
@@ -476,20 +550,20 @@ export default function Page() {
                         Historial completo de reseñas
                       </h3>
                       <p className="mt-2 text-slate-600">
-                        Aquí puedes consultar todas las opiniones publicadas de
-                        pacientes.
+                        Aquí puedes consultar todas las opiniones verificadas y
+                        publicadas de pacientes.
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                      {publishedReviews.length} reseña
-                      {publishedReviews.length === 1 ? "" : "s"} publicada
-                      {publishedReviews.length === 1 ? "" : "s"}
+                      {publishedVerifiedReviews.length} reseña
+                      {publishedVerifiedReviews.length === 1 ? "" : "s"} verificada
+                      {publishedVerifiedReviews.length === 1 ? "" : "s"}
                     </div>
                   </div>
 
                   <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {publishedReviews.map((review) => (
+                    {publishedVerifiedReviews.map((review) => (
                       <ReviewCard key={`all-${review.id}`} review={review} />
                     ))}
                   </div>
@@ -497,6 +571,18 @@ export default function Page() {
               ) : null}
             </>
           )}
+
+          {publishedVerifiedReviews.length === 0 ? (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setOpenReviewModal(true)}
+                className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800"
+              >
+                Escribir reseña
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -875,6 +961,106 @@ export default function Page() {
           </div>
         </div>
       </footer>
+
+      {openReviewModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 px-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl md:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                  Reseñas
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                  Escribe tu reseña
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Tu reseña será revisada antes de publicarse. Solo las reseñas
+                  verificadas aparecerán en la página.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setOpenReviewModal(false)}
+                className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-5">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={reviewForm.patient_name}
+                  onChange={(e) =>
+                    setReviewForm({
+                      ...reviewForm,
+                      patient_name: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  placeholder="Escribe tu nombre"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Calificación
+                </label>
+                <RatingSelector
+                  rating={reviewForm.rating}
+                  onChange={(rating) =>
+                    setReviewForm({
+                      ...reviewForm,
+                      rating,
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Tu experiencia
+                </label>
+                <textarea
+                  value={reviewForm.review_text}
+                  onChange={(e) =>
+                    setReviewForm({
+                      ...reviewForm,
+                      review_text: e.target.value,
+                    })
+                  }
+                  className="min-h-[140px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  placeholder="Cuéntanos cómo fue tu experiencia"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={submitReview}
+                  disabled={sendingReview}
+                  className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {sendingReview ? "Enviando..." : "Enviar reseña"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOpenReviewModal(false)}
+                  className="rounded-2xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
