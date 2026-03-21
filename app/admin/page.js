@@ -115,7 +115,7 @@ function ImageAdminSection({
   return (
     <Card title={title} subtitle={subtitle}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <Input type="file" onChange={(e) => onFileChange(e.target.files[0])} />
+        <Input type="file" onChange={(e) => onFileChange(e.target.files?.[0] || null)} />
         <AccentButton type="button" onClick={onUpload}>
           Subir imagen
         </AccentButton>
@@ -182,7 +182,12 @@ function ReviewStatusBadge({ status }) {
   );
 }
 
-function ReviewEditor({ review, updateReview, saveReview, deleteReviewPermanently }) {
+function ReviewEditor({
+  review,
+  updateReview,
+  saveReview,
+  deleteReviewPermanently,
+}) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="grid gap-4">
@@ -338,6 +343,34 @@ function ReviewSection({
   );
 }
 
+const DEFAULT_CONFIG = {
+  booking_url: "",
+  whatsapp_number: "",
+  whatsapp_message: "",
+  hero_title: "",
+  hero_subtitle: "",
+  cta_primary_text: "",
+  cta_secondary_text: "",
+  agenda_title: "",
+  agenda_subtitle: "",
+  include_1: "",
+  include_2: "",
+  include_3: "",
+  include_4: "",
+  reason_1: "",
+  reason_2: "",
+  reason_3: "",
+  reason_4: "",
+  faq_q1: "",
+  faq_a1: "",
+  faq_q2: "",
+  faq_a2: "",
+  faq_q3: "",
+  faq_a3: "",
+  faq_q4: "",
+  faq_a4: "",
+};
+
 export default function AdminPage() {
   const supabase = createClient();
 
@@ -349,6 +382,8 @@ export default function AdminPage() {
   const [documents, setDocuments] = useState([]);
   const [licenses, setLicenses] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const [profile, setProfile] = useState({
     id: null,
@@ -365,6 +400,8 @@ export default function AdminPage() {
     name: "",
     description: "",
     price: "",
+    destacado: false,
+    orden: 0,
   });
 
   const [newLicense, setNewLicense] = useState({
@@ -382,6 +419,7 @@ export default function AdminPage() {
     review_status: "pending",
   });
 
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
   const [titleFile, setTitleFile] = useState(null);
   const [diplomaFile, setDiplomaFile] = useState(null);
   const [clinicFile, setClinicFile] = useState(null);
@@ -410,6 +448,7 @@ export default function AdminPage() {
       fetchLicenses(),
       fetchProfile(),
       fetchReviews(),
+      fetchConfig(),
     ]);
   }
 
@@ -434,22 +473,51 @@ export default function AdminPage() {
   }
 
   async function fetchServices() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("services")
       .select("*")
       .order("id", { ascending: true });
-    setServices(data || []);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setServices(
+      (data || []).map((service) => ({
+        ...service,
+        destacado: Boolean(service.destacado),
+        orden: Number(service.orden || 0),
+      }))
+    );
   }
 
   async function addService() {
-    const { error } = await supabase.from("services").insert([
-      { ...newService, price: Number(newService.price) },
-    ]);
+    if (!newService.name.trim()) {
+      alert("Agrega al menos el nombre del servicio");
+      return;
+    }
+
+    const payload = {
+      name: newService.name.trim(),
+      description: newService.description.trim(),
+      price: Number(newService.price || 0),
+      destacado: Boolean(newService.destacado),
+      orden: Number(newService.orden || 0),
+    };
+
+    const { error } = await supabase.from("services").insert([payload]);
 
     if (error) {
       alert(error.message);
     } else {
-      setNewService({ name: "", description: "", price: "" });
+      setNewService({
+        name: "",
+        description: "",
+        price: "",
+        destacado: false,
+        orden: 0,
+      });
       fetchServices();
     }
   }
@@ -461,9 +529,17 @@ export default function AdminPage() {
   }
 
   async function saveService(service) {
+    const payload = {
+      name: service.name || "",
+      description: service.description || "",
+      price: Number(service.price || 0),
+      destacado: Boolean(service.destacado),
+      orden: Number(service.orden || 0),
+    };
+
     const { error } = await supabase
       .from("services")
-      .update(service)
+      .update(payload)
       .eq("id", service.id);
 
     if (error) {
@@ -484,16 +560,25 @@ export default function AdminPage() {
   }
 
   async function fetchProfile() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profile")
       .select("*")
       .limit(1)
       .single();
 
+    if (error) {
+      return;
+    }
+
     if (data) setProfile(data);
   }
 
   async function saveProfile() {
+    if (!profile.id) {
+      alert("No se encontró el perfil para actualizar");
+      return;
+    }
+
     const { error } = await supabase
       .from("profile")
       .update(profile)
@@ -573,10 +658,15 @@ export default function AdminPage() {
   }
 
   async function fetchDocuments() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("documents")
       .select("*")
       .order("id", { ascending: false });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
     setDocuments(data || []);
   }
@@ -626,10 +716,15 @@ export default function AdminPage() {
   }
 
   async function fetchReviews() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("reviews")
       .select("*")
       .order("id", { ascending: false });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
     setReviews(data || []);
   }
@@ -750,6 +845,57 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchConfig() {
+    const { data, error } = await supabase.from("config").select("*");
+
+    if (error) {
+      console.error(error.message);
+      return;
+    }
+
+    const mapped = { ...DEFAULT_CONFIG };
+
+    (data || []).forEach((item) => {
+      if (item?.key) {
+        mapped[item.key] = item.value ?? "";
+      }
+    });
+
+    setConfig(mapped);
+  }
+
+  function updateConfigField(key, value) {
+    setConfig((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
+  async function saveConfig() {
+    setSavingConfig(true);
+
+    const rows = Object.entries(config).map(([key, value]) => ({
+      key,
+      value: value ?? "",
+    }));
+
+    const { error } = await supabase
+      .from("config")
+      .upsert(rows, { onConflict: "key" });
+
+    setSavingConfig(false);
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Configuración actualizada");
+      fetchConfig();
+    }
+  }
+
+  const profilePhotos = documents.filter(
+    (d) => d.category === "foto_profesional"
+  );
   const titleImages = documents.filter((d) => d.category === "titulo_academico");
   const diplomaImages = documents.filter(
     (d) => d.category === "diplomado_certificacion"
@@ -758,19 +904,44 @@ export default function AdminPage() {
   const publicityImages = documents.filter((d) => d.category === "publicidad");
 
   const verifiedReviews = useMemo(
-    () => reviews.filter((review) => (review.review_status || "pending") === "verified"),
+    () =>
+      reviews.filter(
+        (review) => (review.review_status || "pending") === "verified"
+      ),
     [reviews]
   );
 
   const pendingReviews = useMemo(
-    () => reviews.filter((review) => (review.review_status || "pending") === "pending"),
+    () =>
+      reviews.filter(
+        (review) => (review.review_status || "pending") === "pending"
+      ),
     [reviews]
   );
 
   const rejectedReviews = useMemo(
-    () => reviews.filter((review) => (review.review_status || "pending") === "rejected"),
+    () =>
+      reviews.filter(
+        (review) => (review.review_status || "pending") === "rejected"
+      ),
     [reviews]
   );
+
+  const sortedServices = useMemo(() => {
+    return [...services].sort((a, b) => {
+      const featuredA = a.destacado ? 1 : 0;
+      const featuredB = b.destacado ? 1 : 0;
+
+      if (featuredA !== featuredB) return featuredB - featuredA;
+
+      const orderA = Number(a.orden || 0);
+      const orderB = Number(b.orden || 0);
+
+      if (orderA !== orderB) return orderA - orderB;
+
+      return Number(a.id || 0) - Number(b.id || 0);
+    });
+  }, [services]);
 
   const verifiedCount = verifiedReviews.length;
   const pendingCount = pendingReviews.length;
@@ -782,7 +953,8 @@ export default function AdminPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
           <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inicia sesión para gestionar tu perfil, servicios, cédulas, imágenes y reseñas.
+            Inicia sesión para gestionar tu perfil, configuración, servicios,
+            cédulas, imágenes y reseñas.
           </p>
 
           <div className="mt-6 space-y-4">
@@ -837,6 +1009,191 @@ export default function AdminPage() {
 
         <div className="space-y-8">
           <Card
+            title="Configuración global"
+            subtitle="Aquí editas los textos y enlaces principales que después se mostrarán en la página pública."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="URL de agenda"
+                value={config.booking_url}
+                onChange={(e) =>
+                  updateConfigField("booking_url", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Número de WhatsApp"
+                value={config.whatsapp_number}
+                onChange={(e) =>
+                  updateConfigField("whatsapp_number", e.target.value)
+                }
+              />
+            </div>
+
+            <Textarea
+              className="mt-4 min-h-24"
+              placeholder="Mensaje de WhatsApp"
+              value={config.whatsapp_message}
+              onChange={(e) =>
+                updateConfigField("whatsapp_message", e.target.value)
+              }
+            />
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Hero title"
+                value={config.hero_title}
+                onChange={(e) =>
+                  updateConfigField("hero_title", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Hero subtitle"
+                value={config.hero_subtitle}
+                onChange={(e) =>
+                  updateConfigField("hero_subtitle", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Texto CTA principal"
+                value={config.cta_primary_text}
+                onChange={(e) =>
+                  updateConfigField("cta_primary_text", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Texto CTA secundario"
+                value={config.cta_secondary_text}
+                onChange={(e) =>
+                  updateConfigField("cta_secondary_text", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Título agenda"
+                value={config.agenda_title}
+                onChange={(e) =>
+                  updateConfigField("agenda_title", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Subtítulo agenda"
+                value={config.agenda_subtitle}
+                onChange={(e) =>
+                  updateConfigField("agenda_subtitle", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Qué incluye 1"
+                value={config.include_1}
+                onChange={(e) =>
+                  updateConfigField("include_1", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Qué incluye 2"
+                value={config.include_2}
+                onChange={(e) =>
+                  updateConfigField("include_2", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Qué incluye 3"
+                value={config.include_3}
+                onChange={(e) =>
+                  updateConfigField("include_3", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Qué incluye 4"
+                value={config.include_4}
+                onChange={(e) =>
+                  updateConfigField("include_4", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="Motivo para consultar 1"
+                value={config.reason_1}
+                onChange={(e) =>
+                  updateConfigField("reason_1", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Motivo para consultar 2"
+                value={config.reason_2}
+                onChange={(e) =>
+                  updateConfigField("reason_2", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Motivo para consultar 3"
+                value={config.reason_3}
+                onChange={(e) =>
+                  updateConfigField("reason_3", e.target.value)
+                }
+              />
+              <Input
+                placeholder="Motivo para consultar 4"
+                value={config.reason_4}
+                onChange={(e) =>
+                  updateConfigField("reason_4", e.target.value)
+                }
+              />
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <Input
+                placeholder="FAQ pregunta 1"
+                value={config.faq_q1}
+                onChange={(e) => updateConfigField("faq_q1", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ respuesta 1"
+                value={config.faq_a1}
+                onChange={(e) => updateConfigField("faq_a1", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ pregunta 2"
+                value={config.faq_q2}
+                onChange={(e) => updateConfigField("faq_q2", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ respuesta 2"
+                value={config.faq_a2}
+                onChange={(e) => updateConfigField("faq_a2", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ pregunta 3"
+                value={config.faq_q3}
+                onChange={(e) => updateConfigField("faq_q3", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ respuesta 3"
+                value={config.faq_a3}
+                onChange={(e) => updateConfigField("faq_a3", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ pregunta 4"
+                value={config.faq_q4}
+                onChange={(e) => updateConfigField("faq_q4", e.target.value)}
+              />
+              <Input
+                placeholder="FAQ respuesta 4"
+                value={config.faq_a4}
+                onChange={(e) => updateConfigField("faq_a4", e.target.value)}
+              />
+            </div>
+
+            <AccentButton className="mt-6" onClick={saveConfig}>
+              {savingConfig ? "Guardando..." : "Guardar configuración"}
+            </AccentButton>
+          </Card>
+
+          <Card
             title="Perfil profesional"
             subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
           >
@@ -877,6 +1234,14 @@ export default function AdminPage() {
                   setProfile({ ...profile, schedule: e.target.value })
                 }
               />
+              <Input
+                className="md:col-span-2"
+                placeholder="Dirección"
+                value={profile.address || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, address: e.target.value })
+                }
+              />
             </div>
 
             <Textarea
@@ -886,22 +1251,134 @@ export default function AdminPage() {
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
             />
 
-            <Textarea
-              className="mt-4 min-h-24"
-              placeholder="Dirección"
-              value={profile.address || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, address: e.target.value })
-              }
-            />
-
-            <AccentButton className="mt-4" onClick={saveProfile}>
+            <PrimaryButton className="mt-4" onClick={saveProfile}>
               Guardar perfil
-            </AccentButton>
+            </PrimaryButton>
           </Card>
 
           <Card
-            title="Cédulas profesionales"
+            title="Servicios"
+            subtitle="Agrega nuevos servicios o modifica los actuales, incluyendo si son destacados y su orden."
+          >
+            <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_140px_auto]">
+              <Input
+                placeholder="Nombre del servicio"
+                value={newService.name}
+                onChange={(e) =>
+                  setNewService({ ...newService, name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Descripción"
+                value={newService.description}
+                onChange={(e) =>
+                  setNewService({ ...newService, description: e.target.value })
+                }
+              />
+              <Input
+                type="number"
+                placeholder="Precio"
+                value={newService.price}
+                onChange={(e) =>
+                  setNewService({ ...newService, price: e.target.value })
+                }
+              />
+              <Input
+                type="number"
+                placeholder="Orden"
+                value={newService.orden}
+                onChange={(e) =>
+                  setNewService({ ...newService, orden: e.target.value })
+                }
+              />
+              <AccentButton onClick={addService}>Agregar</AccentButton>
+            </div>
+
+            <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={Boolean(newService.destacado)}
+                onChange={(e) =>
+                  setNewService({ ...newService, destacado: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+              />
+              Marcar como destacado
+            </label>
+
+            <div className="mt-6 space-y-4">
+              {sortedServices.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                  Aún no hay servicios registrados.
+                </div>
+              ) : (
+                sortedServices.map((service) => (
+                  <div
+                    key={service.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_160px_120px_auto_auto] md:items-center">
+                      <Input
+                        value={service.name || ""}
+                        onChange={(e) =>
+                          updateService(service.id, "name", e.target.value)
+                        }
+                      />
+                      <Input
+                        value={service.description || ""}
+                        onChange={(e) =>
+                          updateService(
+                            service.id,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <Input
+                        type="number"
+                        value={service.price ?? ""}
+                        onChange={(e) =>
+                          updateService(service.id, "price", e.target.value)
+                        }
+                      />
+                      <Input
+                        type="number"
+                        value={service.orden ?? 0}
+                        onChange={(e) =>
+                          updateService(service.id, "orden", e.target.value)
+                        }
+                      />
+                      <SecondaryButton onClick={() => saveService(service)}>
+                        Guardar
+                      </SecondaryButton>
+                      <DangerButton onClick={() => deleteService(service.id)}>
+                        Eliminar
+                      </DangerButton>
+                    </div>
+
+                    <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(service.destacado)}
+                        onChange={(e) =>
+                          updateService(
+                            service.id,
+                            "destacado",
+                            e.target.checked
+                          )
+                        }
+                        className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                      />
+                      Destacado
+                    </label>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card
+            title="Cédulas"
             subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado académico."
           >
             <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
@@ -946,7 +1423,11 @@ export default function AdminPage() {
                       <Input
                         value={license.license_number || ""}
                         onChange={(e) =>
-                          updateLicense(license.id, "license_number", e.target.value)
+                          updateLicense(
+                            license.id,
+                            "license_number",
+                            e.target.value
+                          )
                         }
                       />
                       <SecondaryButton onClick={() => saveLicense(license)}>
@@ -961,6 +1442,15 @@ export default function AdminPage() {
               )}
             </div>
           </Card>
+
+          <ImageAdminSection
+            title="Foto profesional"
+            subtitle="Sube la foto principal del médico para el hero o secciones de presentación."
+            items={profilePhotos}
+            onFileChange={setProfilePhotoFile}
+            onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
+            onDelete={deleteImage}
+          />
 
           <ImageAdminSection
             title="Títulos académicos"
@@ -1116,80 +1606,6 @@ export default function AdminPage() {
               saveReview={saveReview}
               deleteReviewPermanently={deleteReviewPermanently}
             />
-          </Card>
-
-          <Card
-            title="Servicios"
-            subtitle="Agrega nuevos servicios o modifica los actuales, con sus precios y descripciones."
-          >
-            <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto]">
-              <Input
-                placeholder="Nombre del servicio"
-                value={newService.name}
-                onChange={(e) =>
-                  setNewService({ ...newService, name: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Descripción"
-                value={newService.description}
-                onChange={(e) =>
-                  setNewService({ ...newService, description: e.target.value })
-                }
-              />
-              <Input
-                type="number"
-                placeholder="Precio"
-                value={newService.price}
-                onChange={(e) =>
-                  setNewService({ ...newService, price: e.target.value })
-                }
-              />
-              <AccentButton onClick={addService}>Agregar</AccentButton>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {services.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                  Aún no hay servicios registrados.
-                </div>
-              ) : (
-                services.map((service) => (
-                  <div
-                    key={service.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_auto_auto] md:items-center">
-                      <Input
-                        value={service.name || ""}
-                        onChange={(e) =>
-                          updateService(service.id, "name", e.target.value)
-                        }
-                      />
-                      <Input
-                        value={service.description || ""}
-                        onChange={(e) =>
-                          updateService(service.id, "description", e.target.value)
-                        }
-                      />
-                      <Input
-                        type="number"
-                        value={service.price || ""}
-                        onChange={(e) =>
-                          updateService(service.id, "price", e.target.value)
-                        }
-                      />
-                      <SecondaryButton onClick={() => saveService(service)}>
-                        Guardar
-                      </SecondaryButton>
-                      <DangerButton onClick={() => deleteService(service.id)}>
-                        Eliminar
-                      </DangerButton>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
           </Card>
         </div>
       </main>
