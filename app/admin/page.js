@@ -20,14 +20,12 @@ function Card({ title, subtitle, children }) {
 }
 
 function Label({ children }) {
-  return (
-    <p className="mb-2 text-sm font-semibold text-slate-700">{children}</p>
-  );
+  return <p className="mb-2 text-sm font-semibold text-slate-700">{children}</p>;
 }
 
 function ConfigGroupTitle({ children }) {
   return (
-    <div className="mt-8 mb-4">
+    <div className="mb-4 mt-8">
       <h3 className="text-lg font-bold text-slate-900">{children}</h3>
     </div>
   );
@@ -129,7 +127,10 @@ function ImageAdminSection({
   return (
     <Card title={title} subtitle={subtitle}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <Input type="file" onChange={(e) => onFileChange(e.target.files?.[0] || null)} />
+        <Input
+          type="file"
+          onChange={(e) => onFileChange(e.target.files?.[0] || null)}
+        />
         <AccentButton type="button" onClick={onUpload}>
           Subir imagen
         </AccentButton>
@@ -383,6 +384,10 @@ const DEFAULT_CONFIG = {
   faq_a3: "",
   faq_q4: "",
   faq_a4: "",
+  seo_title: "",
+  seo_description: "",
+  seo_city: "",
+  seo_region: "",
 };
 
 export default function AdminPage() {
@@ -1068,7 +1073,7 @@ export default function AdminPage() {
               <div>
                 <Label>Hero Title</Label>
                 <Input
-                  placeholder="Ej: Atención médica clara, sin prisas y enfocada en resolver tu problema desde la primera consulta"
+                  placeholder="Ej: Médico general en Nezahualcóyotl con consulta médica privada, diagnóstico claro y tratamiento oportuno"
                   value={config.hero_title}
                   onChange={(e) =>
                     updateConfigField("hero_title", e.target.value)
@@ -1079,7 +1084,7 @@ export default function AdminPage() {
               <div>
                 <Label>Hero Subtitle</Label>
                 <Input
-                  placeholder="Ej: Consulta privada con valoración completa, explicación sencilla y tratamiento adecuado..."
+                  placeholder="Ej: Atención médica profesional en Nezahualcóyotl, Estado de México, para pacientes que buscan consulta médica cercana..."
                   value={config.hero_subtitle}
                   onChange={(e) =>
                     updateConfigField("hero_subtitle", e.target.value)
@@ -1101,7 +1106,7 @@ export default function AdminPage() {
               <div>
                 <Label>Texto CTA Secundario</Label>
                 <Input
-                  placeholder="Ej: Reservar cita en línea"
+                  placeholder="Ej: Reservar en línea"
                   value={config.cta_secondary_text}
                   onChange={(e) =>
                     updateConfigField("cta_secondary_text", e.target.value)
@@ -1115,7 +1120,7 @@ export default function AdminPage() {
               <div>
                 <Label>Título de agenda</Label>
                 <Input
-                  placeholder="Ej: Da el siguiente paso para mejorar tu salud hoy"
+                  placeholder="Ej: Da el siguiente paso para cuidar tu salud"
                   value={config.agenda_title}
                   onChange={(e) =>
                     updateConfigField("agenda_title", e.target.value)
@@ -1126,10 +1131,57 @@ export default function AdminPage() {
               <div>
                 <Label>Subtítulo de agenda</Label>
                 <Input
-                  placeholder="Ej: Evita que el problema avance. Recibe diagnóstico claro, tratamiento adecuado y seguimiento médico."
+                  placeholder="Ej: Recibe atención médica profesional, cercana y con seguimiento..."
                   value={config.agenda_subtitle}
                   onChange={(e) =>
                     updateConfigField("agenda_subtitle", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <ConfigGroupTitle>SEO</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>SEO Title</Label>
+                <Input
+                  placeholder="Ej: Médico general en Nezahualcóyotl | Consulta médica privada"
+                  value={config.seo_title}
+                  onChange={(e) =>
+                    updateConfigField("seo_title", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>SEO Description</Label>
+                <Input
+                  placeholder="Ej: Consulta médica privada con médico general en Nezahualcóyotl, Estado de México..."
+                  value={config.seo_description}
+                  onChange={(e) =>
+                    updateConfigField("seo_description", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Ciudad SEO</Label>
+                <Input
+                  placeholder="Ej: Nezahualcóyotl"
+                  value={config.seo_city}
+                  onChange={(e) =>
+                    updateConfigField("seo_city", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Estado SEO</Label>
+                <Input
+                  placeholder="Ej: Estado de México"
+                  value={config.seo_region}
+                  onChange={(e) =>
+                    updateConfigField("seo_region", e.target.value)
                   }
                 />
               </div>
@@ -1151,7 +1203,7 @@ export default function AdminPage() {
               <div>
                 <Label>Qué incluye la consulta 2</Label>
                 <Input
-                  placeholder="Ej: Explicación clara del diagnóstico y de lo que está ocurriendo en tu cuerpo."
+                  placeholder="Ej: Explicación clara del diagnóstico y de lo que está ocurriendo."
                   value={config.include_2}
                   onChange={(e) =>
                     updateConfigField("include_2", e.target.value)
@@ -1162,7 +1214,7 @@ export default function AdminPage() {
               <div>
                 <Label>Qué incluye la consulta 3</Label>
                 <Input
-                  placeholder="Ej: Tratamiento indicado paso a paso, con recomendaciones prácticas."
+                  placeholder="Ej: Tratamiento indicado paso a paso."
                   value={config.include_3}
                   onChange={(e) =>
                     updateConfigField("include_3", e.target.value)
@@ -1234,7 +1286,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Pregunta 1</Label>
                 <Input
-                  placeholder="Ej: ¿Cuándo debería acudir a consulta?"
+                  placeholder="Ej: ¿Cómo puedo agendar una consulta médica?"
                   value={config.faq_q1}
                   onChange={(e) => updateConfigField("faq_q1", e.target.value)}
                 />
@@ -1243,7 +1295,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Respuesta 1</Label>
                 <Input
-                  placeholder="Ej: Cuando tienes síntomas que no mejoran, dudas sobre tu salud o simplemente quieres prevenir."
+                  placeholder="Ej: Puedes agendar de forma rápida por WhatsApp o reservar en línea."
                   value={config.faq_a1}
                   onChange={(e) => updateConfigField("faq_a1", e.target.value)}
                 />
@@ -1252,7 +1304,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Pregunta 2</Label>
                 <Input
-                  placeholder="Ej: ¿Me puedes atender aunque no tenga nada grave?"
+                  placeholder="Ej: ¿Dónde se encuentra el consultorio?"
                   value={config.faq_q2}
                   onChange={(e) => updateConfigField("faq_q2", e.target.value)}
                 />
@@ -1261,7 +1313,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Respuesta 2</Label>
                 <Input
-                  placeholder="Ej: Sí. Muchas consultas son de prevención, orientación o dudas médicas antes de que el problema avance."
+                  placeholder="Ej: La dirección exacta del consultorio aparece en la sección de ubicación."
                   value={config.faq_a2}
                   onChange={(e) => updateConfigField("faq_a2", e.target.value)}
                 />
@@ -1270,7 +1322,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Pregunta 3</Label>
                 <Input
-                  placeholder="Ej: ¿Me explicas bien lo que tengo y el tratamiento?"
+                  placeholder="Ej: ¿Qué tipo de atención médica se ofrece?"
                   value={config.faq_q3}
                   onChange={(e) => updateConfigField("faq_q3", e.target.value)}
                 />
@@ -1279,7 +1331,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Respuesta 3</Label>
                 <Input
-                  placeholder="Ej: Sí. La consulta está enfocada en que entiendas claramente tu diagnóstico, qué tomar y cómo cuidarte."
+                  placeholder="Ej: Se ofrece consulta médica privada para valoración, diagnóstico, tratamiento y seguimiento."
                   value={config.faq_a3}
                   onChange={(e) => updateConfigField("faq_a3", e.target.value)}
                 />
@@ -1288,7 +1340,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Pregunta 4</Label>
                 <Input
-                  placeholder="Ej: ¿Qué pasa después de la consulta?"
+                  placeholder="Ej: ¿Cuándo debo acudir con un médico general?"
                   value={config.faq_q4}
                   onChange={(e) => updateConfigField("faq_q4", e.target.value)}
                 />
@@ -1297,7 +1349,7 @@ export default function AdminPage() {
               <div>
                 <Label>FAQ Respuesta 4</Label>
                 <Input
-                  placeholder="Ej: Se te dan indicaciones claras y, si es necesario, seguimiento para asegurar tu mejoría."
+                  placeholder="Ej: Cuando tienes síntomas, molestias que no mejoran o quieres una revisión preventiva."
                   value={config.faq_a4}
                   onChange={(e) => updateConfigField("faq_a4", e.target.value)}
                 />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Script from "next/script";
 import { createClient } from "../lib/supabase";
 
 function SectionHeader({ eyebrow, title, subtitle, center = false }) {
@@ -98,31 +99,13 @@ function ReviewCard({ review }) {
           <p className="text-lg font-semibold text-slate-900">
             {review.patient_name}
           </p>
-          <div className="mt-2">
-            <Stars rating={review.rating} />
-          </div>
+          <p className="mt-1 text-sm text-slate-500">Paciente verificado</p>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          {review.verified ? (
-            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
-              Verificada
-            </span>
-          ) : null}
-
-          {review.verified && review.verification_type ? (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-700">
-              {review.verification_type === "consulta"
-                ? "Consulta asistida"
-                : review.verification_type === "agenda"
-                ? "Cita agendada"
-                : "Manual"}
-            </span>
-          ) : null}
-        </div>
+        <Stars rating={review.rating} />
       </div>
 
-      <p className="mt-5 text-sm leading-7 text-slate-700">
+      <p className="mt-4 text-sm leading-7 text-slate-600">
         {review.review_text}
       </p>
     </div>
@@ -134,19 +117,19 @@ function CTAButtons({
   bookingUrl,
   primaryText,
   secondaryText,
-  dark = false,
+  centered = false,
 }) {
   return (
-    <div className="flex flex-wrap gap-4">
+    <div
+      className={`flex flex-wrap gap-4 ${
+        centered ? "justify-center" : "justify-start"
+      }`}
+    >
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`rounded-2xl px-6 py-3 text-center font-semibold transition ${
-          dark
-            ? "bg-green-600 text-white hover:bg-green-700"
-            : "bg-green-600 text-white hover:bg-green-700"
-        }`}
+        className="rounded-2xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
       >
         {primaryText}
       </a>
@@ -155,11 +138,7 @@ function CTAButtons({
         href={bookingUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`rounded-2xl px-6 py-3 text-center font-semibold transition ${
-          dark
-            ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
-            : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-        }`}
+        className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
       >
         {secondaryText}
       </a>
@@ -168,38 +147,44 @@ function CTAButtons({
 }
 
 const DEFAULT_CONFIG = {
-  booking_url: "https://calendar.app.google/HU8UzZuocbHrX9p38",
+  booking_url: "",
   whatsapp_number: "5533331304",
   whatsapp_message:
     "Hola, quiero agendar una consulta médica. ¿Me puedes compartir disponibilidad?",
   hero_title:
-    "Atención médica clara y confiable para resolver tu problema de salud con seguimiento real",
+    "Médico general en Nezahualcóyotl con consulta médica privada, diagnóstico claro y tratamiento oportuno",
   hero_subtitle:
-    "Consulta privada con valoración integral, explicación sencilla, tratamiento y acompañamiento. Agenda fácil por WhatsApp o reserva en línea en pocos minutos.",
+    "Atención médica profesional en Nezahualcóyotl, Estado de México, para pacientes que buscan consulta médica cercana, explicación clara, diagnóstico, tratamiento y seguimiento real.",
   cta_primary_text: "Agendar por WhatsApp",
   cta_secondary_text: "Reservar en línea",
   agenda_title: "Da el siguiente paso para cuidar tu salud",
   agenda_subtitle:
-    "Recibe atención médica profesional, cercana y con seguimiento. Agenda hoy por WhatsApp o reserva en línea.",
-  include_1: "Valoración médica completa de tus síntomas y antecedentes.",
-  include_2: "Explicación clara del diagnóstico y del tratamiento.",
-  include_3: "Indicaciones concretas sobre medicamentos, estudios y cuidados.",
-  include_4: "Seguimiento orientado a tu evolución clínica.",
-  reason_1: "Tienes síntomas recientes y necesitas orientación médica pronta.",
-  reason_2: "Buscas seguimiento de un padecimiento o tratamiento.",
+    "Recibe atención médica profesional, cercana y con seguimiento. Agenda hoy tu consulta médica por WhatsApp o reserva en línea.",
+  include_1: "Valoración médica completa de tus síntomas, antecedentes y estado general.",
+  include_2: "Explicación clara del diagnóstico y de las posibles causas de tu malestar.",
+  include_3: "Tratamiento e indicaciones concretas sobre medicamentos, estudios y cuidados.",
+  include_4: "Seguimiento orientado a tu evolución clínica y prevención de complicaciones.",
+  reason_1: "Tienes síntomas recientes y necesitas atención médica pronta.",
+  reason_2: "Buscas seguimiento de un padecimiento o ajuste de tratamiento.",
   reason_3: "Necesitas aclarar dudas sobre estudios, diagnóstico o medicamentos.",
-  reason_4: "Quieres una revisión general con enfoque preventivo.",
-  faq_q1: "¿Cómo puedo agendar una cita?",
+  reason_4: "Quieres una revisión general con enfoque preventivo y consulta médica oportuna.",
+  faq_q1: "¿Cómo puedo agendar una consulta médica?",
   faq_a1:
     "Puedes agendar de forma rápida por WhatsApp o reservar en línea según te resulte más cómodo.",
   faq_q2: "¿Dónde se encuentra el consultorio?",
   faq_a2:
-    "La dirección exacta del consultorio aparece en la sección de ubicación.",
-  faq_q3: "¿Cuál es el horario de atención?",
-  faq_a3: "El horario de atención se encuentra en la sección de ubicación.",
-  faq_q4: "¿Qué tipo de atención se ofrece?",
+    "La dirección exacta del consultorio aparece en la sección de ubicación en Nezahualcóyotl, Estado de México.",
+  faq_q3: "¿Qué tipo de atención médica se ofrece?",
+  faq_a3:
+    "Se ofrece consulta médica privada para valoración, diagnóstico, tratamiento, seguimiento y orientación preventiva.",
+  faq_q4: "¿Cuándo debo acudir con un médico general?",
   faq_a4:
-    "Consulta médica privada con valoración, orientación, tratamiento y seguimiento con enfoque profesional y humano.",
+    "Cuando presentas síntomas, molestias que no mejoran, necesitas revisión preventiva o quieres una valoración médica clara y profesional.",
+  seo_title: "Médico general en Nezahualcóyotl | Consulta médica privada",
+  seo_description:
+    "Consulta médica privada con médico general en Nezahualcóyotl, Estado de México. Atención médica cercana, diagnóstico, tratamiento y seguimiento profesional.",
+  seo_city: "Nezahualcóyotl",
+  seo_region: "Estado de México",
 };
 
 export default function Page() {
@@ -273,6 +258,33 @@ export default function Page() {
 
     loadData();
   }, [supabase]);
+
+  const seoTitle = config.seo_title || DEFAULT_CONFIG.seo_title;
+  const seoDescription =
+    config.seo_description || DEFAULT_CONFIG.seo_description;
+
+  useEffect(() => {
+    document.title = seoTitle;
+
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement("meta");
+      metaDescription.setAttribute("name", "description");
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute("content", seoDescription);
+
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement("meta");
+      metaKeywords.setAttribute("name", "keywords");
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute(
+      "content",
+      "médico en Nezahualcóyotl, consulta médica cerca, doctor particular, médico general Neza, consulta médica, médico general, atención médica, diagnóstico, tratamiento"
+    );
+  }, [seoTitle, seoDescription]);
 
   async function submitReview() {
     if (!reviewForm.patient_name.trim() || !reviewForm.review_text.trim()) {
@@ -408,7 +420,7 @@ export default function Page() {
 
     return [
       {
-        question: "¿Cómo puedo agendar una cita?",
+        question: "¿Cómo puedo agendar una consulta médica?",
         answer:
           "Puedes agendar de forma rápida por WhatsApp o reservar en línea según te resulte más cómodo.",
       },
@@ -417,16 +429,17 @@ export default function Page() {
         answer: `El consultorio se encuentra en ${profile.address}`,
       },
       {
-        question: "¿Cuál es el horario de atención?",
-        answer: profile.schedule,
+        question: "¿Qué tipo de atención médica se ofrece?",
+        answer:
+          "Consulta médica privada con valoración, diagnóstico, tratamiento y seguimiento con enfoque profesional y humano.",
       },
       {
-        question: "¿Qué tipo de atención se ofrece?",
+        question: "¿Cuándo debo acudir con un médico general?",
         answer:
-          "Consulta médica privada con valoración, orientación, tratamiento y seguimiento con enfoque profesional y humano.",
+          "Cuando presentas síntomas, molestias persistentes, necesitas prevención o quieres una valoración médica clara.",
       },
     ];
-  }, [config, profile.address, profile.schedule]);
+  }, [config, profile.address]);
 
   const doctorName = profile.doctor_name || "Dr. José Antonio Reyes Hernández";
 
@@ -442,7 +455,10 @@ export default function Page() {
     normalizedWhatsappNumber || "5533331304"
   }?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const bookingUrl = config.booking_url || DEFAULT_CONFIG.booking_url;
+  const bookingUrl =
+    config.booking_url && String(config.booking_url).trim()
+      ? config.booking_url
+      : whatsappUrl;
 
   const primaryCtaText =
     config.cta_primary_text || DEFAULT_CONFIG.cta_primary_text;
@@ -456,8 +472,48 @@ export default function Page() {
   const agendaSubtitle =
     config.agenda_subtitle || DEFAULT_CONFIG.agenda_subtitle;
 
+  const seoCity = config.seo_city || DEFAULT_CONFIG.seo_city;
+  const seoRegion = config.seo_region || DEFAULT_CONFIG.seo_region;
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": ["MedicalBusiness", "Physician"],
+    name: doctorName,
+    description: seoDescription,
+    medicalSpecialty: "GeneralPractice",
+    telephone: profile.phone || whatsappNumberRaw,
+    email: profile.email || "",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: profile.address || "",
+      addressLocality: seoCity,
+      addressRegion: seoRegion,
+      addressCountry: "MX",
+    },
+    areaServed: [
+      {
+        "@type": "City",
+        name: seoCity,
+      },
+      {
+        "@type": "State",
+        name: seoRegion,
+      },
+    ],
+    openingHours: profile.schedule || "",
+    image: profilePhoto?.file_url || "",
+    url:
+      typeof window !== "undefined" ? window.location.href : "",
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Script
+        id="medical-business-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       <a
         href={whatsappUrl}
         target="_blank"
@@ -474,7 +530,7 @@ export default function Page() {
               {doctorName}
             </p>
             <p className="text-sm text-slate-500">
-              Médico general · Consulta privada · Atención integral
+              Médico general · Consulta médica privada · {seoCity}
             </p>
           </div>
 
@@ -509,7 +565,7 @@ export default function Page() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-24">
           <div>
             <p className="inline-flex rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-800 shadow-sm">
-              Consulta médica privada en Nezahualcóyotl
+              Consulta médica privada en {seoCity}, {seoRegion}
             </p>
 
             <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
@@ -531,11 +587,9 @@ export default function Page() {
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-900">
-                  Qué hago
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Qué hago</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Valoro, diagnostico, trato y doy seguimiento.
+                  Consulta médica, diagnóstico, tratamiento y seguimiento.
                 </p>
               </div>
 
@@ -544,7 +598,7 @@ export default function Page() {
                   Para quién es
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Para pacientes que necesitan atención clara y rápida.
+                  Para pacientes que buscan atención médica clara y cercana.
                 </p>
               </div>
 
@@ -566,8 +620,9 @@ export default function Page() {
                   {profilePhoto ? (
                     <img
                       src={profilePhoto.file_url}
-                      alt={`Foto profesional de ${doctorName}`}
+                      alt={`Foto profesional de ${doctorName}, médico general en ${seoCity}`}
                       className="h-[280px] w-full object-cover md:h-[320px]"
+                      loading="eager"
                     />
                   ) : (
                     <div className="flex h-[280px] items-center justify-center bg-slate-100 px-6 text-center text-sm text-slate-400 md:h-[320px]">
@@ -606,20 +661,11 @@ export default function Page() {
 
                     <div className="rounded-2xl bg-slate-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Contacto
+                        Atención médica
                       </p>
-                      <p className="mt-2 text-sm text-slate-800">
-                        {profile.phone}
-                      </p>
-                      <p className="text-sm text-slate-800">{profile.email}</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50 p-4">
-                      <p className="text-sm font-semibold text-slate-900">
-                        Agenda fácil
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        Elige WhatsApp o reserva en línea y asegura tu cita sin complicaciones.
+                      <p className="mt-2 text-sm leading-6 text-slate-800">
+                        Consulta médica privada en {seoCity}, {seoRegion}, con
+                        orientación clara, tratamiento oportuno y seguimiento.
                       </p>
                     </div>
                   </div>
@@ -633,7 +679,7 @@ export default function Page() {
       {/* 2. Agenda rápida */}
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="flex flex-col gap-6 rounded-[2rem] bg-slate-50 p-8 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
                 Agenda rápida
@@ -661,7 +707,7 @@ export default function Page() {
         <SectionHeader
           eyebrow="Servicios"
           title="¿En qué te ayudo?"
-          subtitle="Información clara, tarjetas fáciles de escanear y servicios ordenados para que el paciente identifique rápido si esta consulta es para él."
+          subtitle={`Consulta médica en ${seoCity} para pacientes que buscan valoración, atención médica, diagnóstico y tratamiento sin complicaciones.`}
         />
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -703,7 +749,8 @@ export default function Page() {
               Servicios disponibles
             </h3>
             <p className="text-slate-600">
-              Prioridad en lo importante: menos ruido, mejor lectura y acción más rápida.
+              Servicios claros y fáciles de escanear para que el paciente
+              identifique rápido si esta atención médica es para él.
             </p>
           </div>
 
@@ -716,243 +763,181 @@ export default function Page() {
               {featuredServices.map((service) => (
                 <div
                   key={service.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <h3 className="text-xl font-semibold text-slate-900">
                       {service.name}
                     </h3>
 
                     {service.destacado ? (
-                      <span className="rounded-full bg-cyan-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cyan-800">
+                      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
                         Destacado
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {service.description}
+                  <p className="mt-4 text-sm leading-7 text-slate-600">
+                    {service.description ||
+                      "Consulta médica y atención profesional adaptada a tu necesidad."}
                   </p>
 
-                  <p className="mt-5 text-lg font-bold text-slate-900">
-                    ${service.price} MXN
-                  </p>
+                  {Number(service.price) > 0 ? (
+                    <p className="mt-5 text-sm font-semibold text-slate-900">
+                      Desde ${Number(service.price).toLocaleString("es-MX")} MXN
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        {reasonItems.length > 0 ? (
-          <div className="mt-12 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-            <div className="mb-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                Cuándo consultar
-              </p>
-              <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                Agenda si te identificas con alguna de estas situaciones
-              </h3>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {reasonItems.map((item, index) => (
-                <div
-                  key={`${item}-${index}`}
-                  className="rounded-2xl bg-slate-50 p-5"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 font-bold text-emerald-700">
-                      ✓
-                    </div>
-                    <p className="text-sm leading-7 text-slate-700">{item}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
       </section>
 
       {/* 4. Reseñas */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
-            eyebrow="Confianza"
-            title="Opiniones de pacientes"
-            subtitle="Mejor jerarquía visual para que la reputación se entienda rápido: calificación, número de reseñas y testimonios principales."
+            eyebrow="Reseñas"
+            title="Pacientes que ya confiaron en esta consulta médica"
+            subtitle="Confianza, claridad y seguimiento en una atención médica privada cercana."
+            center
           />
 
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="rounded-[2rem] bg-slate-900 p-8 text-white shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
+          <div className="mb-10 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Calificación promedio
               </p>
-
-              <div className="mt-5 flex items-end gap-3">
-                <span className="text-5xl font-bold">
-                  {publishedVerifiedReviews.length > 0 ? averageRating : "0.0"}
-                </span>
-                <span className="pb-1 text-sm text-slate-300">de 5</span>
-              </div>
-
-              <div className="mt-4">
-                <Stars rating={Math.round(Number(averageRating) || 0)} />
-              </div>
-
-              <p className="mt-4 text-sm leading-7 text-slate-300">
-                {publishedVerifiedReviews.length} reseña
-                {publishedVerifiedReviews.length === 1 ? "" : "s"} verificada
-                {publishedVerifiedReviews.length === 1 ? "" : "s"} publicada
-                {publishedVerifiedReviews.length === 1 ? "" : "s"}.
+              <p className="mt-3 text-4xl font-bold text-slate-900">
+                {averageRating || "0.0"}
               </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenReviewModal(true)}
-                  className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800"
-                >
-                  Escribir reseña
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAllReviews((prev) => !prev)}
-                  className="rounded-2xl border border-white/15 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15"
-                >
-                  {showAllReviews
-                    ? "Ocultar historial"
-                    : `Ver todas (${publishedVerifiedReviews.length})`}
-                </button>
-              </div>
             </div>
 
-            <div>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-slate-900">
-                  {showAllReviews ? "Todas las reseñas" : "3 reseñas destacadas"}
-                </h3>
-                <p className="mt-2 text-slate-600">
-                  {showAllReviews
-                    ? "Historial completo de reseñas verificadas publicadas."
-                    : "Las opiniones más visibles para reforzar confianza desde el primer vistazo."}
-                </p>
-              </div>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Reseñas verificadas
+              </p>
+              <p className="mt-3 text-4xl font-bold text-slate-900">
+                {publishedVerifiedReviews.length}
+              </p>
+            </div>
 
-              {(showAllReviews
-                ? publishedVerifiedReviews
-                : topReviews
-              ).length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500">
-                  Aún no hay reseñas publicadas.
-                </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {(showAllReviews
-                    ? publishedVerifiedReviews
-                    : topReviews
-                  ).map((review) => (
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Tipo de atención
+              </p>
+              <p className="mt-3 text-xl font-bold text-slate-900">
+                Consulta privada
+              </p>
+            </div>
+          </div>
+
+          {publishedVerifiedReviews.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 shadow-sm">
+              Aún no hay reseñas verificadas visibles.
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {(showAllReviews ? publishedVerifiedReviews : topReviews).map(
+                  (review) => (
                     <ReviewCard key={review.id} review={review} />
-                  ))}
+                  )
+                )}
+              </div>
+
+              {publishedVerifiedReviews.length > 3 ? (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllReviews((prev) => !prev)}
+                    className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    {showAllReviews ? "Ver menos reseñas" : "Ver más reseñas"}
+                  </button>
                 </div>
-              )}
-            </div>
+              ) : null}
+            </>
+          )}
+
+          <div className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setOpenReviewModal(true)}
+              className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
+            >
+              Escribir reseña
+            </button>
           </div>
         </div>
       </section>
 
       {/* 5. Sobre el médico */}
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div>
-            <SectionHeader
-              eyebrow="Sobre el médico"
-              title="Atención profesional, humana y enfocada en resolver"
-              subtitle="Esta sección tiene un objetivo distinto: explicar quién te atenderá, cómo trabaja y qué puede esperar el paciente durante la consulta."
-            />
+        <SectionHeader
+          eyebrow="Sobre el médico"
+          title={`Atención médica profesional en ${seoCity}`}
+          subtitle={`Médico general con consulta médica privada en ${seoCity}, ${seoRegion}, enfocado en orientar al paciente con claridad, diagnóstico oportuno y tratamiento adecuado.`}
+        />
 
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-              <h3 className="text-2xl font-bold text-slate-900">
-                {doctorName}
-              </h3>
+        <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Perfil profesional
+            </h3>
 
-              <p className="mt-5 text-base leading-8 text-slate-600">
-                {profile.bio ||
-                  "Atención médica con enfoque humano, explicación clara y seguimiento cercano para ayudarte a entender tu problema de salud y recibir el tratamiento adecuado."}
-              </p>
+            <p className="mt-4 text-sm leading-8 text-slate-600">
+              {profile.bio ||
+                "Consulta médica privada con enfoque profesional, cercano y orientado a resolver dudas, identificar problemas de salud y acompañar al paciente con un tratamiento claro."}
+            </p>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Universidad
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-800">
-                    {profile.university || "Pendiente por agregar en el panel."}
-                  </p>
-                </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Universidad
+                </p>
+                <p className="mt-2 text-slate-800">
+                  {profile.university || "Información disponible en el panel"}
+                </p>
+              </div>
 
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Enfoque de atención
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-800">
-                    Valoración, orientación, tratamiento y seguimiento.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Contacto
-                  </p>
-                  <p className="mt-2 text-sm text-slate-800">{profile.phone}</p>
-                  <p className="text-sm text-slate-800">{profile.email}</p>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Horario
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-800">
-                    {profile.schedule}
-                  </p>
-                </div>
+              <div className="rounded-2xl bg-slate-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Atención
+                </p>
+                <p className="mt-2 text-slate-800">
+                  Consulta médica privada y preventiva
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300">
-              Qué incluye la consulta
-            </p>
-
-            <h3 className="mt-3 text-2xl font-bold">
-              Una experiencia clara, ordenada y útil para el paciente
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Qué incluye tu consulta médica
             </h3>
 
-            <div className="mt-8 grid gap-4">
-              {includeItems.map((item, index) => (
-                <div
-                  key={`${item}-${index}`}
-                  className="rounded-2xl bg-white/5 p-5"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 font-bold text-cyan-300">
-                      {index + 1}
-                    </div>
-                    <p className="text-sm leading-7 text-slate-200">{item}</p>
-                  </div>
+            <div className="mt-6 grid gap-4">
+              {includeItems.length === 0 ? (
+                <div className="rounded-2xl bg-slate-50 p-5 text-slate-600">
+                  Agrega la información en el panel de administración.
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-8">
-              <CTAButtons
-                whatsappUrl={whatsappUrl}
-                bookingUrl={bookingUrl}
-                primaryText={primaryCtaText}
-                secondaryText={secondaryCtaText}
-                dark
-              />
+              ) : (
+                includeItems.map((item, index) => (
+                  <div
+                    key={`${item}-${index}`}
+                    className="rounded-2xl bg-slate-50 p-5"
+                  >
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {`Paso ${index + 1}`}
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      {item}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -963,18 +948,18 @@ export default function Page() {
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
             eyebrow="Credenciales"
-            title="Formación y respaldo profesional"
-            subtitle="Información puntual para generar confianza sin saturar la página."
+            title="Respaldo profesional y formación"
+            subtitle="Información clara para reforzar confianza sin recargar el diseño."
           />
 
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
               <h3 className="text-xl font-semibold text-slate-900">
                 Cédulas profesionales
               </h3>
 
               {licenses.length === 0 ? (
-                <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-slate-500">
+                <div className="mt-6 rounded-2xl bg-white p-5 text-slate-500">
                   Aún no hay cédulas registradas.
                 </div>
               ) : (
@@ -982,13 +967,13 @@ export default function Page() {
                   {licenses.map((license) => (
                     <div
                       key={license.id}
-                      className="rounded-2xl border border-slate-200 bg-white p-5"
+                      className="rounded-2xl bg-white p-5 shadow-sm"
                     >
-                      <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+                      <h3 className="text-base font-semibold text-slate-900">
                         {license.label}
-                      </p>
-                      <p className="mt-2 text-lg font-medium text-slate-900">
-                        {license.license_number}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Cédula: {license.license_number}
                       </p>
                     </div>
                   ))}
@@ -996,13 +981,13 @@ export default function Page() {
               )}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-slate-900">
                   Títulos académicos
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Documentación académica que respalda la formación profesional.
+                  Documentación académica que respalda la formación médica.
                 </p>
 
                 <div className="mt-5 text-sm font-semibold text-slate-900">
@@ -1029,11 +1014,30 @@ export default function Page() {
 
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:col-span-2">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Respaldo profesional
+                  Motivos frecuentes para consultar
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Consulta privada con atención profesional, ordenada y enfocada en orientar con claridad al paciente.
-                </p>
+
+                <div className="mt-5 grid gap-3">
+                  {reasonItems.length === 0 ? (
+                    <p className="text-sm text-slate-600">
+                      Agrega los motivos desde el panel de administración.
+                    </p>
+                  ) : (
+                    reasonItems.map((item, index) => (
+                      <div
+                        key={`${item}-${index}`}
+                        className="rounded-2xl bg-slate-50 p-4"
+                      >
+                        <h3 className="text-sm font-semibold text-slate-900">
+                          Motivo {index + 1}
+                        </h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-600">
+                          {item}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1044,8 +1048,8 @@ export default function Page() {
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeader
           eyebrow="Consultorio"
-          title="Conoce el espacio de atención"
-          subtitle="Más aire visual y una presentación limpia para que el lugar transmita orden y confianza."
+          title={`Consulta médica cerca de ti en ${seoCity}`}
+          subtitle="Un espacio ordenado y profesional para transmitir confianza antes de tu visita."
         />
 
         {clinicImages.length === 0 ? (
@@ -1061,8 +1065,9 @@ export default function Page() {
               >
                 <img
                   src={item.file_url}
-                  alt="Consultorio médico"
+                  alt={`Consultorio médico en ${seoCity}`}
                   className="h-72 w-full object-cover"
+                  loading="lazy"
                 />
               </div>
             ))}
@@ -1075,8 +1080,8 @@ export default function Page() {
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
             eyebrow="Ubicación"
-            title="Cómo llegar al consultorio"
-            subtitle="Dirección, horario y contacto en un solo lugar para reducir dudas antes de agendar."
+            title={`Médico general en ${seoCity}, ${seoRegion}`}
+            subtitle="Dirección, horario y contacto en un solo lugar para reducir dudas antes de agendar tu consulta médica."
           />
 
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -1106,6 +1111,16 @@ export default function Page() {
                   </p>
                   <p className="mt-2 text-slate-800">{profile.phone}</p>
                   <p className="text-slate-800">{profile.email}</p>
+                </div>
+
+                <div className="rounded-2xl bg-white p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    SEO local
+                  </p>
+                  <p className="mt-2 text-slate-800">
+                    Consulta médica privada en {seoCity}, {seoRegion}, con
+                    atención médica cercana, diagnóstico y tratamiento.
+                  </p>
                 </div>
               </div>
 
@@ -1147,13 +1162,7 @@ export default function Page() {
             <FAQItem
               key={`${item.question}-${index}`}
               question={item.question}
-              answer={
-                item.answer === DEFAULT_CONFIG.faq_a2
-                  ? `El consultorio se encuentra en ${profile.address}`
-                  : item.answer === DEFAULT_CONFIG.faq_a3
-                  ? profile.schedule
-                  : item.answer
-              }
+              answer={item.answer}
             />
           ))}
         </div>
@@ -1172,7 +1181,8 @@ export default function Page() {
             </h2>
 
             <p className="mt-4 text-lg leading-8 text-slate-200">
-              Menos vueltas, más acción. Escribe por WhatsApp o reserva en línea y asegura tu atención médica.
+              Menos vueltas, más acción. Escribe por WhatsApp o reserva en línea
+              y asegura tu atención médica en {seoCity}.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -1189,7 +1199,7 @@ export default function Page() {
                 href={bookingUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/15"
+                className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
               >
                 {secondaryCtaText}
               </a>
@@ -1205,7 +1215,7 @@ export default function Page() {
               <h2 className="text-2xl font-bold">{doctorName}</h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">
                 Consulta médica privada con atención profesional, cercana y
-                orientada al seguimiento del paciente.
+                orientada al seguimiento del paciente en {seoCity}, {seoRegion}.
               </p>
             </div>
 
@@ -1295,29 +1305,19 @@ export default function Page() {
                       review_text: e.target.value,
                     })
                   }
-                  className="min-h-[140px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
-                  placeholder="Cuéntanos cómo fue tu experiencia"
+                  className="min-h-[150px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  placeholder="Cuéntanos tu experiencia"
                 />
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={submitReview}
-                  disabled={sendingReview}
-                  className="rounded-2xl bg-cyan-700 px-6 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {sendingReview ? "Enviando..." : "Enviar reseña"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setOpenReviewModal(false)}
-                  className="rounded-2xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
-                >
-                  Cancelar
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={submitReview}
+                disabled={sendingReview}
+                className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {sendingReview ? "Enviando..." : "Enviar reseña"}
+              </button>
             </div>
           </div>
         </div>
