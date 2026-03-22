@@ -19,6 +19,20 @@ function Card({ title, subtitle, children }) {
   );
 }
 
+function Label({ children }) {
+  return (
+    <p className="mb-2 text-sm font-semibold text-slate-700">{children}</p>
+  );
+}
+
+function ConfigGroupTitle({ children }) {
+  return (
+    <div className="mt-8 mb-4">
+      <h3 className="text-lg font-bold text-slate-900">{children}</h3>
+    </div>
+  );
+}
+
 function Input(props) {
   return (
     <input
@@ -1012,180 +1026,282 @@ export default function AdminPage() {
             title="Configuración global"
             subtitle="Aquí editas los textos y enlaces principales que después se mostrarán en la página pública."
           >
+            <ConfigGroupTitle>Enlaces y contacto</ConfigGroupTitle>
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder="URL de agenda"
-                value={config.booking_url}
+              <div>
+                <Label>URL de agenda</Label>
+                <Input
+                  placeholder="Ej: https://calendar.app.google/..."
+                  value={config.booking_url}
+                  onChange={(e) =>
+                    updateConfigField("booking_url", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Número de WhatsApp</Label>
+                <Input
+                  placeholder="Ej: 5533331304"
+                  value={config.whatsapp_number}
+                  onChange={(e) =>
+                    updateConfigField("whatsapp_number", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <Label>Mensaje de WhatsApp</Label>
+              <Textarea
+                className="min-h-24"
+                placeholder="Ej: Hola, quiero agendar una consulta médica. ¿Me puedes compartir disponibilidad?"
+                value={config.whatsapp_message}
                 onChange={(e) =>
-                  updateConfigField("booking_url", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Número de WhatsApp"
-                value={config.whatsapp_number}
-                onChange={(e) =>
-                  updateConfigField("whatsapp_number", e.target.value)
+                  updateConfigField("whatsapp_message", e.target.value)
                 }
               />
             </div>
 
-            <Textarea
-              className="mt-4 min-h-24"
-              placeholder="Mensaje de WhatsApp"
-              value={config.whatsapp_message}
-              onChange={(e) =>
-                updateConfigField("whatsapp_message", e.target.value)
-              }
-            />
+            <ConfigGroupTitle>Hero</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Hero Title</Label>
+                <Input
+                  placeholder="Ej: Atención médica clara, sin prisas y enfocada en resolver tu problema desde la primera consulta"
+                  value={config.hero_title}
+                  onChange={(e) =>
+                    updateConfigField("hero_title", e.target.value)
+                  }
+                />
+              </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder="Hero title"
-                value={config.hero_title}
-                onChange={(e) =>
-                  updateConfigField("hero_title", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Hero subtitle"
-                value={config.hero_subtitle}
-                onChange={(e) =>
-                  updateConfigField("hero_subtitle", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Texto CTA principal"
-                value={config.cta_primary_text}
-                onChange={(e) =>
-                  updateConfigField("cta_primary_text", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Texto CTA secundario"
-                value={config.cta_secondary_text}
-                onChange={(e) =>
-                  updateConfigField("cta_secondary_text", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Título agenda"
-                value={config.agenda_title}
-                onChange={(e) =>
-                  updateConfigField("agenda_title", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Subtítulo agenda"
-                value={config.agenda_subtitle}
-                onChange={(e) =>
-                  updateConfigField("agenda_subtitle", e.target.value)
-                }
-              />
+              <div>
+                <Label>Hero Subtitle</Label>
+                <Input
+                  placeholder="Ej: Consulta privada con valoración completa, explicación sencilla y tratamiento adecuado..."
+                  value={config.hero_subtitle}
+                  onChange={(e) =>
+                    updateConfigField("hero_subtitle", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Texto CTA Principal</Label>
+                <Input
+                  placeholder="Ej: Agendar por WhatsApp"
+                  value={config.cta_primary_text}
+                  onChange={(e) =>
+                    updateConfigField("cta_primary_text", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Texto CTA Secundario</Label>
+                <Input
+                  placeholder="Ej: Reservar cita en línea"
+                  value={config.cta_secondary_text}
+                  onChange={(e) =>
+                    updateConfigField("cta_secondary_text", e.target.value)
+                  }
+                />
+              </div>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder="Qué incluye 1"
-                value={config.include_1}
-                onChange={(e) =>
-                  updateConfigField("include_1", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Qué incluye 2"
-                value={config.include_2}
-                onChange={(e) =>
-                  updateConfigField("include_2", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Qué incluye 3"
-                value={config.include_3}
-                onChange={(e) =>
-                  updateConfigField("include_3", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Qué incluye 4"
-                value={config.include_4}
-                onChange={(e) =>
-                  updateConfigField("include_4", e.target.value)
-                }
-              />
+            <ConfigGroupTitle>Agenda</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Título de agenda</Label>
+                <Input
+                  placeholder="Ej: Da el siguiente paso para mejorar tu salud hoy"
+                  value={config.agenda_title}
+                  onChange={(e) =>
+                    updateConfigField("agenda_title", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Subtítulo de agenda</Label>
+                <Input
+                  placeholder="Ej: Evita que el problema avance. Recibe diagnóstico claro, tratamiento adecuado y seguimiento médico."
+                  value={config.agenda_subtitle}
+                  onChange={(e) =>
+                    updateConfigField("agenda_subtitle", e.target.value)
+                  }
+                />
+              </div>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder="Motivo para consultar 1"
-                value={config.reason_1}
-                onChange={(e) =>
-                  updateConfigField("reason_1", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Motivo para consultar 2"
-                value={config.reason_2}
-                onChange={(e) =>
-                  updateConfigField("reason_2", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Motivo para consultar 3"
-                value={config.reason_3}
-                onChange={(e) =>
-                  updateConfigField("reason_3", e.target.value)
-                }
-              />
-              <Input
-                placeholder="Motivo para consultar 4"
-                value={config.reason_4}
-                onChange={(e) =>
-                  updateConfigField("reason_4", e.target.value)
-                }
-              />
+            <ConfigGroupTitle>Qué incluye la consulta</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Qué incluye la consulta 1</Label>
+                <Input
+                  placeholder="Ej: Valoración médica completa de tus síntomas y antecedentes."
+                  value={config.include_1}
+                  onChange={(e) =>
+                    updateConfigField("include_1", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Qué incluye la consulta 2</Label>
+                <Input
+                  placeholder="Ej: Explicación clara del diagnóstico y de lo que está ocurriendo en tu cuerpo."
+                  value={config.include_2}
+                  onChange={(e) =>
+                    updateConfigField("include_2", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Qué incluye la consulta 3</Label>
+                <Input
+                  placeholder="Ej: Tratamiento indicado paso a paso, con recomendaciones prácticas."
+                  value={config.include_3}
+                  onChange={(e) =>
+                    updateConfigField("include_3", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Qué incluye la consulta 4</Label>
+                <Input
+                  placeholder="Ej: Orientación y seguimiento para asegurar tu mejoría."
+                  value={config.include_4}
+                  onChange={(e) =>
+                    updateConfigField("include_4", e.target.value)
+                  }
+                />
+              </div>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder="FAQ pregunta 1"
-                value={config.faq_q1}
-                onChange={(e) => updateConfigField("faq_q1", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ respuesta 1"
-                value={config.faq_a1}
-                onChange={(e) => updateConfigField("faq_a1", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ pregunta 2"
-                value={config.faq_q2}
-                onChange={(e) => updateConfigField("faq_q2", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ respuesta 2"
-                value={config.faq_a2}
-                onChange={(e) => updateConfigField("faq_a2", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ pregunta 3"
-                value={config.faq_q3}
-                onChange={(e) => updateConfigField("faq_q3", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ respuesta 3"
-                value={config.faq_a3}
-                onChange={(e) => updateConfigField("faq_a3", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ pregunta 4"
-                value={config.faq_q4}
-                onChange={(e) => updateConfigField("faq_q4", e.target.value)}
-              />
-              <Input
-                placeholder="FAQ respuesta 4"
-                value={config.faq_a4}
-                onChange={(e) => updateConfigField("faq_a4", e.target.value)}
-              />
+            <ConfigGroupTitle>Motivos para consultar</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Motivo para consultar 1</Label>
+                <Input
+                  placeholder="Ej: Tienes síntomas recientes y no sabes si requieren atención médica."
+                  value={config.reason_1}
+                  onChange={(e) =>
+                    updateConfigField("reason_1", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Motivo para consultar 2</Label>
+                <Input
+                  placeholder="Ej: Llevas varios días con molestias que no mejoran."
+                  value={config.reason_2}
+                  onChange={(e) =>
+                    updateConfigField("reason_2", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Motivo para consultar 3</Label>
+                <Input
+                  placeholder="Ej: Necesitas saber si debes hacerte estudios o tomar tratamiento."
+                  value={config.reason_3}
+                  onChange={(e) =>
+                    updateConfigField("reason_3", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Motivo para consultar 4</Label>
+                <Input
+                  placeholder="Ej: Quieres revisar tu estado de salud y prevenir problemas antes de que aparezcan complicaciones."
+                  value={config.reason_4}
+                  onChange={(e) =>
+                    updateConfigField("reason_4", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <ConfigGroupTitle>FAQs</ConfigGroupTitle>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>FAQ Pregunta 1</Label>
+                <Input
+                  placeholder="Ej: ¿Cuándo debería acudir a consulta?"
+                  value={config.faq_q1}
+                  onChange={(e) => updateConfigField("faq_q1", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Respuesta 1</Label>
+                <Input
+                  placeholder="Ej: Cuando tienes síntomas que no mejoran, dudas sobre tu salud o simplemente quieres prevenir."
+                  value={config.faq_a1}
+                  onChange={(e) => updateConfigField("faq_a1", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Pregunta 2</Label>
+                <Input
+                  placeholder="Ej: ¿Me puedes atender aunque no tenga nada grave?"
+                  value={config.faq_q2}
+                  onChange={(e) => updateConfigField("faq_q2", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Respuesta 2</Label>
+                <Input
+                  placeholder="Ej: Sí. Muchas consultas son de prevención, orientación o dudas médicas antes de que el problema avance."
+                  value={config.faq_a2}
+                  onChange={(e) => updateConfigField("faq_a2", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Pregunta 3</Label>
+                <Input
+                  placeholder="Ej: ¿Me explicas bien lo que tengo y el tratamiento?"
+                  value={config.faq_q3}
+                  onChange={(e) => updateConfigField("faq_q3", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Respuesta 3</Label>
+                <Input
+                  placeholder="Ej: Sí. La consulta está enfocada en que entiendas claramente tu diagnóstico, qué tomar y cómo cuidarte."
+                  value={config.faq_a3}
+                  onChange={(e) => updateConfigField("faq_a3", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Pregunta 4</Label>
+                <Input
+                  placeholder="Ej: ¿Qué pasa después de la consulta?"
+                  value={config.faq_q4}
+                  onChange={(e) => updateConfigField("faq_q4", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>FAQ Respuesta 4</Label>
+                <Input
+                  placeholder="Ej: Se te dan indicaciones claras y, si es necesario, seguimiento para asegurar tu mejoría."
+                  value={config.faq_a4}
+                  onChange={(e) => updateConfigField("faq_a4", e.target.value)}
+                />
+              </div>
             </div>
 
             <AccentButton className="mt-6" onClick={saveConfig}>
