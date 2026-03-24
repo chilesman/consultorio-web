@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase";
 
-export default function ConfirmarPage() {
+function ConfirmarPageContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
@@ -155,5 +155,31 @@ export default function ConfirmarPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ConfirmarPageFallback() {
+  return (
+    <div className="min-h-screen bg-slate-50 px-6 py-16">
+      <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+          Confirmación de cita
+        </p>
+        <h1 className="mt-3 text-3xl font-bold text-slate-900">
+          Validando cita
+        </h1>
+        <p className="mt-4 text-base leading-7 text-slate-600">
+          Cargando información de confirmación...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function ConfirmarPage() {
+  return (
+    <Suspense fallback={<ConfirmarPageFallback />}>
+      <ConfirmarPageContent />
+    </Suspense>
   );
 }
