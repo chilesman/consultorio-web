@@ -53,11 +53,24 @@ function Textarea(props) {
   );
 }
 
+function Select({ children, ...props }) {
+  return (
+    <select
+      {...props}
+      className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100 ${
+        props.className || ""
+      }`}
+    >
+      {children}
+    </select>
+  );
+}
+
 function PrimaryButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800 ${
+      className={`rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -70,7 +83,7 @@ function AccentButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl bg-cyan-700 px-5 py-3 font-semibold text-white transition hover:bg-cyan-800 ${
+      className={`rounded-2xl bg-cyan-700 px-5 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -83,7 +96,7 @@ function SecondaryButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100 ${
+      className={`rounded-2xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -96,7 +109,7 @@ function DangerButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl border border-red-300 px-4 py-2 font-semibold text-red-600 transition hover:bg-red-50 ${
+      className={`rounded-2xl border border-red-300 px-4 py-2 font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -117,29 +130,25 @@ function Stat({ label, value }) {
 }
 
 function RoleBadge({ role }) {
-  const config = {
-    admin: {
-      label: "Admin",
-      className:
-        "bg-cyan-100 text-cyan-800 border-cyan-200",
-    },
-    secretaria: {
-      label: "Secretaria",
-      className:
-        "bg-amber-100 text-amber-800 border-amber-200",
-    },
-  };
+  if (role === "admin") {
+    return (
+      <span className="rounded-full border border-cyan-200 bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
+        Admin
+      </span>
+    );
+  }
 
-  const current = config[role] || {
-    label: "Sin rol",
-    className: "bg-red-100 text-red-700 border-red-200",
-  };
+  if (role === "secretaria") {
+    return (
+      <span className="rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+        Secretaria
+      </span>
+    );
+  }
 
   return (
-    <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${current.className}`}
-    >
-      {current.label}
+    <span className="rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700">
+      Sin rol
     </span>
   );
 }
@@ -277,34 +286,32 @@ function ReviewEditor({
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="mb-2 text-sm font-medium text-slate-700">Estado</p>
-            <select
+            <Select
               value={review.review_status || "pending"}
               onChange={(e) =>
                 updateReview(review.id, "review_status", e.target.value)
               }
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
             >
               <option value="pending">Pendiente</option>
               <option value="verified">Verificada</option>
               <option value="rejected">Rechazada</option>
-            </select>
+            </Select>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-medium text-slate-700">
               Tipo de verificación
             </p>
-            <select
+            <Select
               value={review.verification_type || "manual"}
               onChange={(e) =>
                 updateReview(review.id, "verification_type", e.target.value)
               }
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
             >
               <option value="manual">Manual</option>
               <option value="agenda">Cita agendada</option>
               <option value="consulta">Consulta asistida</option>
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -386,6 +393,66 @@ function ReviewSection({
   );
 }
 
+function AppointmentStatusBadge({ status, confirmed }) {
+  const base =
+    "rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide";
+
+  if (status === "confirmed") {
+    return (
+      <span className={`${base} bg-cyan-100 text-cyan-800`}>
+        Confirmada
+      </span>
+    );
+  }
+
+  if (status === "cancelled") {
+    return (
+      <span className={`${base} bg-red-100 text-red-700`}>
+        Cancelada
+      </span>
+    );
+  }
+
+  if (status === "completed") {
+    return (
+      <span className={`${base} bg-emerald-100 text-emerald-800`}>
+        Completada
+      </span>
+    );
+  }
+
+  if (status === "no_show") {
+    return (
+      <span className={`${base} bg-orange-100 text-orange-700`}>
+        No show
+      </span>
+    );
+  }
+
+  return (
+    <span className={`${base} bg-amber-100 text-amber-800`}>
+      {confirmed ? "Pendiente confirmada" : "Pendiente"}
+    </span>
+  );
+}
+
+function SlotBadge({ slot }) {
+  return (
+    <div
+      className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
+        slot.available
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-red-200 bg-red-50 text-red-700"
+      }`}
+    >
+      <div>{String(slot.slot).slice(0, 5)}</div>
+      <div className="mt-1 text-xs font-medium uppercase tracking-wide">
+        {slot.available ? "Disponible" : "Ocupado"}
+      </div>
+    </div>
+  );
+}
+
 const DEFAULT_CONFIG = {
   booking_url: "",
   whatsapp_number: "",
@@ -416,6 +483,21 @@ const DEFAULT_CONFIG = {
   seo_description: "",
   seo_city: "",
   seo_region: "",
+};
+
+const DEFAULT_APPOINTMENT_FORM = {
+  id: null,
+  nombre: "",
+  telefono: "",
+  correo: "",
+  edad: "",
+  fecha_nacimiento: "",
+  fecha_cita: "",
+  hora_cita: "",
+  tipo_consulta: "presencial",
+  status: "pending",
+  confirmed: false,
+  notes_admin: "",
 };
 
 export default function AdminPage() {
@@ -476,11 +558,29 @@ export default function AdminPage() {
   const [clinicFile, setClinicFile] = useState(null);
   const [publicityFile, setPublicityFile] = useState(null);
 
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [appointmentForm, setAppointmentForm] = useState(DEFAULT_APPOINTMENT_FORM);
+  const [appointmentMode, setAppointmentMode] = useState("create");
+  const [savingAppointment, setSavingAppointment] = useState(false);
+  const [slotsDate, setSlotsDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [appointmentFilters, setAppointmentFilters] = useState({
+    fecha: new Date().toISOString().split("T")[0],
+    status: "all",
+    tipo: "all",
+  });
+
   const isAdmin = userRole === "admin";
   const isSecretary = userRole === "secretaria";
+
   const canManageReviews = isAdmin || isSecretary;
   const canManageClinicImages = isAdmin || isSecretary;
   const canManagePublicity = isAdmin || isSecretary;
+  const canManageAgenda = isAdmin || isSecretary;
   const canSeeSensitiveConfig = isAdmin;
   const canManageProfile = isAdmin;
   const canManageServices = isAdmin;
@@ -539,6 +639,10 @@ export default function AdminPage() {
         fetchProfile(),
         fetchConfig()
       );
+    }
+
+    if (role === "admin" || role === "secretaria") {
+      tasks.push(fetchAppointments(), fetchAvailableSlots(slotsDate));
     }
 
     await Promise.all(tasks);
@@ -1058,6 +1162,187 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchAppointments() {
+    if (!canManageAgenda) return;
+
+    setAppointmentsLoading(true);
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .order("fecha_cita", { ascending: true })
+      .order("hora_cita", { ascending: true });
+
+    setAppointmentsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setAppointments(data || []);
+  }
+
+  async function fetchAvailableSlots(date) {
+    if (!canManageAgenda || !date) return;
+
+    setSlotsLoading(true);
+
+    const { data, error } = await supabase.rpc(
+      "get_available_appointment_slots",
+      { p_fecha: date }
+    );
+
+    setSlotsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setAvailableSlots(data || []);
+  }
+
+  function resetAppointmentForm(targetDate = "") {
+    setAppointmentMode("create");
+    setAppointmentForm({
+      ...DEFAULT_APPOINTMENT_FORM,
+      fecha_cita: targetDate || appointmentFilters.fecha || "",
+    });
+  }
+
+  function openEditAppointment(appointment) {
+    setAppointmentMode("edit");
+    setAppointmentForm({
+      id: appointment.id,
+      nombre: appointment.nombre || "",
+      telefono: appointment.telefono || "",
+      correo: appointment.correo || "",
+      edad:
+        appointment.edad === null || appointment.edad === undefined
+          ? ""
+          : String(appointment.edad),
+      fecha_nacimiento: appointment.fecha_nacimiento || "",
+      fecha_cita: appointment.fecha_cita || "",
+      hora_cita: appointment.hora_cita ? String(appointment.hora_cita).slice(0, 5) : "",
+      tipo_consulta: appointment.tipo_consulta || "presencial",
+      status: appointment.status || "pending",
+      confirmed: Boolean(appointment.confirmed),
+      notes_admin: appointment.notes_admin || "",
+    });
+
+    setSlotsDate(appointment.fecha_cita || slotsDate);
+    if (appointment.fecha_cita) {
+      fetchAvailableSlots(appointment.fecha_cita);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveAppointmentForm() {
+    if (!canManageAgenda) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (
+      !appointmentForm.nombre.trim() ||
+      !appointmentForm.fecha_cita ||
+      !appointmentForm.hora_cita
+    ) {
+      alert("Completa nombre, fecha y horario.");
+      return;
+    }
+
+    setSavingAppointment(true);
+
+    if (appointmentMode === "create") {
+      const { error } = await supabase.rpc("book_internal_appointment", {
+        p_nombre: appointmentForm.nombre.trim(),
+        p_telefono: appointmentForm.telefono || null,
+        p_correo: appointmentForm.correo || null,
+        p_edad:
+          appointmentForm.edad === "" ? null : Number(appointmentForm.edad),
+        p_fecha_nacimiento: appointmentForm.fecha_nacimiento || null,
+        p_fecha_cita: appointmentForm.fecha_cita,
+        p_hora_cita: appointmentForm.hora_cita,
+        p_tipo_consulta: appointmentForm.tipo_consulta,
+        p_status: appointmentForm.status || "pending",
+        p_confirmed: Boolean(appointmentForm.confirmed),
+        p_notes_admin: appointmentForm.notes_admin || null,
+      });
+
+      setSavingAppointment(false);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert("Cita creada correctamente.");
+    } else {
+      const { error } = await supabase.rpc("update_internal_appointment", {
+        p_appointment_id: appointmentForm.id,
+        p_nombre: appointmentForm.nombre.trim(),
+        p_telefono: appointmentForm.telefono || null,
+        p_correo: appointmentForm.correo || null,
+        p_edad:
+          appointmentForm.edad === "" ? null : Number(appointmentForm.edad),
+        p_fecha_nacimiento: appointmentForm.fecha_nacimiento || null,
+        p_fecha_cita: appointmentForm.fecha_cita,
+        p_hora_cita: appointmentForm.hora_cita,
+        p_tipo_consulta: appointmentForm.tipo_consulta,
+        p_status: appointmentForm.status || "pending",
+        p_confirmed: Boolean(appointmentForm.confirmed),
+        p_notes_admin: appointmentForm.notes_admin || null,
+      });
+
+      setSavingAppointment(false);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert("Cita actualizada correctamente.");
+    }
+
+    resetAppointmentForm(appointmentForm.fecha_cita);
+    fetchAppointments();
+    fetchAvailableSlots(appointmentForm.fecha_cita);
+  }
+
+  async function cancelAppointment(appointment) {
+    if (!canManageAgenda) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Seguro que quieres cancelar la cita de ${appointment.nombre}?`
+    );
+
+    if (!confirmed) return;
+
+    const reason = window.prompt(
+      "Motivo de cancelación (opcional):",
+      appointment.cancelled_reason || ""
+    );
+
+    const { error } = await supabase.rpc("cancel_internal_appointment", {
+      p_appointment_id: appointment.id,
+      p_reason: reason || null,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Cita cancelada.");
+    fetchAppointments();
+    fetchAvailableSlots(appointment.fecha_cita);
+  }
+
   const profilePhotos = documents.filter(
     (d) => d.category === "foto_profesional"
   );
@@ -1107,6 +1392,48 @@ export default function AdminPage() {
       return Number(a.id || 0) - Number(b.id || 0);
     });
   }, [services]);
+
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appointment) => {
+      const matchFecha =
+        appointmentFilters.fecha === "all" ||
+        appointment.fecha_cita === appointmentFilters.fecha;
+
+      const matchStatus =
+        appointmentFilters.status === "all" ||
+        appointment.status === appointmentFilters.status;
+
+      const matchTipo =
+        appointmentFilters.tipo === "all" ||
+        appointment.tipo_consulta === appointmentFilters.tipo;
+
+      return matchFecha && matchStatus && matchTipo;
+    });
+  }, [appointments, appointmentFilters]);
+
+  const appointmentsToday = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return appointments.filter((appointment) => appointment.fecha_cita === today);
+  }, [appointments]);
+
+  const upcomingAppointments = useMemo(() => {
+    const nowDate = new Date().toISOString().split("T")[0];
+    return appointments.filter(
+      (appointment) =>
+        appointment.fecha_cita >= nowDate &&
+        appointment.status !== "cancelled" &&
+        appointment.status !== "completed"
+    );
+  }, [appointments]);
+
+  const appointmentsHistory = useMemo(() => {
+    return appointments.filter(
+      (appointment) =>
+        appointment.status === "completed" ||
+        appointment.status === "cancelled" ||
+        appointment.status === "no_show"
+    );
+  }, [appointments]);
 
   const verifiedCount = verifiedReviews.length;
   const pendingCount = pendingReviews.length;
@@ -1204,8 +1531,8 @@ export default function AdminPage() {
             </div>
             <p className="mt-2 text-sm text-slate-500">
               {isAdmin
-                ? "Acceso completo: configuración, perfil, credenciales, reseñas, imágenes y módulos sensibles."
-                : "Acceso de secretaria: reseñas, fotos del consultorio y publicidad. La configuración y áreas sensibles están ocultas."}
+                ? "Acceso completo: configuración, perfil, credenciales, agenda, reseñas, imágenes y módulos sensibles."
+                : "Acceso de secretaria: agenda completa, reseñas, fotos del consultorio y publicidad. Configuración sensible y expediente clínico quedan fuera."}
             </p>
           </div>
 
@@ -1219,9 +1546,9 @@ export default function AdminPage() {
           <Stat label="Cédulas" value={isAdmin ? licenses.length : "—"} />
           <Stat label="Imágenes" value={documents.length} />
           <Stat label="Reseñas" value={reviews.length} />
-          <Stat label="Verificadas" value={verifiedCount} />
-          <Stat label="Pendientes" value={pendingCount} />
-          <Stat label="Rechazadas" value={rejectedCount} />
+          <Stat label="Citas hoy" value={canManageAgenda ? appointmentsToday.length : "—"} />
+          <Stat label="Próximas" value={canManageAgenda ? upcomingAppointments.length : "—"} />
+          <Stat label="Historial" value={canManageAgenda ? appointmentsHistory.length : "—"} />
         </div>
 
         {isSecretary ? (
@@ -1230,15 +1557,485 @@ export default function AdminPage() {
               Modo secretaria activo
             </h2>
             <p className="mt-2 text-sm leading-6 text-amber-800">
-              En esta etapa solo se muestran los módulos permitidos para tu rol:
-              <strong> reseñas</strong>, <strong>fotos del consultorio</strong> y{" "}
-              <strong>publicidad</strong>. Configuración global, perfil médico,
-              servicios, cédulas e imágenes profesionales quedan ocultos.
+              En esta etapa puedes gestionar la agenda completa, reseñas,
+              publicidad y fotos del consultorio. Configuración global, perfil
+              médico, servicios, credenciales y módulos clínicos sensibles quedan
+              ocultos.
             </p>
           </div>
         ) : null}
 
         <div className="space-y-8">
+          {canManageAgenda ? (
+            <>
+              <Card
+                title={
+                  appointmentMode === "create"
+                    ? "Agenda médica — nueva cita"
+                    : "Agenda médica — editar cita"
+                }
+                subtitle="Bloques de 30 minutos, agenda única y sin doble cita. Presencial y en línea comparten el mismo horario."
+              >
+                <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+                  <div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Nombre</Label>
+                        <Input
+                          value={appointmentForm.nombre}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              nombre: e.target.value,
+                            }))
+                          }
+                          placeholder="Nombre del paciente"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Teléfono</Label>
+                        <Input
+                          value={appointmentForm.telefono}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              telefono: e.target.value,
+                            }))
+                          }
+                          placeholder="Teléfono"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Correo</Label>
+                        <Input
+                          type="email"
+                          value={appointmentForm.correo}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              correo: e.target.value,
+                            }))
+                          }
+                          placeholder="Correo"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Edad</Label>
+                        <Input
+                          type="number"
+                          value={appointmentForm.edad}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              edad: e.target.value,
+                            }))
+                          }
+                          placeholder="Edad"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Fecha de nacimiento</Label>
+                        <Input
+                          type="date"
+                          value={appointmentForm.fecha_nacimiento}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              fecha_nacimiento: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Fecha de cita</Label>
+                        <Input
+                          type="date"
+                          value={appointmentForm.fecha_cita}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              fecha_cita: value,
+                            }));
+                            setSlotsDate(value);
+                            fetchAvailableSlots(value);
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Hora de cita</Label>
+                        <Input
+                          type="time"
+                          step="1800"
+                          value={appointmentForm.hora_cita}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              hora_cita: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Tipo de consulta</Label>
+                        <Select
+                          value={appointmentForm.tipo_consulta}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              tipo_consulta: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="presencial">Presencial</option>
+                          <option value="online">Online</option>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Estatus</Label>
+                        <Select
+                          value={appointmentForm.status}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              status: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="pending">Pendiente</option>
+                          <option value="confirmed">Confirmada</option>
+                          <option value="completed">Completada</option>
+                          <option value="no_show">No show</option>
+                          <option value="cancelled">Cancelada</option>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-end">
+                        <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(appointmentForm.confirmed)}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                confirmed: e.target.checked,
+                              }))
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                          />
+                          Confirmar manualmente
+                        </label>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label>Notas administrativas</Label>
+                        <Textarea
+                          className="min-h-28"
+                          value={appointmentForm.notes_admin}
+                          onChange={(e) =>
+                            setAppointmentForm((prev) => ({
+                              ...prev,
+                              notes_admin: e.target.value,
+                            }))
+                          }
+                          placeholder="Notas internas de la cita"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <AccentButton
+                        onClick={saveAppointmentForm}
+                        disabled={savingAppointment}
+                      >
+                        {savingAppointment
+                          ? appointmentMode === "create"
+                            ? "Creando..."
+                            : "Guardando..."
+                          : appointmentMode === "create"
+                          ? "Crear cita"
+                          : "Guardar cambios"}
+                      </AccentButton>
+
+                      <SecondaryButton
+                        onClick={() =>
+                          resetAppointmentForm(appointmentForm.fecha_cita)
+                        }
+                      >
+                        Limpiar formulario
+                      </SecondaryButton>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Horarios disponibles
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Selecciona una fecha para ver bloques de 30 minutos.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <Label>Fecha para consultar horarios</Label>
+                      <Input
+                        type="date"
+                        value={slotsDate}
+                        onChange={(e) => {
+                          setSlotsDate(e.target.value);
+                          fetchAvailableSlots(e.target.value);
+                        }}
+                      />
+                    </div>
+
+                    {slotsLoading ? (
+                      <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
+                        Cargando horarios...
+                      </div>
+                    ) : availableSlots.length === 0 ? (
+                      <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
+                        No hay horarios configurados o disponibles para esta fecha.
+                      </div>
+                    ) : (
+                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                        {availableSlots.map((slot, index) => (
+                          <button
+                            key={`${slot.slot}-${index}`}
+                            type="button"
+                            onClick={() =>
+                              slot.available
+                                ? setAppointmentForm((prev) => ({
+                                    ...prev,
+                                    fecha_cita: slotsDate,
+                                    hora_cita: String(slot.slot).slice(0, 5),
+                                  }))
+                                : null
+                            }
+                            className="text-left"
+                            disabled={!slot.available}
+                          >
+                            <SlotBadge slot={slot} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
+              <Card
+                title="Agenda — resumen operativo"
+                subtitle="Vista rápida para secretaria y admin: citas del día, próximas y seguimiento general."
+              >
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Stat label="Citas del día" value={appointmentsToday.length} />
+                  <Stat label="Próximas citas" value={upcomingAppointments.length} />
+                  <Stat label="Historial" value={appointmentsHistory.length} />
+                </div>
+              </Card>
+
+              <Card
+                title="Agenda — filtros y listado completo"
+                subtitle="Filtra por fecha, estado y tipo de consulta. Desde aquí puedes editar, reprogramar o cancelar."
+              >
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label>Fecha</Label>
+                    <Input
+                      type="date"
+                      value={appointmentFilters.fecha}
+                      onChange={(e) =>
+                        setAppointmentFilters((prev) => ({
+                          ...prev,
+                          fecha: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estatus</Label>
+                    <Select
+                      value={appointmentFilters.status}
+                      onChange={(e) =>
+                        setAppointmentFilters((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="all">Todos</option>
+                      <option value="pending">Pendiente</option>
+                      <option value="confirmed">Confirmada</option>
+                      <option value="completed">Completada</option>
+                      <option value="cancelled">Cancelada</option>
+                      <option value="no_show">No show</option>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select
+                      value={appointmentFilters.tipo}
+                      onChange={(e) =>
+                        setAppointmentFilters((prev) => ({
+                          ...prev,
+                          tipo: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="all">Todos</option>
+                      <option value="presencial">Presencial</option>
+                      <option value="online">Online</option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <SecondaryButton
+                    onClick={() =>
+                      setAppointmentFilters({
+                        fecha: new Date().toISOString().split("T")[0],
+                        status: "all",
+                        tipo: "all",
+                      })
+                    }
+                  >
+                    Restablecer filtros
+                  </SecondaryButton>
+
+                  <SecondaryButton onClick={() => fetchAppointments()}>
+                    Recargar agenda
+                  </SecondaryButton>
+                </div>
+
+                <div className="mt-8 space-y-4">
+                  {appointmentsLoading ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                      Cargando citas...
+                    </div>
+                  ) : filteredAppointments.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                      No hay citas para los filtros seleccionados.
+                    </div>
+                  ) : (
+                    filteredAppointments.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                      >
+                        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Paciente
+                              </p>
+                              <p className="mt-2 font-semibold text-slate-900">
+                                {appointment.nombre}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-600">
+                                {appointment.telefono || "Sin teléfono"}
+                              </p>
+                              <p className="text-sm text-slate-600">
+                                {appointment.correo || "Sin correo"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Cita
+                              </p>
+                              <p className="mt-2 font-semibold text-slate-900">
+                                {appointment.fecha_cita}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-600">
+                                {String(appointment.hora_cita).slice(0, 5)}
+                              </p>
+                              <p className="text-sm text-slate-600">
+                                {appointment.tipo_consulta === "online"
+                                  ? "Consulta en línea"
+                                  : "Consulta presencial"}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Estado
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <AppointmentStatusBadge
+                                  status={appointment.status}
+                                  confirmed={appointment.confirmed}
+                                />
+                                {appointment.confirmed ? (
+                                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
+                                    Confirmada manualmente
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Datos administrativos
+                              </p>
+                              <p className="mt-2 text-sm text-slate-700">
+                                Edad:{" "}
+                                {appointment.edad === null ||
+                                appointment.edad === undefined
+                                  ? "Sin dato"
+                                  : appointment.edad}
+                              </p>
+                              <p className="text-sm text-slate-700">
+                                Nacimiento:{" "}
+                                {appointment.fecha_nacimiento || "Sin dato"}
+                              </p>
+                            </div>
+
+                            <div className="md:col-span-2 xl:col-span-2">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Nota administrativa
+                              </p>
+                              <p className="mt-2 text-sm leading-6 text-slate-700">
+                                {appointment.notes_admin || "Sin notas"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 xl:w-[280px] xl:justify-end">
+                            <SecondaryButton
+                              onClick={() => openEditAppointment(appointment)}
+                            >
+                              Editar / reprogramar
+                            </SecondaryButton>
+
+                            <DangerButton
+                              onClick={() => cancelAppointment(appointment)}
+                              disabled={appointment.status === "cancelled"}
+                            >
+                              Cancelar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </>
+          ) : null}
+
           {canSeeSensitiveConfig ? (
             <Card
               title="Configuración global"
@@ -1405,40 +2202,33 @@ export default function AdminPage() {
                 <div>
                   <Label>Qué incluye la consulta 1</Label>
                   <Input
-                    placeholder="Ej: Valoración médica completa de tus síntomas y antecedentes."
                     value={config.include_1}
                     onChange={(e) =>
                       updateConfigField("include_1", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Qué incluye la consulta 2</Label>
                   <Input
-                    placeholder="Ej: Explicación clara del diagnóstico y de lo que está ocurriendo."
                     value={config.include_2}
                     onChange={(e) =>
                       updateConfigField("include_2", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Qué incluye la consulta 3</Label>
                   <Input
-                    placeholder="Ej: Tratamiento indicado paso a paso."
                     value={config.include_3}
                     onChange={(e) =>
                       updateConfigField("include_3", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Qué incluye la consulta 4</Label>
                   <Input
-                    placeholder="Ej: Orientación y seguimiento para asegurar tu mejoría."
                     value={config.include_4}
                     onChange={(e) =>
                       updateConfigField("include_4", e.target.value)
@@ -1452,40 +2242,33 @@ export default function AdminPage() {
                 <div>
                   <Label>Motivo para consultar 1</Label>
                   <Input
-                    placeholder="Ej: Tienes síntomas recientes y no sabes si requieren atención médica."
                     value={config.reason_1}
                     onChange={(e) =>
                       updateConfigField("reason_1", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Motivo para consultar 2</Label>
                   <Input
-                    placeholder="Ej: Llevas varios días con molestias que no mejoran."
                     value={config.reason_2}
                     onChange={(e) =>
                       updateConfigField("reason_2", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Motivo para consultar 3</Label>
                   <Input
-                    placeholder="Ej: Necesitas saber si debes hacerte estudios o tomar tratamiento."
                     value={config.reason_3}
                     onChange={(e) =>
                       updateConfigField("reason_3", e.target.value)
                     }
                   />
                 </div>
-
                 <div>
                   <Label>Motivo para consultar 4</Label>
                   <Input
-                    placeholder="Ej: Quieres revisar tu estado de salud y prevenir problemas antes de que aparezcan complicaciones."
                     value={config.reason_4}
                     onChange={(e) =>
                       updateConfigField("reason_4", e.target.value)
@@ -1499,70 +2282,55 @@ export default function AdminPage() {
                 <div>
                   <Label>FAQ Pregunta 1</Label>
                   <Input
-                    placeholder="Ej: ¿Cómo puedo agendar una consulta médica?"
                     value={config.faq_q1}
                     onChange={(e) => updateConfigField("faq_q1", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Respuesta 1</Label>
                   <Input
-                    placeholder="Ej: Puedes agendar de forma rápida por WhatsApp o reservar en línea."
                     value={config.faq_a1}
                     onChange={(e) => updateConfigField("faq_a1", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Pregunta 2</Label>
                   <Input
-                    placeholder="Ej: ¿Dónde se encuentra el consultorio?"
                     value={config.faq_q2}
                     onChange={(e) => updateConfigField("faq_q2", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Respuesta 2</Label>
                   <Input
-                    placeholder="Ej: La dirección exacta del consultorio aparece en la sección de ubicación."
                     value={config.faq_a2}
                     onChange={(e) => updateConfigField("faq_a2", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Pregunta 3</Label>
                   <Input
-                    placeholder="Ej: ¿Qué tipo de atención médica se ofrece?"
                     value={config.faq_q3}
                     onChange={(e) => updateConfigField("faq_q3", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Respuesta 3</Label>
                   <Input
-                    placeholder="Ej: Se ofrece consulta médica privada para valoración, diagnóstico, tratamiento y seguimiento."
                     value={config.faq_a3}
                     onChange={(e) => updateConfigField("faq_a3", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Pregunta 4</Label>
                   <Input
-                    placeholder="Ej: ¿Cuándo debo acudir con un médico general?"
                     value={config.faq_q4}
                     onChange={(e) => updateConfigField("faq_q4", e.target.value)}
                   />
                 </div>
-
                 <div>
                   <Label>FAQ Respuesta 4</Label>
                   <Input
-                    placeholder="Ej: Cuando tienes síntomas, molestias que no mejoran o quieres una revisión preventiva."
                     value={config.faq_a4}
                     onChange={(e) => updateConfigField("faq_a4", e.target.value)}
                   />
@@ -1936,7 +2704,7 @@ export default function AdminPage() {
                   <p className="mb-2 text-sm font-medium text-slate-700">
                     Estado de la reseña
                   </p>
-                  <select
+                  <Select
                     value={newReview.review_status}
                     onChange={(e) =>
                       setNewReview({
@@ -1944,19 +2712,18 @@ export default function AdminPage() {
                         review_status: e.target.value,
                       })
                     }
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
                   >
                     <option value="pending">Pendiente</option>
                     <option value="verified">Verificada</option>
                     <option value="rejected">Rechazada</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
                   <p className="mb-2 text-sm font-medium text-slate-700">
                     Tipo de verificación
                   </p>
-                  <select
+                  <Select
                     value={newReview.verification_type}
                     onChange={(e) =>
                       setNewReview({
@@ -1964,12 +2731,11 @@ export default function AdminPage() {
                         verification_type: e.target.value,
                       })
                     }
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
                   >
                     <option value="manual">Manual</option>
                     <option value="agenda">Cita agendada</option>
                     <option value="consulta">Consulta asistida</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
 
