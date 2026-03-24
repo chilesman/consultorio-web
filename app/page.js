@@ -146,6 +146,30 @@ function CTAButtons({
   );
 }
 
+function SlotButton({ slot, selected, onClick }) {
+  const isAvailable = Boolean(slot.available);
+
+  return (
+    <button
+      type="button"
+      disabled={!isAvailable}
+      onClick={onClick}
+      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+        isAvailable
+          ? selected
+            ? "border-cyan-700 bg-cyan-700 text-white"
+            : "border-slate-300 bg-white text-slate-700 hover:border-cyan-400 hover:bg-cyan-50"
+          : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+      }`}
+    >
+      <div>{String(slot.slot).slice(0, 5)}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-wide">
+        {isAvailable ? "Disponible" : "Ocupado"}
+      </div>
+    </button>
+  );
+}
+
 const DEFAULT_CONFIG = {
   booking_url: "",
   whatsapp_number: "5533331304",
@@ -187,6 +211,17 @@ const DEFAULT_CONFIG = {
   seo_region: "Estado de México",
 };
 
+const DEFAULT_BOOKING_FORM = {
+  nombre: "",
+  telefono: "",
+  correo: "",
+  edad: "",
+  fecha_nacimiento: "",
+  fecha_cita: "",
+  hora_cita: "",
+  tipo_consulta: "presencial",
+};
+
 export default function Page() {
   const supabase = createClient();
 
@@ -198,6 +233,11 @@ export default function Page() {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [openReviewModal, setOpenReviewModal] = useState(false);
   const [sendingReview, setSendingReview] = useState(false);
+
+  const [bookingForm, setBookingForm] = useState(DEFAULT_BOOKING_FORM);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [submittingBooking, setSubmittingBooking] = useState(false);
 
   const [profile, setProfile] = useState({
     doctor_name: "Dr. José Antonio Reyes Hernández",
@@ -258,6 +298,35 @@ export default function Page() {
 
     loadData();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!bookingForm.fecha_cita) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    async function loadSlots() {
+      setLoadingSlots(true);
+
+      const { data, error } = await supabase.rpc(
+        "get_available_appointment_slots",
+        {
+          p_fecha: bookingForm.fecha_cita,
+        }
+      );
+
+      setLoadingSlots(false);
+
+      if (error) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      setAvailableSlots(data || []);
+    }
+
+    loadSlots();
+  }, [bookingForm.fecha_cita, supabase]);
 
   const seoTitle = config.seo_title || DEFAULT_CONFIG.seo_title;
   const seoDescription =
@@ -320,6 +389,53 @@ export default function Page() {
       rating: 5,
     });
     setOpenReviewModal(false);
+  }
+
+  async function submitBooking() {
+    if (
+      !bookingForm.nombre.trim() ||
+      !bookingForm.fecha_cita ||
+      !bookingForm.hora_cita ||
+      !bookingForm.tipo_consulta
+    ) {
+      alert("Completa nombre, fecha, horario y tipo de consulta.");
+      return;
+    }
+
+    setSubmittingBooking(true);
+
+    const { error } = await supabase.rpc("book_public_appointment", {
+      p_nombre: bookingForm.nombre.trim(),
+      p_telefono: bookingForm.telefono || null,
+      p_correo: bookingForm.correo || null,
+      p_edad: bookingForm.edad === "" ? null : Number(bookingForm.edad),
+      p_fecha_nacimiento: bookingForm.fecha_nacimiento || null,
+      p_fecha_cita: bookingForm.fecha_cita,
+      p_hora_cita: bookingForm.hora_cita,
+      p_tipo_consulta: bookingForm.tipo_consulta,
+    });
+
+    setSubmittingBooking(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert(
+      "Tu cita fue registrada correctamente. Revisa tu correo para confirmar la cita."
+    );
+
+    const selectedDate = bookingForm.fecha_cita;
+
+    setBookingForm(DEFAULT_BOOKING_FORM);
+
+    if (selectedDate) {
+      const { data } = await supabase.rpc("get_available_appointment_slots", {
+        p_fecha: selectedDate,
+      });
+      setAvailableSlots(data || []);
+    }
   }
 
   const profilePhoto = useMemo(
@@ -455,10 +571,7 @@ export default function Page() {
     normalizedWhatsappNumber || "5533331304"
   }?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const bookingUrl =
-    config.booking_url && String(config.booking_url).trim()
-      ? config.booking_url
-      : whatsappUrl;
+  const bookingUrl = "#agenda-online";
 
   const primaryCtaText =
     config.cta_primary_text || DEFAULT_CONFIG.cta_primary_text;
@@ -502,8 +615,7 @@ export default function Page() {
     ],
     openingHours: profile.schedule || "",
     image: profilePhoto?.file_url || "",
-    url:
-      typeof window !== "undefined" ? window.location.href : "",
+    url: typeof window !== "undefined" ? window.location.href : "",
   };
 
   return (
@@ -546,8 +658,6 @@ export default function Page() {
 
             <a
               href={bookingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               className="rounded-2xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
             >
               {secondaryCtaText}
@@ -556,7 +666,6 @@ export default function Page() {
         </div>
       </header>
 
-      {/* 1. Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-100 via-sky-50 to-emerald-50" />
         <div className="absolute -left-16 top-10 h-56 w-56 rounded-full bg-cyan-200/40 blur-3xl" />
@@ -607,7 +716,7 @@ export default function Page() {
                   Cómo agendar
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Por WhatsApp o reserva en línea en minutos.
+                  Elige fecha, horario y confirma tu cita.
                 </p>
               </div>
             </div>
@@ -676,10 +785,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 2. Agenda rápida */}
-      <section className="border-y border-slate-200 bg-white">
+      <section id="agenda-online" className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="flex flex-col gap-6 rounded-[2rem] bg-slate-50 p-8 md:flex-row md:items-center md:justify-between">
+          <div className="grid gap-8 rounded-[2rem] bg-slate-50 p-8 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
                 Agenda rápida
@@ -690,19 +798,250 @@ export default function Page() {
               <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
                 {agendaSubtitle}
               </p>
+
+              <div className="mt-6 space-y-3">
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">
+                    1. Elige tu fecha
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Consulta los bloques disponibles de 30 minutos.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">
+                    2. Selecciona horario y tipo de consulta
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Presencial y en línea comparten agenda, así evitamos cruces.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">
+                    3. Confirma tu cita
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Después de agendar, recibirás un correo para confirmar.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <CTAButtons
-              whatsappUrl={whatsappUrl}
-              bookingUrl={bookingUrl}
-              primaryText={primaryCtaText}
-              secondaryText={secondaryCtaText}
-            />
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-xl font-semibold text-slate-900">
+                Reserva en línea
+              </h3>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={bookingForm.nombre}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        nombre: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                    placeholder="Escribe tu nombre"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Teléfono
+                  </label>
+                  <input
+                    type="tel"
+                    value={bookingForm.telefono}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        telefono: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                    placeholder="Tu teléfono"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Correo
+                  </label>
+                  <input
+                    type="email"
+                    value={bookingForm.correo}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        correo: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                    placeholder="Tu correo"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Edad
+                  </label>
+                  <input
+                    type="number"
+                    value={bookingForm.edad}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        edad: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                    placeholder="Tu edad"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Fecha de nacimiento
+                  </label>
+                  <input
+                    type="date"
+                    value={bookingForm.fecha_nacimiento}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        fecha_nacimiento: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Fecha de cita
+                  </label>
+                  <input
+                    type="date"
+                    value={bookingForm.fecha_cita}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        fecha_cita: e.target.value,
+                        hora_cita: "",
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Tipo de consulta
+                  </label>
+                  <select
+                    value={bookingForm.tipo_consulta}
+                    onChange={(e) =>
+                      setBookingForm((prev) => ({
+                        ...prev,
+                        tipo_consulta: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-cyan-700 focus:ring-2 focus:ring-cyan-100"
+                  >
+                    <option value="presencial">Presencial</option>
+                    <option value="online">En línea</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Horario seleccionado
+                  </label>
+                  <input
+                    type="text"
+                    value={bookingForm.hora_cita}
+                    readOnly
+                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none"
+                    placeholder="Selecciona un horario abajo"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <p className="mb-3 text-sm font-medium text-slate-700">
+                  Horarios disponibles
+                </p>
+
+                {!bookingForm.fecha_cita ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                    Primero selecciona una fecha para ver horarios disponibles.
+                  </div>
+                ) : loadingSlots ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                    Cargando horarios...
+                  </div>
+                ) : availableSlots.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                    No hay horarios disponibles para esta fecha.
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {availableSlots.map((slot, index) => (
+                      <SlotButton
+                        key={`${slot.slot}-${index}`}
+                        slot={slot}
+                        selected={
+                          bookingForm.hora_cita === String(slot.slot).slice(0, 5)
+                        }
+                        onClick={() =>
+                          setBookingForm((prev) => ({
+                            ...prev,
+                            hora_cita: String(slot.slot).slice(0, 5),
+                          }))
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={submitBooking}
+                  disabled={submittingBooking}
+                  className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {submittingBooking ? "Agendando..." : "Agendar cita"}
+                </button>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  {primaryCtaText}
+                </a>
+              </div>
+
+              <p className="mt-4 text-sm leading-6 text-slate-500">
+                Al enviar tu solicitud, tu cita queda pendiente de confirmación.
+                Recibirás un correo para confirmar el horario seleccionado.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. Servicios / en qué te ayudo */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeader
           eyebrow="Servicios"
@@ -794,7 +1133,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 4. Reseñas */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
@@ -873,7 +1211,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 5. Sobre el médico */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeader
           eyebrow="Sobre el médico"
@@ -943,7 +1280,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 6. Credenciales */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
@@ -1044,7 +1380,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 7. Consultorio */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeader
           eyebrow="Consultorio"
@@ -1075,7 +1410,6 @@ export default function Page() {
         )}
       </section>
 
-      {/* 8. Ubicación */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 py-20">
           <SectionHeader
@@ -1148,7 +1482,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 9. FAQ */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <SectionHeader
           eyebrow="Preguntas frecuentes"
@@ -1168,7 +1501,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* 10. Agenda final */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="rounded-[2rem] bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-900 px-8 py-14 text-white shadow-xl md:px-12">
           <div className="mx-auto max-w-4xl text-center">
@@ -1181,8 +1513,8 @@ export default function Page() {
             </h2>
 
             <p className="mt-4 text-lg leading-8 text-slate-200">
-              Menos vueltas, más acción. Escribe por WhatsApp o reserva en línea
-              y asegura tu atención médica en {seoCity}.
+              Elige fecha, horario y tipo de consulta en tu agenda en línea o
+              escríbenos por WhatsApp para atención directa en {seoCity}.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -1197,8 +1529,6 @@ export default function Page() {
 
               <a
                 href={bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
               >
                 {secondaryCtaText}
