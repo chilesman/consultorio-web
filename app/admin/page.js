@@ -82,24 +82,11 @@ function PrimaryButton({ children, ...props }) {
   );
 }
 
-function AccentButton({ children, ...props }) {
-  return (
-    <button
-      {...props}
-      className={`rounded-2xl bg-cyan-700 px-5 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60 ${
-        props.className || ""
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
 function SecondaryButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -112,7 +99,7 @@ function DangerButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className={`rounded-2xl border border-red-300 px-4 py-2 font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 ${
         props.className || ""
       }`}
     >
@@ -121,623 +108,340 @@ function DangerButton({ children, ...props }) {
   );
 }
 
-function Stat({ label, value }) {
+function StatusBadge({ children, tone = "default" }) {
+  const tones = {
+    default: "bg-slate-100 text-slate-700 border-slate-200",
+    success: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    warning: "bg-amber-100 text-amber-700 border-amber-200",
+    danger: "bg-rose-100 text-rose-700 border-rose-200",
+    info: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  };
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+        tones[tone] || tones.default
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function InfoStat({ label, value, helper }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-bold text-slate-900">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      {helper ? <p className="mt-2 text-sm text-slate-500">{helper}</p> : null}
     </div>
+  );
+}
+
+function EmptyState({ title, description }) {
+  return (
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+      <p className="text-lg font-semibold text-slate-800">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="my-6 h-px w-full bg-slate-200" />;
+}
+
+function SidebarButton({
+  active,
+  onClick,
+  icon,
+  label,
+  description,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+        active
+          ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+      }`}
+    >
+      <span className={active ? "text-white" : "text-slate-500"}>{icon}</span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{label}</span>
+        <span
+          className={`mt-1 block text-xs leading-5 ${
+            active ? "text-slate-200" : "text-slate-500"
+          }`}
+        >
+          {description}
+        </span>
+      </span>
+    </button>
   );
 }
 
 function RoleBadge({ role }) {
   if (role === "admin") {
-    return (
-      <span className="rounded-full border border-cyan-200 bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
-        Admin
-      </span>
-    );
+    return <StatusBadge tone="success">Administrador</StatusBadge>;
   }
 
   if (role === "secretaria") {
-    return (
-      <span className="rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
-        Secretaria
-      </span>
-    );
+    return <StatusBadge tone="info">Secretaria</StatusBadge>;
   }
 
-  return (
-    <span className="rounded-full border border-red-200 bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700">
-      Sin rol
-    </span>
-  );
-}
-
-function ImageAdminSection({
-  title,
-  subtitle,
-  items,
-  onFileChange,
-  onUpload,
-  onDelete,
-}) {
-  return (
-    <Card title={title} subtitle={subtitle}>
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <Input
-          type="file"
-          onChange={(e) => onFileChange(e.target.files?.[0] || null)}
-        />
-        <AccentButton type="button" onClick={onUpload}>
-          Subir imagen
-        </AccentButton>
-      </div>
-
-      {items.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-          Aún no hay imágenes en este apartado.
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((img) => (
-            <div
-              key={img.id}
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
-            >
-              <img
-                src={img.file_url}
-                alt={title}
-                className="h-52 w-full object-cover"
-              />
-              <div className="flex items-center justify-between p-4">
-                <a
-                  href={img.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                >
-                  Ver imagen
-                </a>
-                <DangerButton onClick={() => onDelete(img.id, img.file_url)}>
-                  Eliminar
-                </DangerButton>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function ReviewStatusBadge({ status }) {
-  if (status === "verified") {
-    return (
-      <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-800">
-        Verificada
-      </span>
-    );
-  }
-
-  if (status === "rejected") {
-    return (
-      <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700">
-        Rechazada
-      </span>
-    );
-  }
-
-  return (
-    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
-      Pendiente
-    </span>
-  );
-}
-
-function ReviewEditor({
-  review,
-  updateReview,
-  saveReview,
-  deleteReviewPermanently,
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="grid gap-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input
-            value={review.patient_name || ""}
-            onChange={(e) =>
-              updateReview(review.id, "patient_name", e.target.value)
-            }
-          />
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-slate-700">
-              Calificación
-            </p>
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => updateReview(review.id, "rating", star)}
-                  className={`text-3xl transition ${
-                    Number(review.rating) >= star
-                      ? "text-yellow-500"
-                      : "text-slate-300"
-                  }`}
-                  aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <Textarea
-          className="min-h-24"
-          value={review.review_text || ""}
-          onChange={(e) =>
-            updateReview(review.id, "review_text", e.target.value)
-          }
-        />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <p className="mb-2 text-sm font-medium text-slate-700">Estado</p>
-            <Select
-              value={review.review_status || "pending"}
-              onChange={(e) =>
-                updateReview(review.id, "review_status", e.target.value)
-              }
-            >
-              <option value="pending">Pendiente</option>
-              <option value="verified">Verificada</option>
-              <option value="rejected">Rechazada</option>
-            </Select>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-slate-700">
-              Tipo de verificación
-            </p>
-            <Select
-              value={review.verification_type || "manual"}
-              onChange={(e) =>
-                updateReview(review.id, "verification_type", e.target.value)
-              }
-            >
-              <option value="manual">Manual</option>
-              <option value="agenda">Cita agendada</option>
-              <option value="consulta">Consulta asistida</option>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <ReviewStatusBadge status={review.review_status || "pending"} />
-
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
-              {review.verification_type === "consulta"
-                ? "Consulta asistida"
-                : review.verification_type === "agenda"
-                ? "Cita agendada"
-                : "Manual"}
-            </span>
-
-            {review.is_published ? (
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
-                Visible
-              </span>
-            ) : (
-              <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
-                No visible
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <SecondaryButton onClick={() => saveReview(review)}>
-              Guardar
-            </SecondaryButton>
-            <DangerButton onClick={() => deleteReviewPermanently(review.id)}>
-              Borrar permanentemente
-            </DangerButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ReviewSection({
-  title,
-  subtitle,
-  reviews,
-  updateReview,
-  saveReview,
-  deleteReviewPermanently,
-}) {
-  return (
-    <div className="mt-8">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-slate-900">{title}</h3>
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-        </div>
-        <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-          {reviews.length}
-        </div>
-      </div>
-
-      {reviews.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-          No hay reseñas en este apartado.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <ReviewEditor
-              key={review.id}
-              review={review}
-              updateReview={updateReview}
-              saveReview={saveReview}
-              deleteReviewPermanently={deleteReviewPermanently}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AppointmentStatusBadge({ status, confirmed }) {
-  const base =
-    "rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide";
-
-  if (status === "confirmed") {
-    return (
-      <span className={`${base} bg-cyan-100 text-cyan-800`}>
-        Confirmada
-      </span>
-    );
-  }
-
-  if (status === "cancelled") {
-    return (
-      <span className={`${base} bg-red-100 text-red-700`}>
-        Cancelada
-      </span>
-    );
-  }
-
-  if (status === "completed") {
-    return (
-      <span className={`${base} bg-emerald-100 text-emerald-800`}>
-        Completada
-      </span>
-    );
-  }
-
-  if (status === "no_show") {
-    return (
-      <span className={`${base} bg-orange-100 text-orange-700`}>
-        No show
-      </span>
-    );
-  }
-
-  return (
-    <span className={`${base} bg-amber-100 text-amber-800`}>
-      {confirmed ? "Pendiente confirmada" : "Pendiente"}
-    </span>
-  );
-}
-
-function SlotBadge({ slot }) {
-  return (
-    <div
-      className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
-        slot.available
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-red-200 bg-red-50 text-red-700"
-      }`}
-    >
-      <div>{String(slot.slot).slice(0, 5)}</div>
-      <div className="mt-1 text-xs font-medium uppercase tracking-wide">
-        {slot.available ? "Disponible" : "Ocupado"}
-      </div>
-    </div>
-  );
-}
-
-function IconDashboard() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M4 4h7v7H4V4Zm9 0h7v5h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconConfig() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M12 8.5A3.5 3.5 0 1 0 12 15.5A3.5 3.5 0 1 0 12 8.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.2 1.2 0 0 1 0 1.7l-1.6 1.6a1.2 1.2 0 0 1-1.7 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1.2 1.2 0 0 1-1.2 1.2h-2.3A1.2 1.2 0 0 1 9.9 20v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.2 1.2 0 0 1-1.7 0l-1.6-1.6a1.2 1.2 0 0 1 0-1.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a1.2 1.2 0 0 1-1.2-1.2v-2.3A1.2 1.2 0 0 1 4 9.9h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.2 1.2 0 0 1 0-1.7l1.6-1.6a1.2 1.2 0 0 1 1.7 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4A1.2 1.2 0 0 1 11.1 2.8h2.3A1.2 1.2 0 0 1 14.6 4v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a1.2 1.2 0 0 1 1.7 0l1.6 1.6a1.2 1.2 0 0 1 0 1.7l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6h.2A1.2 1.2 0 0 1 21.2 11v2.3a1.2 1.2 0 0 1-1.2 1.2h-.2a1 1 0 0 0-.9.5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconProfile() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M5 20a7 7 0 0 1 14 0"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconServices() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M12 5v14M5 12h14"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7.5 7.5h9v9h-9z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconLicenses() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M7 4h10a2 2 0 0 1 2 2v12l-3-2-3 2-3-2-3 2V6a2 2 0 0 1 2-2Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 8h6M9 11h6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconCredentials() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M12 3l7 4v5c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V7l7-4Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="m9.5 12 1.5 1.5 3.5-3.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconAgenda() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M7 3v3M17 3v3M4 9h16"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <rect
-        x="4"
-        y="5"
-        width="16"
-        height="15"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M9 13h2M13 13h2M9 16h2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconReviews() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M12 17.5 7.3 20l.9-5.3-3.8-3.7 5.3-.8L12 5.5l2.3 4.7 5.3.8-3.8 3.7.9 5.3-4.7-2.5Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconClinic() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M4 20V8l8-5 8 5v12"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 20v-5h4v5M12 8v4M10 10h4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconPublicity() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M4 14V9a2 2 0 0 1 2-2h9l5-3v16l-5-3H6a2 2 0 0 1-2-2Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 17v3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconExpediente() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M9 4h6M9 8h6M8 4h8a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 13h6M9 16h4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+  return <StatusBadge>Sin rol</StatusBadge>;
 }
 
 function MenuIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M4 7h16M4 12h16M4 17h16"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
 }
 
 function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-      <path
-        d="M6 6l12 12M18 6 6 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="m6 6 12 12M18 6 6 18" />
     </svg>
   );
 }
 
-function SidebarButton({ active, onClick, icon, label, description }) {
+function IconDashboard() {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-2xl border px-4 py-3 text-left transition ${
-        active
-          ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10"
-          : "border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50"
-      }`}
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
     >
-      <div
-        className={`absolute left-0 top-0 h-full w-1 rounded-r-full transition ${
-          active ? "bg-cyan-400" : "bg-transparent group-hover:bg-slate-200"
-        }`}
-      />
-
-      <div className="flex items-start gap-3">
-        <div
-          className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition ${
-            active
-              ? "border-white/10 bg-white/10 text-white"
-              : "border-slate-200 bg-white text-slate-700 group-hover:border-slate-300"
-          }`}
-        >
-          {icon}
-        </div>
-
-        <div className="min-w-0">
-          <p
-            className={`text-sm font-semibold ${
-              active ? "text-white" : "text-slate-900"
-            }`}
-          >
-            {label}
-          </p>
-          {description ? (
-            <p
-              className={`mt-1 text-xs leading-5 ${
-                active ? "text-slate-200" : "text-slate-500"
-              }`}
-            >
-              {description}
-            </p>
-          ) : null}
-        </div>
-      </div>
-    </button>
+      <path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6V11h-6v9Zm0-11h6V4h-6v5Z" />
+    </svg>
   );
+}
+
+function IconConfig() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .15 1.7 1.7 0 0 0-.85 1.45V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-.85-1.45 1.7 1.7 0 0 0-1-.15 1.7 1.7 0 0 0-1.87.34l-.06.06A2 2 0 1 1 2.54 16.9l.06-.06A1.7 1.7 0 0 0 2.94 15a1.7 1.7 0 0 0-.15-1 1.7 1.7 0 0 0-1.45-.85H1.25a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 2.79 8a1.7 1.7 0 0 0 .15-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 5.37 2.24l.06.06A1.7 1.7 0 0 0 7.3 2.64a1.7 1.7 0 0 0 1-.15A1.7 1.7 0 0 0 9.15 1h.09a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 .85 1.45 1.7 1.7 0 0 0 1 .15 1.7 1.7 0 0 0 1.87-.34l.06-.06A2 2 0 1 1 21.46 5.1l-.06.06A1.7 1.7 0 0 0 21.06 7c.1.33.15.66.15 1a1.7 1.7 0 0 0 1.45.85h.09a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.45.85c-.1.33-.15.66-.15 1Z" />
+    </svg>
+  );
+}
+
+function IconProfile() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M20 21a8 8 0 1 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function IconAgenda() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 11h18" />
+    </svg>
+  );
+}
+
+function IconPatients() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+      <circle cx="10" cy="7" r="4" />
+      <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconReviews() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" />
+      <path d="m9 10 1.2 1.2L15 6.5" />
+    </svg>
+  );
+}
+
+function IconClinic() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M4 21h16" />
+      <path d="M6 21V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14" />
+      <path d="M10 9h4M12 7v4M9 14h2M13 14h2M9 18h2M13 18h2" />
+    </svg>
+  );
+}
+
+function IconPublicity() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M3 11v2" />
+      <path d="M7 9v6" />
+      <path d="M11 7v10" />
+      <path d="M15 9v6" />
+      <path d="M19 11v2" />
+    </svg>
+  );
+}
+
+function IconServices() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M4 7h16M4 12h16M4 17h10" />
+    </svg>
+  );
+}
+
+function IconLicenses() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </svg>
+  );
+}
+
+function IconCredentials() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M12 3 2 9l10 6 10-6-10-6Z" />
+      <path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5" />
+    </svg>
+  );
+}
+
+function IconExpediente() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M9 3h6l1 2h3a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2h3l1-2Z" />
+      <path d="M12 9v6M9 12h6" />
+    </svg>
+  );
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "—";
+
+  try {
+    return new Date(`${dateString}T00:00:00`).toLocaleDateString("es-MX", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+function formatDateTime(dateString, timeString) {
+  if (!dateString) return "—";
+  const datePart = formatDate(dateString);
+  const safeTime = timeString ? String(timeString).slice(0, 5) : "—";
+  return `${datePart} · ${safeTime}`;
+}
+
+function calculateAgeFromBirthDate(dateString) {
+  if (!dateString) return "";
+  const today = new Date();
+  const birth = new Date(`${dateString}T00:00:00`);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age -= 1;
+  }
+
+  return age >= 0 ? String(age) : "";
 }
 
 const DEFAULT_CONFIG = {
@@ -750,13 +454,23 @@ const DEFAULT_CONFIG = {
   cta_secondary_text: "",
   agenda_title: "",
   agenda_subtitle: "",
-  include_1: "",
-  include_2: "",
-  include_3: "",
-  include_4: "",
+  doctor_name: "",
+  doctor_specialty: "",
+  doctor_city: "",
+  doctor_state: "",
+  doctor_whatsapp: "",
+  doctor_email: "",
+  doctor_phone: "",
+  about_title: "",
+  about_text: "",
+  reasons_title: "",
+  reason_1_title: "",
   reason_1: "",
+  reason_2_title: "",
   reason_2: "",
+  reason_3_title: "",
   reason_3: "",
+  reason_4_title: "",
   reason_4: "",
   faq_q1: "",
   faq_a1: "",
@@ -774,6 +488,7 @@ const DEFAULT_CONFIG = {
 
 const DEFAULT_APPOINTMENT_FORM = {
   id: null,
+  patient_id: null,
   nombre: "",
   telefono: "",
   correo: "",
@@ -786,6 +501,44 @@ const DEFAULT_APPOINTMENT_FORM = {
   confirmed: false,
   notes_admin: "",
 };
+
+const DEFAULT_PATIENT_FORM = {
+  id: null,
+  nombre: "",
+  telefono: "",
+  correo: "",
+  fecha_nacimiento: "",
+  edad: "",
+  sexo: "",
+  curp: "",
+  direccion: "",
+  contacto_emergencia_nombre: "",
+  contacto_emergencia_telefono: "",
+  notas_identificacion: "",
+};
+
+function buildPatientSnapshot(patient) {
+  if (!patient) {
+    return {
+      patient_id: null,
+      nombre: "",
+      telefono: "",
+      correo: "",
+      edad: "",
+      fecha_nacimiento: "",
+    };
+  }
+
+  return {
+    patient_id: patient.id,
+    nombre: patient.nombre || "",
+    telefono: patient.telefono || "",
+    correo: patient.correo || "",
+    edad:
+      patient.edad === null || patient.edad === undefined ? "" : String(patient.edad),
+    fecha_nacimiento: patient.fecha_nacimiento || "",
+  };
+}
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -863,6 +616,17 @@ export default function AdminPage() {
     tipo: "all",
   });
 
+  const [patients, setPatients] = useState([]);
+  const [patientsLoading, setPatientsLoading] = useState(false);
+  const [patientsSearch, setPatientsSearch] = useState("");
+  const [patientForm, setPatientForm] = useState(DEFAULT_PATIENT_FORM);
+  const [patientMode, setPatientMode] = useState("create");
+  const [savingPatient, setSavingPatient] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedPatientAppointments, setSelectedPatientAppointments] = useState([]);
+  const [patientAppointmentsLoading, setPatientAppointmentsLoading] =
+    useState(false);
+
   const isAdmin = userRole === "admin";
   const isSecretary = userRole === "secretaria";
 
@@ -870,6 +634,7 @@ export default function AdminPage() {
   const canManageClinicImages = isAdmin || isSecretary;
   const canManagePublicity = isAdmin || isSecretary;
   const canManageAgenda = isAdmin || isSecretary;
+  const canManagePatients = isAdmin || isSecretary;
   const canSeeSensitiveConfig = isAdmin;
   const canManageProfile = isAdmin;
   const canManageServices = isAdmin;
@@ -882,7 +647,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isSecretary) {
-      const allowed = ["dashboard", "agenda", "reviews", "clinic", "publicity"];
+      const allowed = [
+        "dashboard",
+        "agenda",
+        "patients",
+        "reviews",
+        "clinic",
+        "publicity",
+      ];
       if (!allowed.includes(activeSection)) {
         setActiveSection("dashboard");
       }
@@ -892,6 +664,21 @@ export default function AdminPage() {
   useEffect(() => {
     setSidebarOpen(false);
   }, [activeSection]);
+
+  useEffect(() => {
+    if (!canManagePatients) return;
+
+    const timeout = setTimeout(() => {
+      fetchPatients();
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [patientsSearch, canManagePatients]);
+
+  useEffect(() => {
+    if (!selectedPatientId) return;
+    fetchPatientAppointments(selectedPatientId);
+  }, [selectedPatientId]);
 
   async function init() {
     setAuthLoading(true);
@@ -944,7 +731,11 @@ export default function AdminPage() {
     }
 
     if (role === "admin" || role === "secretaria") {
-      tasks.push(fetchAppointments(), fetchAvailableSlots(slotsDate));
+      tasks.push(
+        fetchAppointments(),
+        fetchAvailableSlots(slotsDate),
+        fetchPatients()
+      );
     }
 
     await Promise.all(tasks);
@@ -1464,6 +1255,223 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchPatients(customSearch = patientsSearch) {
+    if (!canManagePatients) return;
+
+    setPatientsLoading(true);
+
+    let query = supabase
+      .from("patients")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    const safeSearch = (customSearch || "").trim();
+
+    if (safeSearch) {
+      query = query.or(
+        `nombre.ilike.%${safeSearch}%,telefono.ilike.%${safeSearch}%,correo.ilike.%${safeSearch}%`
+      );
+    }
+
+    const { data, error } = await query;
+
+    setPatientsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setPatients(data || []);
+  }
+
+  async function fetchPatientAppointments(patientId) {
+    if (!canManagePatients || !patientId) {
+      setSelectedPatientAppointments([]);
+      return;
+    }
+
+    setPatientAppointmentsLoading(true);
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("fecha_cita", { ascending: false })
+      .order("hora_cita", { ascending: false });
+
+    setPatientAppointmentsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setSelectedPatientAppointments(data || []);
+  }
+
+  function resetPatientForm() {
+    setPatientMode("create");
+    setPatientForm(DEFAULT_PATIENT_FORM);
+  }
+
+  function openCreatePatient(prefill = {}) {
+    setPatientMode("create");
+    setPatientForm({
+      ...DEFAULT_PATIENT_FORM,
+      ...prefill,
+      edad:
+        prefill.edad === null || prefill.edad === undefined
+          ? prefill.fecha_nacimiento
+            ? calculateAgeFromBirthDate(prefill.fecha_nacimiento)
+            : ""
+          : String(prefill.edad),
+    });
+    setSelectedPatientId(null);
+    setSelectedPatientAppointments([]);
+    setActiveSection("patients");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function openEditPatient(patient) {
+    setPatientMode("edit");
+    setPatientForm({
+      id: patient.id,
+      nombre: patient.nombre || "",
+      telefono: patient.telefono || "",
+      correo: patient.correo || "",
+      fecha_nacimiento: patient.fecha_nacimiento || "",
+      edad:
+        patient.edad === null || patient.edad === undefined
+          ? patient.fecha_nacimiento
+            ? calculateAgeFromBirthDate(patient.fecha_nacimiento)
+            : ""
+          : String(patient.edad),
+      sexo: patient.sexo || "",
+      curp: patient.curp || "",
+      direccion: patient.direccion || "",
+      contacto_emergencia_nombre: patient.contacto_emergencia_nombre || "",
+      contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
+      notas_identificacion: patient.notas_identificacion || "",
+    });
+    setSelectedPatientId(patient.id);
+    fetchPatientAppointments(patient.id);
+    setActiveSection("patients");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function attachPatientToAppointment(patient) {
+    const snapshot = buildPatientSnapshot(patient);
+    setAppointmentForm((prev) => ({
+      ...prev,
+      ...snapshot,
+    }));
+  }
+
+  function removePatientFromAppointment() {
+    setAppointmentForm((prev) => ({
+      ...prev,
+      patient_id: null,
+    }));
+  }
+
+  async function savePatientForm() {
+    if (!canManagePatients) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!patientForm.nombre.trim()) {
+      alert("El nombre del paciente es obligatorio.");
+      return;
+    }
+
+    setSavingPatient(true);
+
+    const safeBirthDate = patientForm.fecha_nacimiento || null;
+    const safeAge =
+      patientForm.edad === ""
+        ? safeBirthDate
+          ? Number(calculateAgeFromBirthDate(safeBirthDate))
+          : null
+        : Number(patientForm.edad);
+
+    const payload = {
+      nombre: patientForm.nombre.trim(),
+      telefono: patientForm.telefono.trim() || null,
+      correo: patientForm.correo.trim().toLowerCase() || null,
+      fecha_nacimiento: safeBirthDate,
+      edad: Number.isFinite(safeAge) ? safeAge : null,
+      sexo: patientForm.sexo || null,
+      curp: patientForm.curp.trim().toUpperCase() || null,
+      direccion: patientForm.direccion.trim() || null,
+      contacto_emergencia_nombre:
+        patientForm.contacto_emergencia_nombre.trim() || null,
+      contacto_emergencia_telefono:
+        patientForm.contacto_emergencia_telefono.trim() || null,
+      notas_identificacion: patientForm.notas_identificacion.trim() || null,
+    };
+
+    let response;
+
+    if (patientMode === "create") {
+      response = await supabase.from("patients").insert(payload).select().single();
+    } else {
+      response = await supabase
+        .from("patients")
+        .update(payload)
+        .eq("id", patientForm.id)
+        .select()
+        .single();
+    }
+
+    setSavingPatient(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    const savedPatient = response.data;
+
+    if (savedPatient) {
+      setSelectedPatientId(savedPatient.id);
+      await fetchPatientAppointments(savedPatient.id);
+      attachPatientToAppointment(savedPatient);
+    }
+
+    await fetchPatients();
+
+    alert(
+      patientMode === "create"
+        ? "Paciente registrado correctamente."
+        : "Paciente actualizado correctamente."
+    );
+
+    setPatientMode("edit");
+    setPatientForm({
+      id: savedPatient.id,
+      nombre: savedPatient.nombre || "",
+      telefono: savedPatient.telefono || "",
+      correo: savedPatient.correo || "",
+      fecha_nacimiento: savedPatient.fecha_nacimiento || "",
+      edad:
+        savedPatient.edad === null || savedPatient.edad === undefined
+          ? savedPatient.fecha_nacimiento
+            ? calculateAgeFromBirthDate(savedPatient.fecha_nacimiento)
+            : ""
+          : String(savedPatient.edad),
+      sexo: savedPatient.sexo || "",
+      curp: savedPatient.curp || "",
+      direccion: savedPatient.direccion || "",
+      contacto_emergencia_nombre:
+        savedPatient.contacto_emergencia_nombre || "",
+      contacto_emergencia_telefono:
+        savedPatient.contacto_emergencia_telefono || "",
+      notas_identificacion: savedPatient.notas_identificacion || "",
+    });
+  }
+
   async function fetchAppointments() {
     if (!canManageAgenda) return;
 
@@ -1518,6 +1526,7 @@ export default function AdminPage() {
     setActiveSection("agenda");
     setAppointmentForm({
       id: appointment.id,
+      patient_id: appointment.patient_id || null,
       nombre: appointment.nombre || "",
       telefono: appointment.telefono || "",
       correo: appointment.correo || "",
@@ -1562,6 +1571,7 @@ export default function AdminPage() {
 
     if (appointmentMode === "create") {
       const { error } = await supabase.rpc("book_internal_appointment", {
+        p_patient_id: appointmentForm.patient_id || null,
         p_nombre: appointmentForm.nombre.trim(),
         p_telefono: appointmentForm.telefono || null,
         p_correo: appointmentForm.correo || null,
@@ -1587,6 +1597,7 @@ export default function AdminPage() {
     } else {
       const { error } = await supabase.rpc("update_internal_appointment", {
         p_appointment_id: appointmentForm.id,
+        p_patient_id: appointmentForm.patient_id || null,
         p_nombre: appointmentForm.nombre.trim(),
         p_telefono: appointmentForm.telefono || null,
         p_correo: appointmentForm.correo || null,
@@ -1761,6 +1772,13 @@ export default function AdminPage() {
         group: "operacion",
       },
       {
+        key: "patients",
+        label: "Pacientes",
+        icon: <IconPatients />,
+        description: "Listado, búsqueda, ficha y citas ligadas",
+        group: "operacion",
+      },
+      {
         key: "reviews",
         label: "Reseñas",
         icon: <IconReviews />,
@@ -1868,8 +1886,7 @@ export default function AdminPage() {
       }))
       .filter((group) => group.items.length > 0);
   }, [sidebarItems]);
-
-  if (authLoading) {
+    if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
@@ -1886,24 +1903,32 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
         <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
-          <h1 className="text-3xl font-bold text-slate-900">Panel privado</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Acceso al panel</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Inicia sesión para gestionar tu panel según el rol asignado.
+            Inicia sesión con tu cuenta autorizada para administrar la página médica.
           </p>
 
-          <div className="mt-6 space-y-4">
-            <Input
-              type="email"
-              placeholder="Correo"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <div className="mt-8 space-y-4">
+            <div>
+              <Label>Correo</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+              />
+            </div>
+
+            <div>
+              <Label>Contraseña</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+              />
+            </div>
+
             <PrimaryButton className="w-full" onClick={login}>
               Entrar
             </PrimaryButton>
@@ -1915,33 +1940,27 @@ export default function AdminPage() {
 
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-slate-100 px-6 py-16">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-900">
-            Validando permisos
-          </h1>
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
+        <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
+          <h1 className="text-3xl font-bold text-slate-900">Verificando permisos</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Estamos cargando tu rol y los módulos disponibles para tu usuario.
+            Estamos validando el rol de tu cuenta...
           </p>
         </div>
       </div>
     );
   }
 
-  if (!userRole) {
+  if (!isAdmin && !isSecretary) {
     return (
-      <div className="min-h-screen bg-slate-100 px-6 py-16">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-red-200 bg-red-50 p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-red-700">
-            Acceso restringido
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-red-700">
-            Tu usuario no tiene un rol asignado en <strong>users_roles</strong>.
-            Solicita acceso al administrador para continuar.
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
+        <div className="mx-auto max-w-md rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl backdrop-blur">
+          <h1 className="text-3xl font-bold text-slate-900">Sin permisos</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            Tu cuenta no tiene acceso a este panel administrativo.
           </p>
-
           <div className="mt-6">
-            <DangerButton onClick={logout}>Cerrar sesión</DangerButton>
+            <SecondaryButton onClick={logout}>Cerrar sesión</SecondaryButton>
           </div>
         </div>
       </div>
@@ -1949,102 +1968,55 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50">
+      <div className="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold text-slate-900">
-                Panel de administración
-              </h1>
-              <RoleBadge role={userRole} />
-            </div>
-            <p className="mt-2 text-sm text-slate-500">
-              {isAdmin
-                ? "Acceso completo: configuración, perfil, credenciales, agenda, reseñas, imágenes y módulos sensibles."
-                : "Acceso de secretaria: agenda completa, reseñas, fotos del consultorio y publicidad. Configuración sensible y expediente clínico quedan fuera."}
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+              Panel privado
             </p>
+            <h1 className="text-lg font-bold text-slate-900">
+              Administración médica
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 lg:hidden"
-            >
-              <MenuIcon />
-              Menú
-            </button>
-
-            <DangerButton onClick={logout}>Cerrar sesión</DangerButton>
-          </div>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-slate-700 shadow-sm"
+          >
+            {sidebarOpen ? <CloseIcon /> : <MenuIcon />}
+          </button>
         </div>
-      </header>
+      </div>
 
-      {sidebarOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-slate-900/50"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-[88%] max-w-sm overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Menú</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Navegación rápida del panel
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(false)}
-                className="rounded-2xl border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {sidebarGroups.map((group) => (
-                <div key={group.key}>
-                  <p className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                    {group.label}
-                  </p>
-                  <div className="space-y-2">
-                    {group.items.map((item) => (
-                      <SidebarButton
-                        key={item.key}
-                        active={activeSection === item.key}
-                        onClick={() => setActiveSection(item.key)}
-                        icon={item.icon}
-                        label={item.label}
-                        description={item.description}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="hidden h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:block">
-            <div className="mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Menú</h2>
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <aside
+            className={`${
+              sidebarOpen ? "block" : "hidden"
+            } rounded-3xl border border-white/70 bg-white/90 p-5 shadow-xl backdrop-blur lg:block`}
+          >
+            <div className="border-b border-slate-200 pb-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                Panel privado
+              </p>
+              <h1 className="mt-3 text-2xl font-bold text-slate-900">
+                Administración médica
+              </h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Módulos organizados por área, con visibilidad según rol.
+                Administra agenda, pacientes, reseñas, credenciales y contenido
+                visual del sitio.
               </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="mt-6 space-y-6">
               {sidebarGroups.map((group) => (
                 <div key={group.key}>
-                  <p className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                     {group.label}
                   </p>
+
                   <div className="space-y-2">
                     {group.items.map((item) => (
                       <SidebarButton
@@ -2059,664 +2031,216 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                  Rol actual
-                </p>
-                <div className="mt-3 flex items-center gap-3">
-                  <RoleBadge role={userRole} />
-                </div>
-                <p className="mt-3 text-xs leading-5 text-slate-500">
-                  Los módulos sensibles se ocultan automáticamente cuando el rol
-                  no tiene acceso.
-                </p>
+            <Divider />
+
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Sesión actual
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">
+                {session.user.email}
+              </p>
+              <div className="mt-3">
+                <RoleBadge role={userRole} />
+              </div>
+              <div className="mt-4">
+                <SecondaryButton onClick={logout}>Cerrar sesión</SecondaryButton>
               </div>
             </div>
           </aside>
 
-          <div className="space-y-8">
+          <main className="space-y-6">
             {activeSection === "dashboard" ? (
-              <>
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                        Sección activa
-                      </p>
-                      <h2 className="mt-2 text-xl font-bold text-slate-900">
-                        {sidebarItems.find((item) => item.key === activeSection)
-                          ?.label || "Resumen"}
-                      </h2>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSidebarOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                    >
-                      <MenuIcon />
-                      Cambiar
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-7">
-                  <Stat label="Servicios" value={isAdmin ? services.length : "—"} />
-                  <Stat label="Cédulas" value={isAdmin ? licenses.length : "—"} />
-                  <Stat label="Imágenes" value={documents.length} />
-                  <Stat label="Reseñas" value={reviews.length} />
-                  <Stat
+              <Card
+                title="Resumen del sistema"
+                subtitle="Vista rápida de agenda, pacientes y reseñas."
+              >
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <InfoStat
                     label="Citas hoy"
-                    value={canManageAgenda ? appointmentsToday.length : "—"}
+                    value={appointmentsToday.length}
+                    helper="Programadas para hoy"
                   />
-                  <Stat
-                    label="Próximas"
-                    value={canManageAgenda ? upcomingAppointments.length : "—"}
+                  <InfoStat
+                    label="Próximas citas"
+                    value={upcomingAppointments.length}
+                    helper="Pendientes y confirmadas"
                   />
-                  <Stat
-                    label="Historial"
-                    value={canManageAgenda ? appointmentsHistory.length : "—"}
+                  <InfoStat
+                    label="Pacientes"
+                    value={patients.length}
+                    helper="Registros en el sistema"
+                  />
+                  <InfoStat
+                    label="Reseñas verificadas"
+                    value={verifiedCount}
+                    helper="Publicadas"
                   />
                 </div>
 
-                {isSecretary ? (
-                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
-                    <h2 className="text-xl font-bold text-amber-900">
-                      Modo secretaria activo
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-amber-800">
-                      En esta etapa puedes gestionar la agenda completa, reseñas,
-                      publicidad y fotos del consultorio. Configuración global, perfil
-                      médico, servicios, credenciales y módulos clínicos sensibles quedan
-                      ocultos.
-                    </p>
-                  </div>
-                ) : null}
+                <Divider />
 
-                <Card
-                  title="Resumen operativo"
-                  subtitle="Desde el menú lateral puedes entrar directo a cada área. Aquí queda el resumen general del panel."
-                >
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Stat
-                      label="Reseñas verificadas"
-                      value={canManageReviews ? verifiedCount : "—"}
-                    />
-                    <Stat
-                      label="Reseñas pendientes"
-                      value={canManageReviews ? pendingCount : "—"}
-                    />
-                    <Stat
-                      label="Reseñas rechazadas"
-                      value={canManageReviews ? rejectedCount : "—"}
-                    />
-                  </div>
-                </Card>
-              </>
-            ) : null}
-
-            {activeSection !== "dashboard" ? (
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
-                <div className="flex items-center justify-between gap-3">
+                <div className="grid gap-6 xl:grid-cols-2">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                      Sección activa
-                    </p>
-                    <h2 className="mt-2 text-xl font-bold text-slate-900">
-                      {sidebarItems.find((item) => item.key === activeSection)
-                        ?.label || ""}
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    <MenuIcon />
-                    Cambiar
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {activeSection === "agenda" && canManageAgenda ? (
-              <>
-                <Card
-                  title={
-                    appointmentMode === "create"
-                      ? "Agenda médica — nueva cita"
-                      : "Agenda médica — editar cita"
-                  }
-                  subtitle="Bloques de 30 minutos, agenda única y sin doble cita. Presencial y en línea comparten el mismo horario."
-                >
-                  <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-                    <div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label>Nombre</Label>
-                          <Input
-                            value={appointmentForm.nombre}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                nombre: e.target.value,
-                              }))
-                            }
-                            placeholder="Nombre del paciente"
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Teléfono</Label>
-                          <Input
-                            value={appointmentForm.telefono}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                telefono: e.target.value,
-                              }))
-                            }
-                            placeholder="Teléfono"
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Correo</Label>
-                          <Input
-                            type="email"
-                            value={appointmentForm.correo}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                correo: e.target.value,
-                              }))
-                            }
-                            placeholder="Correo"
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Edad</Label>
-                          <Input
-                            type="number"
-                            value={appointmentForm.edad}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                edad: e.target.value,
-                              }))
-                            }
-                            placeholder="Edad"
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Fecha de nacimiento</Label>
-                          <Input
-                            type="date"
-                            value={appointmentForm.fecha_nacimiento}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                fecha_nacimiento: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Fecha de cita</Label>
-                          <Input
-                            type="date"
-                            value={appointmentForm.fecha_cita}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                fecha_cita: value,
-                              }));
-                              setSlotsDate(value);
-                              fetchAvailableSlots(value);
-                            }}
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Hora de cita</Label>
-                          <Input
-                            type="time"
-                            step="1800"
-                            value={appointmentForm.hora_cita}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                hora_cita: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Tipo de consulta</Label>
-                          <Select
-                            value={appointmentForm.tipo_consulta}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                tipo_consulta: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="presencial">Presencial</option>
-                            <option value="online">Online</option>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Estatus</Label>
-                          <Select
-                            value={appointmentForm.status}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                status: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="pending">Pendiente</option>
-                            <option value="confirmed">Confirmada</option>
-                            <option value="completed">Completada</option>
-                            <option value="no_show">No show</option>
-                            <option value="cancelled">Cancelada</option>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-end">
-                          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(appointmentForm.confirmed)}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  confirmed: e.target.checked,
-                                }))
-                              }
-                              className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
-                            />
-                            Confirmar manualmente
-                          </label>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label>Notas administrativas</Label>
-                          <Textarea
-                            className="min-h-28"
-                            value={appointmentForm.notes_admin}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                notes_admin: e.target.value,
-                              }))
-                            }
-                            placeholder="Notas internas de la cita"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-6 flex flex-wrap gap-3">
-                        <AccentButton
-                          onClick={saveAppointmentForm}
-                          disabled={savingAppointment}
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Actividad reciente
+                    </h3>
+                    <div className="mt-4 space-y-3">
+                      {appointments.slice(0, 5).map((appointment) => (
+                        <div
+                          key={appointment.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                         >
-                          {savingAppointment
-                            ? appointmentMode === "create"
-                              ? "Creando..."
-                              : "Guardando..."
-                            : appointmentMode === "create"
-                            ? "Crear cita"
-                            : "Guardar cambios"}
-                        </AccentButton>
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {appointment.nombre || "Paciente sin nombre"}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                {formatDateTime(
+                                  appointment.fecha_cita,
+                                  appointment.hora_cita
+                                )}
+                              </p>
+                            </div>
 
-                        <SecondaryButton
-                          onClick={() =>
-                            resetAppointmentForm(appointmentForm.fecha_cita)
-                          }
-                        >
-                          Limpiar formulario
-                        </SecondaryButton>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-900">
-                          Horarios disponibles
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Selecciona una fecha para ver bloques de 30 minutos.
-                        </p>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label>Fecha para consultar horarios</Label>
-                        <Input
-                          type="date"
-                          value={slotsDate}
-                          onChange={(e) => {
-                            setSlotsDate(e.target.value);
-                            fetchAvailableSlots(e.target.value);
-                          }}
-                        />
-                      </div>
-
-                      {slotsLoading ? (
-                        <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
-                          Cargando horarios...
-                        </div>
-                      ) : availableSlots.length === 0 ? (
-                        <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
-                          No hay horarios configurados o disponibles para esta fecha.
-                        </div>
-                      ) : (
-                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                          {availableSlots.map((slot, index) => (
-                            <button
-                              key={`${slot.slot}-${index}`}
-                              type="button"
-                              onClick={() =>
-                                slot.available
-                                  ? setAppointmentForm((prev) => ({
-                                      ...prev,
-                                      fecha_cita: slotsDate,
-                                      hora_cita: String(slot.slot).slice(0, 5),
-                                    }))
-                                  : null
+                            <StatusBadge
+                              tone={
+                                appointment.status === "completed"
+                                  ? "success"
+                                  : appointment.status === "cancelled"
+                                  ? "danger"
+                                  : appointment.status === "confirmed"
+                                  ? "info"
+                                  : appointment.status === "no_show"
+                                  ? "warning"
+                                  : "default"
                               }
-                              className="text-left"
-                              disabled={!slot.available}
                             >
-                              <SlotBadge slot={slot} />
-                            </button>
-                          ))}
+                              {appointment.status || "pending"}
+                            </StatusBadge>
+                          </div>
                         </div>
-                      )}
+                      ))}
+
+                      {!appointments.length ? (
+                        <EmptyState
+                          title="Aún no hay citas registradas"
+                          description="Cuando empieces a operar la agenda, aquí verás el movimiento reciente."
+                        />
+                      ) : null}
                     </div>
                   </div>
-                </Card>
 
-                <Card
-                  title="Agenda — filtros y listado completo"
-                  subtitle="Filtra por fecha, estado y tipo de consulta. Desde aquí puedes editar, reprogramar o cancelar."
-                >
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div>
-                      <Label>Fecha</Label>
-                      <Input
-                        type="date"
-                        value={appointmentFilters.fecha}
-                        onChange={(e) =>
-                          setAppointmentFilters((prev) => ({
-                            ...prev,
-                            fecha: e.target.value,
-                          }))
-                        }
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Estado de reseñas
+                    </h3>
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                      <InfoStat
+                        label="Pendientes"
+                        value={pendingCount}
+                        helper="Por moderar"
+                      />
+                      <InfoStat
+                        label="Verificadas"
+                        value={verifiedCount}
+                        helper="Publicadas"
+                      />
+                      <InfoStat
+                        label="Rechazadas"
+                        value={rejectedCount}
+                        helper="No visibles"
                       />
                     </div>
 
-                    <div>
-                      <Label>Estatus</Label>
-                      <Select
-                        value={appointmentFilters.status}
-                        onChange={(e) =>
-                          setAppointmentFilters((prev) => ({
-                            ...prev,
-                            status: e.target.value,
-                          }))
-                        }
-                      >
-                        <option value="all">Todos</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="confirmed">Confirmada</option>
-                        <option value="completed">Completada</option>
-                        <option value="cancelled">Cancelada</option>
-                        <option value="no_show">No show</option>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Tipo</Label>
-                      <Select
-                        value={appointmentFilters.tipo}
-                        onChange={(e) =>
-                          setAppointmentFilters((prev) => ({
-                            ...prev,
-                            tipo: e.target.value,
-                          }))
-                        }
-                      >
-                        <option value="all">Todos</option>
-                        <option value="presencial">Presencial</option>
-                        <option value="online">Online</option>
-                      </Select>
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Avance actual
+                      </h4>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        El paso 2 ya quedó integrado: listado de pacientes,
+                        buscador, ficha individual, alta/edición y vínculo con citas
+                        desde agenda.
+                      </p>
                     </div>
                   </div>
-
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <SecondaryButton
-                      onClick={() =>
-                        setAppointmentFilters({
-                          fecha: new Date().toISOString().split("T")[0],
-                          status: "all",
-                          tipo: "all",
-                        })
-                      }
-                    >
-                      Restablecer filtros
-                    </SecondaryButton>
-
-                    <SecondaryButton onClick={() => fetchAppointments()}>
-                      Recargar agenda
-                    </SecondaryButton>
-                  </div>
-
-                  <div className="mt-8 space-y-4">
-                    {appointmentsLoading ? (
-                      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                        Cargando citas...
-                      </div>
-                    ) : filteredAppointments.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                        No hay citas para los filtros seleccionados.
-                      </div>
-                    ) : (
-                      filteredAppointments.map((appointment) => (
-                        <div
-                          key={appointment.id}
-                          className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
-                        >
-                          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Paciente
-                                </p>
-                                <p className="mt-2 font-semibold text-slate-900">
-                                  {appointment.nombre}
-                                </p>
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {appointment.telefono || "Sin teléfono"}
-                                </p>
-                                <p className="text-sm text-slate-600">
-                                  {appointment.correo || "Sin correo"}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Cita
-                                </p>
-                                <p className="mt-2 font-semibold text-slate-900">
-                                  {appointment.fecha_cita}
-                                </p>
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {String(appointment.hora_cita).slice(0, 5)}
-                                </p>
-                                <p className="text-sm text-slate-600">
-                                  {appointment.tipo_consulta === "online"
-                                    ? "Consulta en línea"
-                                    : "Consulta presencial"}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Estado
-                                </p>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  <AppointmentStatusBadge
-                                    status={appointment.status}
-                                    confirmed={appointment.confirmed}
-                                  />
-                                  {appointment.confirmed ? (
-                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
-                                      Confirmada manualmente
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </div>
-
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Datos administrativos
-                                </p>
-                                <p className="mt-2 text-sm text-slate-700">
-                                  Edad:{" "}
-                                  {appointment.edad === null ||
-                                  appointment.edad === undefined
-                                    ? "Sin dato"
-                                    : appointment.edad}
-                                </p>
-                                <p className="text-sm text-slate-700">
-                                  Nacimiento:{" "}
-                                  {appointment.fecha_nacimiento || "Sin dato"}
-                                </p>
-                              </div>
-
-                              <div className="md:col-span-2 xl:col-span-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Nota administrativa
-                                </p>
-                                <p className="mt-2 text-sm leading-6 text-slate-700">
-                                  {appointment.notes_admin || "Sin notas"}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 xl:w-[280px] xl:justify-end">
-                              <SecondaryButton
-                                onClick={() => openEditAppointment(appointment)}
-                              >
-                                Editar / reprogramar
-                              </SecondaryButton>
-
-                              <DangerButton
-                                onClick={() => cancelAppointment(appointment)}
-                                disabled={appointment.status === "cancelled"}
-                              >
-                                Cancelar
-                              </DangerButton>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </Card>
-              </>
+                </div>
+              </Card>
             ) : null}
 
             {activeSection === "config" && canSeeSensitiveConfig ? (
               <Card
                 title="Configuración global"
-                subtitle="Aquí editas los textos y enlaces principales que después se mostrarán en la página pública."
+                subtitle="Textos principales, SEO y enlaces generales del sitio."
               >
-                <ConfigGroupTitle>Enlaces y contacto</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <Label>URL de agenda</Label>
+                    <Label>Booking URL</Label>
                     <Input
-                      placeholder="Ej: https://calendar.app.google/..."
                       value={config.booking_url}
                       onChange={(e) =>
                         updateConfigField("booking_url", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>Número de WhatsApp</Label>
+                    <Label>WhatsApp principal</Label>
                     <Input
-                      placeholder="Ej: 5533331304"
                       value={config.whatsapp_number}
                       onChange={(e) =>
                         updateConfigField("whatsapp_number", e.target.value)
                       }
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <Label>Mensaje de WhatsApp</Label>
+                    <Textarea
+                      rows={3}
+                      value={config.whatsapp_message}
+                      onChange={(e) =>
+                        updateConfigField("whatsapp_message", e.target.value)
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-4">
-                  <Label>Mensaje de WhatsApp</Label>
-                  <Textarea
-                    className="min-h-24"
-                    placeholder="Ej: Hola, quiero agendar una consulta médica. ¿Me puedes compartir disponibilidad?"
-                    value={config.whatsapp_message}
-                    onChange={(e) =>
-                      updateConfigField("whatsapp_message", e.target.value)
-                    }
-                  />
-                </div>
+                <ConfigGroupTitle>Hero principal</ConfigGroupTitle>
 
-                <ConfigGroupTitle>Hero</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <Label>Hero Title</Label>
+                    <Label>Hero title</Label>
                     <Input
-                      placeholder="Ej: Médico general en Nezahualcóyotl con consulta médica privada, diagnóstico claro y tratamiento oportuno"
                       value={config.hero_title}
                       onChange={(e) =>
                         updateConfigField("hero_title", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>Hero Subtitle</Label>
+                    <Label>Hero subtitle</Label>
                     <Input
-                      placeholder="Ej: Atención médica profesional en Nezahualcóyotl, Estado de México..."
                       value={config.hero_subtitle}
                       onChange={(e) =>
                         updateConfigField("hero_subtitle", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>Texto CTA Principal</Label>
+                    <Label>CTA principal</Label>
                     <Input
-                      placeholder="Ej: Agendar por WhatsApp"
                       value={config.cta_primary_text}
                       onChange={(e) =>
                         updateConfigField("cta_primary_text", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>Texto CTA Secundario</Label>
+                    <Label>CTA secundario</Label>
                     <Input
-                      placeholder="Ej: Reservar en línea"
                       value={config.cta_secondary_text}
                       onChange={(e) =>
                         updateConfigField("cta_secondary_text", e.target.value)
@@ -2726,22 +2250,20 @@ export default function AdminPage() {
                 </div>
 
                 <ConfigGroupTitle>Agenda</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
+
+                <div className="grid gap-5 md:grid-cols-2">
                   <div>
                     <Label>Título de agenda</Label>
                     <Input
-                      placeholder="Ej: Da el siguiente paso para cuidar tu salud"
                       value={config.agenda_title}
                       onChange={(e) =>
                         updateConfigField("agenda_title", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
                     <Label>Subtítulo de agenda</Label>
                     <Input
-                      placeholder="Ej: Recibe atención médica profesional, cercana y con seguimiento..."
                       value={config.agenda_subtitle}
                       onChange={(e) =>
                         updateConfigField("agenda_subtitle", e.target.value)
@@ -2751,44 +2273,38 @@ export default function AdminPage() {
                 </div>
 
                 <ConfigGroupTitle>SEO</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
+
+                <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <Label>SEO Title</Label>
+                    <Label>SEO title</Label>
                     <Input
-                      placeholder="Ej: Médico general en Nezahualcóyotl | Consulta médica privada"
                       value={config.seo_title}
                       onChange={(e) =>
                         updateConfigField("seo_title", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>SEO Description</Label>
+                    <Label>SEO description</Label>
                     <Input
-                      placeholder="Ej: Consulta médica privada con médico general en Nezahualcóyotl..."
                       value={config.seo_description}
                       onChange={(e) =>
                         updateConfigField("seo_description", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
                     <Label>Ciudad SEO</Label>
                     <Input
-                      placeholder="Ej: Nezahualcóyotl"
                       value={config.seo_city}
                       onChange={(e) =>
                         updateConfigField("seo_city", e.target.value)
                       }
                     />
                   </div>
-
                   <div>
-                    <Label>Estado SEO</Label>
+                    <Label>Región SEO</Label>
                     <Input
-                      placeholder="Ej: Estado de México"
                       value={config.seo_region}
                       onChange={(e) =>
                         updateConfigField("seo_region", e.target.value)
@@ -2797,287 +2313,266 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <ConfigGroupTitle>Qué incluye la consulta</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label>Qué incluye la consulta 1</Label>
-                    <Input
-                      value={config.include_1}
-                      onChange={(e) =>
-                        updateConfigField("include_1", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Qué incluye la consulta 2</Label>
-                    <Input
-                      value={config.include_2}
-                      onChange={(e) =>
-                        updateConfigField("include_2", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Qué incluye la consulta 3</Label>
-                    <Input
-                      value={config.include_3}
-                      onChange={(e) =>
-                        updateConfigField("include_3", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Qué incluye la consulta 4</Label>
-                    <Input
-                      value={config.include_4}
-                      onChange={(e) =>
-                        updateConfigField("include_4", e.target.value)
-                      }
-                    />
-                  </div>
+                <div className="mt-8 flex justify-end">
+                  <PrimaryButton onClick={saveConfig} disabled={savingConfig}>
+                    {savingConfig ? "Guardando..." : "Guardar configuración"}
+                  </PrimaryButton>
                 </div>
-
-                <ConfigGroupTitle>Motivos para consultar</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label>Motivo para consultar 1</Label>
-                    <Input
-                      value={config.reason_1}
-                      onChange={(e) =>
-                        updateConfigField("reason_1", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Motivo para consultar 2</Label>
-                    <Input
-                      value={config.reason_2}
-                      onChange={(e) =>
-                        updateConfigField("reason_2", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Motivo para consultar 3</Label>
-                    <Input
-                      value={config.reason_3}
-                      onChange={(e) =>
-                        updateConfigField("reason_3", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Motivo para consultar 4</Label>
-                    <Input
-                      value={config.reason_4}
-                      onChange={(e) =>
-                        updateConfigField("reason_4", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <ConfigGroupTitle>FAQs</ConfigGroupTitle>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label>FAQ Pregunta 1</Label>
-                    <Input
-                      value={config.faq_q1}
-                      onChange={(e) => updateConfigField("faq_q1", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Respuesta 1</Label>
-                    <Input
-                      value={config.faq_a1}
-                      onChange={(e) => updateConfigField("faq_a1", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Pregunta 2</Label>
-                    <Input
-                      value={config.faq_q2}
-                      onChange={(e) => updateConfigField("faq_q2", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Respuesta 2</Label>
-                    <Input
-                      value={config.faq_a2}
-                      onChange={(e) => updateConfigField("faq_a2", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Pregunta 3</Label>
-                    <Input
-                      value={config.faq_q3}
-                      onChange={(e) => updateConfigField("faq_q3", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Respuesta 3</Label>
-                    <Input
-                      value={config.faq_a3}
-                      onChange={(e) => updateConfigField("faq_a3", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Pregunta 4</Label>
-                    <Input
-                      value={config.faq_q4}
-                      onChange={(e) => updateConfigField("faq_q4", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>FAQ Respuesta 4</Label>
-                    <Input
-                      value={config.faq_a4}
-                      onChange={(e) => updateConfigField("faq_a4", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <AccentButton className="mt-6" onClick={saveConfig}>
-                  {savingConfig ? "Guardando..." : "Guardar configuración"}
-                </AccentButton>
               </Card>
             ) : null}
 
             {activeSection === "profile" && canManageProfile ? (
               <Card
-                title="Perfil profesional"
-                subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
+                title="Perfil del médico"
+                subtitle="Datos profesionales y de contacto."
               >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input
-                    placeholder="Nombre del médico"
-                    value={profile.doctor_name || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, doctor_name: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Universidad"
-                    value={profile.university || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, university: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Teléfono"
-                    value={profile.phone || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, phone: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Correo"
-                    value={profile.email || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, email: e.target.value })
-                    }
-                  />
-                  <Input
-                    className="md:col-span-2"
-                    placeholder="Horario"
-                    value={profile.schedule || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, schedule: e.target.value })
-                    }
-                  />
-                  <Input
-                    className="md:col-span-2"
-                    placeholder="Dirección"
-                    value={profile.address || ""}
-                    onChange={(e) =>
-                      setProfile({ ...profile, address: e.target.value })
-                    }
-                  />
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>Nombre</Label>
+                    <Input
+                      value={profile.doctor_name || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          doctor_name: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Universidad</Label>
+                    <Input
+                      value={profile.university || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          university: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Teléfono</Label>
+                    <Input
+                      value={profile.phone || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Correo</Label>
+                    <Input
+                      value={profile.email || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Dirección</Label>
+                    <Textarea
+                      rows={3}
+                      value={profile.address || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Horario</Label>
+                    <Input
+                      value={profile.schedule || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          schedule: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Biografía</Label>
+                    <Textarea
+                      rows={5}
+                      value={profile.bio || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          bio: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
 
-                <Textarea
-                  className="mt-4 min-h-28"
-                  placeholder="Semblanza profesional"
-                  value={profile.bio || ""}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                />
-
-                <PrimaryButton className="mt-4" onClick={saveProfile}>
-                  Guardar perfil
-                </PrimaryButton>
+                <div className="mt-8 flex justify-end">
+                  <PrimaryButton onClick={saveProfile}>
+                    Guardar perfil
+                  </PrimaryButton>
+                </div>
               </Card>
             ) : null}
 
             {activeSection === "services" && canManageServices ? (
               <Card
                 title="Servicios"
-                subtitle="Agrega nuevos servicios o modifica los actuales, incluyendo si son destacados y su orden."
+                subtitle="Servicios médicos mostrados en la página."
               >
-                <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_140px_auto]">
-                  <Input
-                    placeholder="Nombre del servicio"
-                    value={newService.name}
-                    onChange={(e) =>
-                      setNewService({ ...newService, name: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Descripción"
-                    value={newService.description}
-                    onChange={(e) =>
-                      setNewService({ ...newService, description: e.target.value })
-                    }
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Precio"
-                    value={newService.price}
-                    onChange={(e) =>
-                      setNewService({ ...newService, price: e.target.value })
-                    }
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Orden"
-                    value={newService.orden}
-                    onChange={(e) =>
-                      setNewService({ ...newService, orden: e.target.value })
-                    }
-                  />
-                  <AccentButton onClick={addService}>Agregar</AccentButton>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Nombre</Label>
+                      <Input
+                        value={newService.name}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Precio</Label>
+                      <Input
+                        type="number"
+                        value={newService.price}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            price: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Orden</Label>
+                      <Input
+                        type="number"
+                        value={newService.orden}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            orden: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(newService.destacado)}
+                          onChange={(e) =>
+                            setNewService((prev) => ({
+                              ...prev,
+                              destacado: e.target.checked,
+                            }))
+                          }
+                        />
+                        Marcar como destacado
+                      </label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label>Descripción</Label>
+                      <Textarea
+                        rows={4}
+                        value={newService.description}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <PrimaryButton onClick={addService}>
+                      Agregar servicio
+                    </PrimaryButton>
+                  </div>
                 </div>
 
-                <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(newService.destacado)}
-                    onChange={(e) =>
-                      setNewService({ ...newService, destacado: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
-                  />
-                  Marcar como destacado
-                </label>
+                <Divider />
 
-                <div className="mt-6 space-y-4">
-                  {sortedServices.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                      Aún no hay servicios registrados.
-                    </div>
-                  ) : (
-                    sortedServices.map((service) => (
-                      <div
-                        key={service.id}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                      >
-                        <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_160px_120px_auto_auto] md:items-center">
+                <div className="grid gap-4">
+                  {sortedServices.map((service) => (
+                    <div
+                      key={service.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Nombre</Label>
                           <Input
                             value={service.name || ""}
                             onChange={(e) =>
                               updateService(service.id, "name", e.target.value)
                             }
                           />
+                        </div>
+                        <div>
+                          <Label>Precio</Label>
                           <Input
+                            type="number"
+                            value={service.price || ""}
+                            onChange={(e) =>
+                              updateService(service.id, "price", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label>Orden</Label>
+                          <Input
+                            type="number"
+                            value={service.orden || 0}
+                            onChange={(e) =>
+                              updateService(service.id, "orden", e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(service.destacado)}
+                              onChange={(e) =>
+                                updateService(
+                                  service.id,
+                                  "destacado",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                            Destacado
+                          </label>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>Descripción</Label>
+                          <Textarea
+                            rows={4}
                             value={service.description || ""}
                             onChange={(e) =>
                               updateService(
@@ -3087,46 +2582,26 @@ export default function AdminPage() {
                               )
                             }
                           />
-                          <Input
-                            type="number"
-                            value={service.price ?? ""}
-                            onChange={(e) =>
-                              updateService(service.id, "price", e.target.value)
-                            }
-                          />
-                          <Input
-                            type="number"
-                            value={service.orden ?? 0}
-                            onChange={(e) =>
-                              updateService(service.id, "orden", e.target.value)
-                            }
-                          />
-                          <SecondaryButton onClick={() => saveService(service)}>
-                            Guardar
-                          </SecondaryButton>
-                          <DangerButton onClick={() => deleteService(service.id)}>
-                            Eliminar
-                          </DangerButton>
                         </div>
-
-                        <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(service.destacado)}
-                            onChange={(e) =>
-                              updateService(
-                                service.id,
-                                "destacado",
-                                e.target.checked
-                              )
-                            }
-                            className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
-                          />
-                          Destacado
-                        </label>
                       </div>
-                    ))
-                  )}
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <PrimaryButton onClick={() => saveService(service)}>
+                          Guardar cambios
+                        </PrimaryButton>
+                        <DangerButton onClick={() => deleteService(service.id)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!sortedServices.length ? (
+                    <EmptyState
+                      title="No hay servicios"
+                      description="Agrega aquí los servicios médicos disponibles."
+                    />
+                  ) : null}
                 </div>
               </Card>
             ) : null}
@@ -3134,47 +2609,64 @@ export default function AdminPage() {
             {activeSection === "licenses" && canManageLicenses ? (
               <Card
                 title="Cédulas"
-                subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado académico."
+                subtitle="Registro de cédulas profesionales y grados."
               >
-                <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-                  <Input
-                    placeholder="Tipo (Licenciatura, Especialidad, Maestría...)"
-                    value={newLicense.label}
-                    onChange={(e) =>
-                      setNewLicense({ ...newLicense, label: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Número de cédula"
-                    value={newLicense.license_number}
-                    onChange={(e) =>
-                      setNewLicense({
-                        ...newLicense,
-                        license_number: e.target.value,
-                      })
-                    }
-                  />
-                  <AccentButton onClick={addLicense}>Agregar</AccentButton>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Tipo / etiqueta</Label>
+                      <Input
+                        value={newLicense.label}
+                        onChange={(e) =>
+                          setNewLicense((prev) => ({
+                            ...prev,
+                            label: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Número de cédula</Label>
+                      <Input
+                        value={newLicense.license_number}
+                        onChange={(e) =>
+                          setNewLicense((prev) => ({
+                            ...prev,
+                            license_number: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <PrimaryButton onClick={addLicense}>
+                      Agregar cédula
+                    </PrimaryButton>
+                  </div>
                 </div>
 
-                <div className="mt-6 space-y-4">
-                  {licenses.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                      Aún no hay cédulas registradas.
-                    </div>
-                  ) : (
-                    licenses.map((license) => (
-                      <div
-                        key={license.id}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                      >
-                        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                <Divider />
+
+                <div className="grid gap-4">
+                  {licenses.map((license) => (
+                    <div
+                      key={license.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Etiqueta</Label>
                           <Input
                             value={license.label || ""}
                             onChange={(e) =>
                               updateLicense(license.id, "label", e.target.value)
                             }
                           />
+                        </div>
+                        <div>
+                          <Label>Número</Label>
                           <Input
                             value={license.license_number || ""}
                             onChange={(e) =>
@@ -3185,208 +2677,1433 @@ export default function AdminPage() {
                               )
                             }
                           />
-                          <SecondaryButton onClick={() => saveLicense(license)}>
-                            Guardar
-                          </SecondaryButton>
-                          <DangerButton onClick={() => deleteLicense(license.id)}>
-                            Eliminar
-                          </DangerButton>
                         </div>
                       </div>
-                    ))
-                  )}
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <PrimaryButton onClick={() => saveLicense(license)}>
+                          Guardar cambios
+                        </PrimaryButton>
+                        <DangerButton onClick={() => deleteLicense(license.id)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!licenses.length ? (
+                    <EmptyState
+                      title="No hay cédulas registradas"
+                      description="Agrega aquí los datos académicos y profesionales."
+                    />
+                  ) : null}
                 </div>
               </Card>
             ) : null}
 
             {activeSection === "credentials" && canManageProfessionalImages ? (
-              <>
-                <ImageAdminSection
-                  title="Foto profesional"
-                  subtitle="Sube la foto principal del médico para el hero o secciones de presentación."
-                  items={profilePhotos}
-                  onFileChange={setProfilePhotoFile}
-                  onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
-                  onDelete={deleteImage}
-                />
+              <Card
+                title="Credenciales"
+                subtitle="Sube fotos profesionales, títulos y certificaciones."
+              >
+                <div className="grid gap-6 xl:grid-cols-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Foto profesional</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() => uploadImage(profilePhotoFile, "foto_profesional")}
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
 
-                <ImageAdminSection
-                  title="Títulos académicos"
-                  subtitle="Sube imágenes de títulos de licenciatura, especialidad, maestrías u otros grados formales."
-                  items={titleImages}
-                  onFileChange={setTitleFile}
-                  onUpload={() => uploadImage(titleFile, "titulo_academico")}
-                  onDelete={deleteImage}
-                />
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Título académico</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setTitleFile(e.target.files?.[0] || null)}
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() => uploadImage(titleFile, "titulo_academico")}
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
 
-                <ImageAdminSection
-                  title="Diplomados y certificaciones"
-                  subtitle="Sube constancias, certificados o diplomados relevantes para tu práctica profesional."
-                  items={diplomaImages}
-                  onFileChange={setDiplomaFile}
-                  onUpload={() =>
-                    uploadImage(diplomaFile, "diplomado_certificacion")
-                  }
-                  onDelete={deleteImage}
-                />
-              </>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Diplomado o certificación</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setDiplomaFile(e.target.files?.[0] || null)}
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() =>
+                          uploadImage(diplomaFile, "diplomado_certificacion")
+                        }
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-6 xl:grid-cols-3">
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Fotos profesionales
+                    </h3>
+                    <div className="space-y-4">
+                      {profilePhotos.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Foto profesional"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Títulos académicos
+                    </h3>
+                    <div className="space-y-4">
+                      {titleImages.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Título"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Diplomas y certificaciones
+                    </h3>
+                    <div className="space-y-4">
+                      {diplomaImages.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Certificación"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
             ) : null}
 
-            {activeSection === "clinic" && canManageClinicImages ? (
-              <ImageAdminSection
-                title="Fotos del consultorio"
-                subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
-                items={clinicImages}
-                onFileChange={setClinicFile}
-                onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
-                onDelete={deleteImage}
-              />
+            {activeSection === "agenda" && canManageAgenda ? (
+              <Card
+                title="Agenda"
+                subtitle="Crear, editar, filtrar y relacionar citas con pacientes."
+              >
+                <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {appointmentMode === "create" ? "Nueva cita" : "Editar cita"}
+                        </h3>
+
+                        {appointmentMode === "edit" ? (
+                          <SecondaryButton onClick={() => resetAppointmentForm()}>
+                            Nueva
+                          </SecondaryButton>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <Label>Paciente vinculado</Label>
+                          {appointmentForm.patient_id ? (
+                            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
+                              <p className="text-sm font-semibold text-cyan-900">
+                                Paciente #{appointmentForm.patient_id}
+                              </p>
+                              <p className="mt-1 text-sm text-cyan-800">
+                                {appointmentForm.nombre}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <SecondaryButton onClick={removePatientFromAppointment}>
+                                  Desvincular
+                                </SecondaryButton>
+                                <SecondaryButton
+                                  onClick={() => {
+                                    const currentPatient = patients.find(
+                                      (patient) =>
+                                        patient.id === appointmentForm.patient_id
+                                    );
+                                    if (currentPatient) openEditPatient(currentPatient);
+                                  }}
+                                >
+                                  Ver ficha
+                                </SecondaryButton>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                              Esta cita aún no está ligada a un paciente del sistema.
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label>Nombre del paciente</Label>
+                          <Input
+                            value={appointmentForm.nombre}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                nombre: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Teléfono</Label>
+                            <Input
+                              value={appointmentForm.telefono}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  telefono: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label>Correo</Label>
+                            <Input
+                              type="email"
+                              value={appointmentForm.correo}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  correo: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Edad</Label>
+                            <Input
+                              type="number"
+                              value={appointmentForm.edad}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  edad: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label>Fecha de nacimiento</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_nacimiento}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_nacimiento: e.target.value,
+                                  edad: e.target.value
+                                    ? calculateAgeFromBirthDate(e.target.value)
+                                    : prev.edad,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Fecha de cita</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_cita}
+                              onChange={(e) => {
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_cita: e.target.value,
+                                }));
+                                setSlotsDate(e.target.value);
+                                fetchAvailableSlots(e.target.value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Hora</Label>
+                            <Input
+                              type="time"
+                              value={appointmentForm.hora_cita}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  hora_cita: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Tipo de consulta</Label>
+                            <Select
+                              value={appointmentForm.tipo_consulta}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  tipo_consulta: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="presencial">Presencial</option>
+                              <option value="online">En línea</option>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Estatus</Label>
+                            <Select
+                              value={appointmentForm.status}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  status: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="pending">Pendiente</option>
+                              <option value="confirmed">Confirmada</option>
+                              <option value="completed">Completada</option>
+                              <option value="cancelled">Cancelada</option>
+                              <option value="no_show">No asistió</option>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(appointmentForm.confirmed)}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  confirmed: e.target.checked,
+                                }))
+                              }
+                            />
+                            Cita confirmada por el paciente
+                          </label>
+                        </div>
+
+                        <div>
+                          <Label>Nota administrativa</Label>
+                          <Textarea
+                            rows={4}
+                            value={appointmentForm.notes_admin}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                notes_admin: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <PrimaryButton
+                            onClick={saveAppointmentForm}
+                            disabled={savingAppointment}
+                          >
+                            {savingAppointment
+                              ? "Guardando..."
+                              : appointmentMode === "create"
+                              ? "Guardar cita"
+                              : "Actualizar cita"}
+                          </PrimaryButton>
+
+                          <SecondaryButton
+                            onClick={() =>
+                              openCreatePatient(buildPatientSnapshot(appointmentForm))
+                            }
+                          >
+                            Crear paciente con estos datos
+                          </SecondaryButton>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Horarios disponibles
+                        </h3>
+                        <SecondaryButton
+                          onClick={() => fetchAvailableSlots(slotsDate)}
+                          disabled={!slotsDate || slotsLoading}
+                        >
+                          Actualizar
+                        </SecondaryButton>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label>Fecha para revisar</Label>
+                        <Input
+                          type="date"
+                          value={slotsDate}
+                          onChange={(e) => {
+                            setSlotsDate(e.target.value);
+                            fetchAvailableSlots(e.target.value);
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(availableSlots || []).map((slot) => (
+                          <button
+                            key={slot.hora}
+                            type="button"
+                            onClick={() =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                fecha_cita: slotsDate,
+                                hora_cita: slot.hora,
+                              }))
+                            }
+                            className={`rounded-full border px-3 py-2 text-sm font-semibold ${
+                              slot.disponible
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-slate-100 text-slate-400"
+                            }`}
+                            disabled={!slot.disponible}
+                          >
+                            {slot.hora}
+                          </button>
+                        ))}
+                      </div>
+
+                      {!availableSlots.length ? (
+                        <p className="mt-4 text-sm text-slate-500">
+                          {slotsLoading
+                            ? "Consultando horarios..."
+                            : "Selecciona una fecha para revisar la disponibilidad."}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Filtros de agenda
+                      </h3>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div>
+                          <Label>Fecha</Label>
+                          <Select
+                            value={appointmentFilters.fecha}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                fecha: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todas</option>
+                            {[...new Set(appointments.map((a) => a.fecha_cita))]
+                              .filter(Boolean)
+                              .map((date) => (
+                                <option key={date} value={date}>
+                                  {formatDate(date)}
+                                </option>
+                              ))}
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Estatus</Label>
+                          <Select
+                            value={appointmentFilters.status}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                status: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="confirmed">Confirmada</option>
+                            <option value="completed">Completada</option>
+                            <option value="cancelled">Cancelada</option>
+                            <option value="no_show">No asistió</option>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Tipo</Label>
+                          <Select
+                            value={appointmentFilters.tipo}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                tipo: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="online">En línea</option>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Card
+                      title="Citas registradas"
+                      subtitle="Listado completo con edición, cancelación y vínculo con pacientes."
+                    >
+                      <div className="grid gap-4">
+                        {filteredAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-lg font-bold text-slate-900">
+                                    {appointment.nombre || "Paciente sin nombre"}
+                                  </p>
+
+                                  <StatusBadge
+                                    tone={
+                                      appointment.status === "completed"
+                                        ? "success"
+                                        : appointment.status === "cancelled"
+                                        ? "danger"
+                                        : appointment.status === "confirmed"
+                                        ? "info"
+                                        : appointment.status === "no_show"
+                                        ? "warning"
+                                        : "default"
+                                    }
+                                  >
+                                    {appointment.status || "pending"}
+                                  </StatusBadge>
+
+                                  {appointment.confirmed ? (
+                                    <StatusBadge tone="success">
+                                      Confirmada
+                                    </StatusBadge>
+                                  ) : null}
+                                </div>
+
+                                <p className="mt-2 text-sm text-slate-600">
+                                  {formatDateTime(
+                                    appointment.fecha_cita,
+                                    appointment.hora_cita
+                                  )}
+                                </p>
+
+                                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
+                                  <span>Tipo: {appointment.tipo_consulta || "—"}</span>
+                                  <span>Tel: {appointment.telefono || "—"}</span>
+                                  <span>Correo: {appointment.correo || "—"}</span>
+                                  <span>
+                                    Paciente ligado:{" "}
+                                    {appointment.patient_id
+                                      ? `#${appointment.patient_id}`
+                                      : "No"}
+                                  </span>
+                                </div>
+
+                                {appointment.notes_admin ? (
+                                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                                    {appointment.notes_admin}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <SecondaryButton
+                                  onClick={() => openEditAppointment(appointment)}
+                                >
+                                  Editar
+                                </SecondaryButton>
+
+                                {appointment.patient_id ? (
+                                  <SecondaryButton
+                                    onClick={() => {
+                                      const patient = patients.find(
+                                        (item) => item.id === appointment.patient_id
+                                      );
+                                      if (patient) openEditPatient(patient);
+                                    }}
+                                  >
+                                    Ver paciente
+                                  </SecondaryButton>
+                                ) : (
+                                  <SecondaryButton
+                                    onClick={() =>
+                                      openCreatePatient({
+                                        nombre: appointment.nombre || "",
+                                        telefono: appointment.telefono || "",
+                                        correo: appointment.correo || "",
+                                        edad:
+                                          appointment.edad === null ||
+                                          appointment.edad === undefined
+                                            ? ""
+                                            : String(appointment.edad),
+                                        fecha_nacimiento:
+                                          appointment.fecha_nacimiento || "",
+                                      })
+                                    }
+                                  >
+                                    Crear paciente
+                                  </SecondaryButton>
+                                )}
+
+                                <DangerButton
+                                  onClick={() => cancelAppointment(appointment)}
+                                >
+                                  Cancelar
+                                </DangerButton>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {!filteredAppointments.length ? (
+                          <EmptyState
+                            title="No hay citas para mostrar"
+                            description="Ajusta filtros o crea la primera cita desde el formulario lateral."
+                          />
+                        ) : null}
+                      </div>
+
+                      {appointmentsLoading ? (
+                        <p className="mt-4 text-sm text-slate-500">
+                          Cargando agenda...
+                        </p>
+                      ) : null}
+                    </Card>
+                  </div>
+                </div>
+              </Card>
             ) : null}
 
-            {activeSection === "publicity" && canManagePublicity ? (
-              <ImageAdminSection
-                title="Publicidad"
-                subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
-                items={publicityImages}
-                onFileChange={setPublicityFile}
-                onUpload={() => uploadImage(publicityFile, "publicidad")}
-                onDelete={deleteImage}
-              />
+            {activeSection === "patients" && canManagePatients ? (
+              <Card
+                title="Pacientes"
+                subtitle="Listado general, buscador por nombre / teléfono / correo, ficha individual y citas ligadas."
+              >
+                <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {patientMode === "create"
+                            ? "Nuevo paciente"
+                            : "Ficha individual"}
+                        </h3>
+
+                        <div className="flex gap-2">
+                          <SecondaryButton onClick={() => openCreatePatient()}>
+                            Nuevo
+                          </SecondaryButton>
+                          <SecondaryButton onClick={resetPatientForm}>
+                            Limpiar
+                          </SecondaryButton>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <Label>Nombre completo</Label>
+                          <Input
+                            value={patientForm.nombre}
+                            onChange={(e) =>
+                              setPatientForm((prev) => ({
+                                ...prev,
+                                nombre: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Teléfono</Label>
+                            <Input
+                              value={patientForm.telefono}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  telefono: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Correo</Label>
+                            <Input
+                              type="email"
+                              value={patientForm.correo}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  correo: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Fecha de nacimiento</Label>
+                            <Input
+                              type="date"
+                              value={patientForm.fecha_nacimiento}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  fecha_nacimiento: e.target.value,
+                                  edad: e.target.value
+                                    ? calculateAgeFromBirthDate(e.target.value)
+                                    : prev.edad,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Edad</Label>
+                            <Input
+                              type="number"
+                              value={patientForm.edad}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  edad: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Sexo</Label>
+                            <Select
+                              value={patientForm.sexo}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  sexo: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Selecciona</option>
+                              <option value="Masculino">Masculino</option>
+                              <option value="Femenino">Femenino</option>
+                              <option value="Otro">Otro</option>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>CURP</Label>
+                            <Input
+                              value={patientForm.curp}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  curp: e.target.value.toUpperCase(),
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Dirección</Label>
+                          <Textarea
+                            rows={3}
+                            value={patientForm.direccion}
+                            onChange={(e) =>
+                              setPatientForm((prev) => ({
+                                ...prev,
+                                direccion: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Contacto de emergencia</Label>
+                            <Input
+                              value={patientForm.contacto_emergencia_nombre}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  contacto_emergencia_nombre: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Teléfono de emergencia</Label>
+                            <Input
+                              value={patientForm.contacto_emergencia_telefono}
+                              onChange={(e) =>
+                                setPatientForm((prev) => ({
+                                  ...prev,
+                                  contacto_emergencia_telefono: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Notas de identificación</Label>
+                          <Textarea
+                            rows={4}
+                            value={patientForm.notas_identificacion}
+                            onChange={(e) =>
+                              setPatientForm((prev) => ({
+                                ...prev,
+                                notas_identificacion: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <PrimaryButton
+                            onClick={savePatientForm}
+                            disabled={savingPatient}
+                          >
+                            {savingPatient
+                              ? "Guardando..."
+                              : patientMode === "create"
+                              ? "Guardar paciente"
+                              : "Actualizar paciente"}
+                          </PrimaryButton>
+
+                          {selectedPatientId ? (
+                            <SecondaryButton
+                              onClick={() => {
+                                const currentPatient = patients.find(
+                                  (patient) => patient.id === selectedPatientId
+                                );
+                                if (currentPatient) attachPatientToAppointment(currentPatient);
+                                setActiveSection("agenda");
+                              }}
+                            >
+                              Vincular a agenda
+                            </SecondaryButton>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Resumen del paciente
+                      </h3>
+
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <InfoStat
+                          label="Paciente"
+                          value={selectedPatientId ? `#${selectedPatientId}` : "Nuevo"}
+                          helper="Identificador interno"
+                        />
+                        <InfoStat
+                          label="Citas ligadas"
+                          value={selectedPatientAppointments.length}
+                          helper="Historial relacionado"
+                        />
+                      </div>
+
+                      {!selectedPatientId ? (
+                        <p className="mt-4 text-sm text-slate-500">
+                          Guarda el paciente para habilitar su historial y ligarlo a la agenda.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Card
+                      title="Listado general de pacientes"
+                      subtitle="Busca por nombre, teléfono o correo y entra a la vista individual."
+                    >
+                      <div className="flex flex-col gap-3 md:flex-row">
+                        <Input
+                          placeholder="Buscar por nombre, teléfono o correo"
+                          value={patientsSearch}
+                          onChange={(e) => setPatientsSearch(e.target.value)}
+                        />
+                        <SecondaryButton onClick={() => fetchPatients()}>
+                          Buscar
+                        </SecondaryButton>
+                      </div>
+
+                      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <InfoStat
+                          label="Pacientes registrados"
+                          value={patients.length}
+                          helper="Resultados cargados"
+                        />
+                        <InfoStat
+                          label="Con teléfono"
+                          value={patients.filter((p) => p.telefono).length}
+                          helper="Contacto disponible"
+                        />
+                        <InfoStat
+                          label="Con correo"
+                          value={patients.filter((p) => p.correo).length}
+                          helper="Comunicación digital"
+                        />
+                        <InfoStat
+                          label="Con citas ligadas"
+                          value={
+                            patients.filter((patient) =>
+                              appointments.some((a) => a.patient_id === patient.id)
+                            ).length
+                          }
+                          helper="Pacientes vinculados"
+                        />
+                      </div>
+
+                      <Divider />
+
+                      <div className="grid gap-4">
+                        {patients.map((patient) => (
+                          <div
+                            key={patient.id}
+                            className={`rounded-2xl border p-5 transition ${
+                              selectedPatientId === patient.id
+                                ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                                : "border-slate-200 bg-slate-50 text-slate-900"
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-lg font-bold">
+                                    {patient.nombre || "Sin nombre"}
+                                  </p>
+                                  <StatusBadge
+                                    tone={
+                                      selectedPatientId === patient.id
+                                        ? "info"
+                                        : "default"
+                                    }
+                                  >
+                                    #{patient.id}
+                                  </StatusBadge>
+                                </div>
+
+                                <div
+                                  className={`mt-3 grid gap-2 text-sm ${
+                                    selectedPatientId === patient.id
+                                      ? "text-slate-200"
+                                      : "text-slate-500"
+                                  }`}
+                                >
+                                  <p>Teléfono: {patient.telefono || "—"}</p>
+                                  <p>Correo: {patient.correo || "—"}</p>
+                                  <p>
+                                    Nacimiento:{" "}
+                                    {patient.fecha_nacimiento
+                                      ? formatDate(patient.fecha_nacimiento)
+                                      : "—"}
+                                  </p>
+                                  <p>
+                                    Actualizado:{" "}
+                                    {patient.updated_at
+                                      ? new Date(patient.updated_at).toLocaleString("es-MX")
+                                      : "—"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <SecondaryButton onClick={() => openEditPatient(patient)}>
+                                  Ver paciente
+                                </SecondaryButton>
+                                <SecondaryButton
+                                  onClick={() => attachPatientToAppointment(patient)}
+                                >
+                                  Vincular a cita
+                                </SecondaryButton>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {!patients.length ? (
+                          <EmptyState
+                            title="No hay pacientes registrados"
+                            description="Puedes crearlos desde este módulo o desde agenda usando los datos de una cita."
+                          />
+                        ) : null}
+                      </div>
+
+                      {patientsLoading ? (
+                        <p className="mt-4 text-sm text-slate-500">
+                          Cargando pacientes...
+                        </p>
+                      ) : null}
+                    </Card>
+
+                    <Card
+                      title="Citas ligadas al paciente"
+                      subtitle={
+                        selectedPatientId
+                          ? `Historial vinculado del paciente ${
+                              patients.find((patient) => patient.id === selectedPatientId)
+                                ?.nombre || ""
+                            }`
+                          : "Selecciona o guarda un paciente para ver su historial."
+                      }
+                    >
+                      {!selectedPatientId ? (
+                        <EmptyState
+                          title="Sin paciente seleccionado"
+                          description="Elige un paciente del listado o guarda uno nuevo para consultar sus citas."
+                        />
+                      ) : (
+                        <div className="grid gap-4">
+                          {selectedPatientAppointments.map((appointment) => (
+                            <div
+                              key={appointment.id}
+                              className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-lg font-bold text-slate-900">
+                                      {formatDateTime(
+                                        appointment.fecha_cita,
+                                        appointment.hora_cita
+                                      )}
+                                    </p>
+                                    <StatusBadge
+                                      tone={
+                                        appointment.status === "completed"
+                                          ? "success"
+                                          : appointment.status === "cancelled"
+                                          ? "danger"
+                                          : appointment.status === "confirmed"
+                                          ? "info"
+                                          : appointment.status === "no_show"
+                                          ? "warning"
+                                          : "default"
+                                      }
+                                    >
+                                      {appointment.status || "pending"}
+                                    </StatusBadge>
+                                  </div>
+
+                                  <p className="mt-2 text-sm text-slate-500">
+                                    Tipo: {appointment.tipo_consulta || "—"}
+                                  </p>
+
+                                  {appointment.notes_admin ? (
+                                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                                      {appointment.notes_admin}
+                                    </p>
+                                  ) : null}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  <SecondaryButton
+                                    onClick={() => openEditAppointment(appointment)}
+                                  >
+                                    Editar cita
+                                  </SecondaryButton>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          {!selectedPatientAppointments.length ? (
+                            <EmptyState
+                              title="Sin citas ligadas"
+                              description="Este paciente todavía no tiene consultas vinculadas en el sistema."
+                            />
+                          ) : null}
+                        </div>
+                      )}
+
+                      {patientAppointmentsLoading ? (
+                        <p className="mt-4 text-sm text-slate-500">
+                          Cargando historial del paciente...
+                        </p>
+                      ) : null}
+                    </Card>
+                  </div>
+                </div>
+              </Card>
             ) : null}
 
             {activeSection === "reviews" && canManageReviews ? (
               <Card
                 title="Reseñas"
-                subtitle="Gestiona reseñas por apartados: pendientes, verificadas y rechazadas, con opción de borrado permanente."
+                subtitle="Moderación, edición y publicación."
               >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Input
-                    placeholder="Nombre del paciente"
-                    value={newReview.patient_name}
-                    onChange={(e) =>
-                      setNewReview({ ...newReview, patient_name: e.target.value })
-                    }
-                  />
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                    <div>
+                      <Label>Nombre del paciente</Label>
+                      <Input
+                        value={newReview.patient_name}
+                        onChange={(e) =>
+                          setNewReview((prev) => ({
+                            ...prev,
+                            patient_name: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
 
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-slate-700">
-                      Calificación
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setNewReview({ ...newReview, rating: star })}
-                          className={`text-3xl transition ${
-                            Number(newReview.rating) >= star
-                              ? "text-yellow-500"
-                              : "text-slate-300"
-                          }`}
-                          aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
-                        >
-                          ★
-                        </button>
-                      ))}
+                    <div className="xl:col-span-2">
+                      <Label>Reseña</Label>
+                      <Textarea
+                        rows={3}
+                        value={newReview.review_text}
+                        onChange={(e) =>
+                          setNewReview((prev) => ({
+                            ...prev,
+                            review_text: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Calificación</Label>
+                      <Select
+                        value={String(newReview.rating)}
+                        onChange={(e) =>
+                          setNewReview((prev) => ({
+                            ...prev,
+                            rating: Number(e.target.value),
+                          }))
+                        }
+                      >
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>Estatus</Label>
+                      <Select
+                        value={newReview.review_status}
+                        onChange={(e) =>
+                          setNewReview((prev) => ({
+                            ...prev,
+                            review_status: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="pending">Pendiente</option>
+                        <option value="verified">Verificada</option>
+                        <option value="rejected">Rechazada</option>
+                      </Select>
                     </div>
                   </div>
-                </div>
 
-                <Textarea
-                  className="mt-4 min-h-24"
-                  placeholder="Texto de la reseña"
-                  value={newReview.review_text}
-                  onChange={(e) =>
-                    setNewReview({ ...newReview, review_text: e.target.value })
-                  }
-                />
-
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-slate-700">
-                      Estado de la reseña
-                    </p>
-                    <Select
-                      value={newReview.review_status}
-                      onChange={(e) =>
-                        setNewReview({
-                          ...newReview,
-                          review_status: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="pending">Pendiente</option>
-                      <option value="verified">Verificada</option>
-                      <option value="rejected">Rechazada</option>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-slate-700">
-                      Tipo de verificación
-                    </p>
-                    <Select
-                      value={newReview.verification_type}
-                      onChange={(e) =>
-                        setNewReview({
-                          ...newReview,
-                          verification_type: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="manual">Manual</option>
-                      <option value="agenda">Cita agendada</option>
-                      <option value="consulta">Consulta asistida</option>
-                    </Select>
+                  <div className="mt-5">
+                    <PrimaryButton onClick={addReview}>
+                      Agregar reseña
+                    </PrimaryButton>
                   </div>
                 </div>
 
-                <AccentButton className="mt-4" onClick={addReview}>
-                  Agregar reseña
-                </AccentButton>
+                <Divider />
 
-                <ReviewSection
-                  title="Pendientes"
-                  subtitle="Reseñas enviadas por pacientes que aún no se verifican ni publican."
-                  reviews={pendingReviews}
-                  updateReview={updateReview}
-                  saveReview={saveReview}
-                  deleteReviewPermanently={deleteReviewPermanently}
-                />
+                <div className="grid gap-4">
+                  {reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                        <div>
+                          <Label>Paciente</Label>
+                          <Input
+                            value={review.patient_name || ""}
+                            onChange={(e) =>
+                              updateReview(review.id, "patient_name", e.target.value)
+                            }
+                          />
+                        </div>
 
-                <ReviewSection
-                  title="Verificadas"
-                  subtitle="Reseñas confirmadas y publicadas en la página."
-                  reviews={verifiedReviews}
-                  updateReview={updateReview}
-                  saveReview={saveReview}
-                  deleteReviewPermanently={deleteReviewPermanently}
-                />
+                        <div className="xl:col-span-2">
+                          <Label>Texto</Label>
+                          <Textarea
+                            rows={3}
+                            value={review.review_text || ""}
+                            onChange={(e) =>
+                              updateReview(review.id, "review_text", e.target.value)
+                            }
+                          />
+                        </div>
 
-                <ReviewSection
-                  title="Rechazadas"
-                  subtitle="Reseñas descartadas que no se muestran en la página pública."
-                  reviews={rejectedReviews}
-                  updateReview={updateReview}
-                  saveReview={saveReview}
-                  deleteReviewPermanently={deleteReviewPermanently}
-                />
+                        <div>
+                          <Label>Calificación</Label>
+                          <Select
+                            value={String(review.rating || 5)}
+                            onChange={(e) =>
+                              updateReview(
+                                review.id,
+                                "rating",
+                                Number(e.target.value)
+                              )
+                            }
+                          >
+                            <option value="5">5</option>
+                            <option value="4">4</option>
+                            <option value="3">3</option>
+                            <option value="2">2</option>
+                            <option value="1">1</option>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Estatus</Label>
+                          <Select
+                            value={review.review_status || "pending"}
+                            onChange={(e) =>
+                              updateReview(
+                                review.id,
+                                "review_status",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="pending">Pendiente</option>
+                            <option value="verified">Verificada</option>
+                            <option value="rejected">Rechazada</option>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <PrimaryButton onClick={() => saveReview(review)}>
+                          Guardar cambios
+                        </PrimaryButton>
+                        <DangerButton
+                          onClick={() => deleteReviewPermanently(review.id)}
+                        >
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!reviews.length ? (
+                    <EmptyState
+                      title="No hay reseñas registradas"
+                      description="Aquí podrás moderar y publicar la prueba social del sitio."
+                    />
+                  ) : null}
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "clinic" && canManageClinicImages ? (
+              <Card
+                title="Consultorio"
+                subtitle="Fotos del espacio médico."
+              >
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <Label>Subir imagen del consultorio</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setClinicFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="mt-4">
+                    <PrimaryButton
+                      onClick={() => uploadImage(clinicFile, "foto_consultorio")}
+                    >
+                      Subir imagen
+                    </PrimaryButton>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {clinicImages.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <img
+                        src={doc.file_url}
+                        alt="Consultorio"
+                        className="h-52 w-full rounded-2xl object-cover"
+                      />
+                      <div className="mt-4">
+                        <DangerButton onClick={() => deleteImage(doc.id, doc.file_url)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!clinicImages.length ? (
+                    <EmptyState
+                      title="Sin imágenes del consultorio"
+                      description="Sube fotos para reforzar confianza y contexto visual."
+                    />
+                  ) : null}
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "publicity" && canManagePublicity ? (
+              <Card
+                title="Publicidad"
+                subtitle="Banners, creativos y material gráfico."
+              >
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <Label>Subir imagen de publicidad</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPublicityFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="mt-4">
+                    <PrimaryButton
+                      onClick={() => uploadImage(publicityFile, "publicidad")}
+                    >
+                      Subir imagen
+                    </PrimaryButton>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {publicityImages.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <img
+                        src={doc.file_url}
+                        alt="Publicidad"
+                        className="h-52 w-full rounded-2xl object-cover"
+                      />
+                      <div className="mt-4">
+                        <DangerButton onClick={() => deleteImage(doc.id, doc.file_url)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!publicityImages.length ? (
+                    <EmptyState
+                      title="Sin material publicitario"
+                      description="Sube recursos gráficos para campañas y presencia visual."
+                    />
+                  ) : null}
+                </div>
               </Card>
             ) : null}
 
             {activeSection === "expediente" && isAdmin ? (
               <Card
                 title="Expediente clínico"
-                subtitle="Este apartado queda preparado para integrar historial por paciente, nota médica, signos vitales, diagnóstico, tratamiento y seguimiento."
+                subtitle="Este módulo se desarrollará en el paso 3."
               >
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                  Próximo paso: aquí vamos a montar pacientes + expediente clínico completo dentro del admin.
-                </div>
+                <EmptyState
+                  title="Módulo en preparación"
+                  description="El siguiente paso será construir historia clínica, signos vitales, nota médica, diagnóstico, tratamiento y seguimiento."
+                />
               </Card>
             ) : null}
-          </div>
+          </main>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
