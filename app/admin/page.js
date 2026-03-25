@@ -456,18 +456,286 @@ function SlotBadge({ slot }) {
   );
 }
 
-function SidebarButton({ active, onClick, children }) {
+function IconDashboard() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M4 4h7v7H4V4Zm9 0h7v5h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconConfig() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M12 8.5A3.5 3.5 0 1 0 12 15.5A3.5 3.5 0 1 0 12 8.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1.2 1.2 0 0 1 0 1.7l-1.6 1.6a1.2 1.2 0 0 1-1.7 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1.2 1.2 0 0 1-1.2 1.2h-2.3A1.2 1.2 0 0 1 9.9 20v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1.2 1.2 0 0 1-1.7 0l-1.6-1.6a1.2 1.2 0 0 1 0-1.7l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a1.2 1.2 0 0 1-1.2-1.2v-2.3A1.2 1.2 0 0 1 4 9.9h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1.2 1.2 0 0 1 0-1.7l1.6-1.6a1.2 1.2 0 0 1 1.7 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4A1.2 1.2 0 0 1 11.1 2.8h2.3A1.2 1.2 0 0 1 14.6 4v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a1.2 1.2 0 0 1 1.7 0l1.6 1.6a1.2 1.2 0 0 1 0 1.7l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6h.2A1.2 1.2 0 0 1 21.2 11v2.3a1.2 1.2 0 0 1-1.2 1.2h-.2a1 1 0 0 0-.9.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconProfile() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M5 20a7 7 0 0 1 14 0"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconServices() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M12 5v14M5 12h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7.5 7.5h9v9h-9z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconLicenses() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M7 4h10a2 2 0 0 1 2 2v12l-3-2-3 2-3-2-3 2V6a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 8h6M9 11h6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconCredentials() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M12 3l7 4v5c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V7l7-4Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m9.5 12 1.5 1.5 3.5-3.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconAgenda() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M7 3v3M17 3v3M4 9h16"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <rect
+        x="4"
+        y="5"
+        width="16"
+        height="15"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M9 13h2M13 13h2M9 16h2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconReviews() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M12 17.5 7.3 20l.9-5.3-3.8-3.7 5.3-.8L12 5.5l2.3 4.7 5.3.8-3.8 3.7.9 5.3-4.7-2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconClinic() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M4 20V8l8-5 8 5v12"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 20v-5h4v5M12 8v4M10 10h4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconPublicity() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M4 14V9a2 2 0 0 1 2-2h9l5-3v16l-5-3H6a2 2 0 0 1-2-2Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 17v3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconExpediente() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M9 4h6M9 8h6M8 4h8a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 13h6M9 16h4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+      <path
+        d="M6 6l12 12M18 6 6 18"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SidebarButton({ active, onClick, icon, label, description }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+      className={`group relative w-full overflow-hidden rounded-2xl border px-4 py-3 text-left transition ${
         active
-          ? "bg-slate-900 text-white shadow-sm"
-          : "text-slate-700 hover:bg-slate-100"
+          ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10"
+          : "border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50"
       }`}
     >
-      {children}
+      <div
+        className={`absolute left-0 top-0 h-full w-1 rounded-r-full transition ${
+          active ? "bg-cyan-400" : "bg-transparent group-hover:bg-slate-200"
+        }`}
+      />
+
+      <div className="flex items-start gap-3">
+        <div
+          className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition ${
+            active
+              ? "border-white/10 bg-white/10 text-white"
+              : "border-slate-200 bg-white text-slate-700 group-hover:border-slate-300"
+          }`}
+        >
+          {icon}
+        </div>
+
+        <div className="min-w-0">
+          <p
+            className={`text-sm font-semibold ${
+              active ? "text-white" : "text-slate-900"
+            }`}
+          >
+            {label}
+          </p>
+          {description ? (
+            <p
+              className={`mt-1 text-xs leading-5 ${
+                active ? "text-slate-200" : "text-slate-500"
+              }`}
+            >
+              {description}
+            </p>
+          ) : null}
+        </div>
+      </div>
     </button>
   );
 }
@@ -527,6 +795,7 @@ export default function AdminPage() {
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -619,6 +888,10 @@ export default function AdminPage() {
       }
     }
   }, [activeSection, isSecretary]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [activeSection]);
 
   async function init() {
     setAuthLoading(true);
@@ -1473,24 +1746,128 @@ export default function AdminPage() {
 
   const sidebarItems = useMemo(() => {
     const items = [
-      { key: "dashboard", label: "Resumen" },
-      { key: "agenda", label: "Citas" },
-      { key: "reviews", label: "Reseñas" },
-      { key: "clinic", label: "Consultorio" },
-      { key: "publicity", label: "Publicidad" },
+      {
+        key: "dashboard",
+        label: "Resumen",
+        icon: <IconDashboard />,
+        description: "Vista general del panel",
+        group: "general",
+      },
+      {
+        key: "agenda",
+        label: "Citas",
+        icon: <IconAgenda />,
+        description: "Agenda, horarios y cambios",
+        group: "operacion",
+      },
+      {
+        key: "reviews",
+        label: "Reseñas",
+        icon: <IconReviews />,
+        description: "Moderación y publicación",
+        group: "operacion",
+      },
+      {
+        key: "clinic",
+        label: "Consultorio",
+        icon: <IconClinic />,
+        description: "Fotos del espacio médico",
+        group: "contenido",
+      },
+      {
+        key: "publicity",
+        label: "Publicidad",
+        icon: <IconPublicity />,
+        description: "Banners y material visual",
+        group: "contenido",
+      },
     ];
 
     if (isAdmin) {
-      items.splice(1, 0, { key: "config", label: "Configuración" });
-      items.splice(2, 0, { key: "profile", label: "Perfil del médico" });
-      items.splice(3, 0, { key: "services", label: "Servicios" });
-      items.splice(4, 0, { key: "licenses", label: "Cédulas" });
-      items.splice(5, 0, { key: "credentials", label: "Credenciales" });
-      items.push({ key: "expediente", label: "Expediente" });
+      items.splice(
+        1,
+        0,
+        {
+          key: "config",
+          label: "Configuración",
+          icon: <IconConfig />,
+          description: "Textos, SEO y enlaces",
+          group: "general",
+        },
+        {
+          key: "profile",
+          label: "Perfil del médico",
+          icon: <IconProfile />,
+          description: "Datos profesionales y contacto",
+          group: "general",
+        }
+      );
+
+      items.splice(
+        3,
+        0,
+        {
+          key: "services",
+          label: "Servicios",
+          icon: <IconServices />,
+          description: "Oferta médica publicada",
+          group: "operacion",
+        },
+        {
+          key: "licenses",
+          label: "Cédulas",
+          icon: <IconLicenses />,
+          description: "Números y grados académicos",
+          group: "operacion",
+        },
+        {
+          key: "credentials",
+          label: "Credenciales",
+          icon: <IconCredentials />,
+          description: "Títulos y certificaciones",
+          group: "operacion",
+        }
+      );
+
+      items.push({
+        key: "expediente",
+        label: "Expediente",
+        icon: <IconExpediente />,
+        description: "Módulo clínico en preparación",
+        group: "clinico",
+      });
     }
 
     return items;
   }, [isAdmin]);
+
+  const sidebarGroups = useMemo(() => {
+    const orderedGroups = [
+      {
+        key: "general",
+        label: "General",
+      },
+      {
+        key: "operacion",
+        label: "Operación",
+      },
+      {
+        key: "contenido",
+        label: "Contenido",
+      },
+      {
+        key: "clinico",
+        label: "Clínico",
+      },
+    ];
+
+    return orderedGroups
+      .map((group) => ({
+        ...group,
+        items: sidebarItems.filter((item) => item.group === group.key),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [sidebarItems]);
 
   if (authLoading) {
     return (
@@ -1589,36 +1966,140 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <DangerButton onClick={logout}>Cerrar sesión</DangerButton>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 lg:hidden"
+            >
+              <MenuIcon />
+              Menú
+            </button>
+
+            <DangerButton onClick={logout}>Cerrar sesión</DangerButton>
+          </div>
         </div>
       </header>
 
+      {sidebarOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-slate-900/50"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-[88%] max-w-sm overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Menú</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Navegación rápida del panel
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="rounded-2xl border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {sidebarGroups.map((group) => (
+                <div key={group.key}>
+                  <p className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                    {group.label}
+                  </p>
+                  <div className="space-y-2">
+                    {group.items.map((item) => (
+                      <SidebarButton
+                        key={item.key}
+                        active={activeSection === item.key}
+                        onClick={() => setActiveSection(item.key)}
+                        icon={item.icon}
+                        label={item.label}
+                        description={item.description}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+        <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="hidden h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:block">
             <div className="mb-5">
               <h2 className="text-lg font-bold text-slate-900">Menú</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Organiza el panel por áreas para evitar tanto scroll.
+                Módulos organizados por área, con visibilidad según rol.
               </p>
             </div>
 
-            <div className="space-y-2">
-              {sidebarItems.map((item) => (
-                <SidebarButton
-                  key={item.key}
-                  active={activeSection === item.key}
-                  onClick={() => setActiveSection(item.key)}
-                >
-                  {item.label}
-                </SidebarButton>
+            <div className="space-y-6">
+              {sidebarGroups.map((group) => (
+                <div key={group.key}>
+                  <p className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                    {group.label}
+                  </p>
+                  <div className="space-y-2">
+                    {group.items.map((item) => (
+                      <SidebarButton
+                        key={item.key}
+                        active={activeSection === item.key}
+                        onClick={() => setActiveSection(item.key)}
+                        icon={item.icon}
+                        label={item.label}
+                        description={item.description}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                  Rol actual
+                </p>
+                <div className="mt-3 flex items-center gap-3">
+                  <RoleBadge role={userRole} />
+                </div>
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  Los módulos sensibles se ocultan automáticamente cuando el rol
+                  no tiene acceso.
+                </p>
+              </div>
             </div>
           </aside>
 
           <div className="space-y-8">
             {activeSection === "dashboard" ? (
               <>
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                        Sección activa
+                      </p>
+                      <h2 className="mt-2 text-xl font-bold text-slate-900">
+                        {sidebarItems.find((item) => item.key === activeSection)
+                          ?.label || "Resumen"}
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      <MenuIcon />
+                      Cambiar
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-7">
                   <Stat label="Servicios" value={isAdmin ? services.length : "—"} />
                   <Stat label="Cédulas" value={isAdmin ? licenses.length : "—"} />
@@ -1672,6 +2153,30 @@ export default function AdminPage() {
                   </div>
                 </Card>
               </>
+            ) : null}
+
+            {activeSection !== "dashboard" ? (
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:hidden">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                      Sección activa
+                    </p>
+                    <h2 className="mt-2 text-xl font-bold text-slate-900">
+                      {sidebarItems.find((item) => item.key === activeSection)
+                        ?.label || ""}
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    <MenuIcon />
+                    Cambiar
+                  </button>
+                </div>
+              </div>
             ) : null}
 
             {activeSection === "agenda" && canManageAgenda ? (
@@ -2719,7 +3224,9 @@ export default function AdminPage() {
                   subtitle="Sube constancias, certificados o diplomados relevantes para tu práctica profesional."
                   items={diplomaImages}
                   onFileChange={setDiplomaFile}
-                  onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
+                  onUpload={() =>
+                    uploadImage(diplomaFile, "diplomado_certificacion")
+                  }
                   onDelete={deleteImage}
                 />
               </>
