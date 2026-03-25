@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../lib/supabase";
 
-function Card({ title, subtitle, children }) {
+function Card({ title, subtitle, children, id }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section
+      id={id}
+      className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+    >
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
         {subtitle ? (
@@ -453,6 +456,22 @@ function SlotBadge({ slot }) {
   );
 }
 
+function SidebarButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+        active
+          ? "bg-slate-900 text-white shadow-sm"
+          : "text-slate-700 hover:bg-slate-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 const DEFAULT_CONFIG = {
   booking_url: "",
   whatsapp_number: "",
@@ -507,6 +526,7 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -590,6 +610,15 @@ export default function AdminPage() {
   useEffect(() => {
     init();
   }, []);
+
+  useEffect(() => {
+    if (isSecretary) {
+      const allowed = ["dashboard", "agenda", "reviews", "clinic", "publicity"];
+      if (!allowed.includes(activeSection)) {
+        setActiveSection("dashboard");
+      }
+    }
+  }, [activeSection, isSecretary]);
 
   async function init() {
     setAuthLoading(true);
@@ -1213,6 +1242,7 @@ export default function AdminPage() {
 
   function openEditAppointment(appointment) {
     setAppointmentMode("edit");
+    setActiveSection("agenda");
     setAppointmentForm({
       id: appointment.id,
       nombre: appointment.nombre || "",
@@ -1224,7 +1254,9 @@ export default function AdminPage() {
           : String(appointment.edad),
       fecha_nacimiento: appointment.fecha_nacimiento || "",
       fecha_cita: appointment.fecha_cita || "",
-      hora_cita: appointment.hora_cita ? String(appointment.hora_cita).slice(0, 5) : "",
+      hora_cita: appointment.hora_cita
+        ? String(appointment.hora_cita).slice(0, 5)
+        : "",
       tipo_consulta: appointment.tipo_consulta || "presencial",
       status: appointment.status || "pending",
       confirmed: Boolean(appointment.confirmed),
@@ -1439,6 +1471,27 @@ export default function AdminPage() {
   const pendingCount = pendingReviews.length;
   const rejectedCount = rejectedReviews.length;
 
+  const sidebarItems = useMemo(() => {
+    const items = [
+      { key: "dashboard", label: "Resumen" },
+      { key: "agenda", label: "Citas" },
+      { key: "reviews", label: "Reseñas" },
+      { key: "clinic", label: "Consultorio" },
+      { key: "publicity", label: "Publicidad" },
+    ];
+
+    if (isAdmin) {
+      items.splice(1, 0, { key: "config", label: "Configuración" });
+      items.splice(2, 0, { key: "profile", label: "Perfil del médico" });
+      items.splice(3, 0, { key: "services", label: "Servicios" });
+      items.splice(4, 0, { key: "licenses", label: "Cédulas" });
+      items.splice(5, 0, { key: "credentials", label: "Credenciales" });
+      items.push({ key: "expediente", label: "Expediente" });
+    }
+
+    return items;
+  }, [isAdmin]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50 px-6 py-16">
@@ -1541,242 +1594,296 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 grid gap-4 md:grid-cols-7">
-          <Stat label="Servicios" value={isAdmin ? services.length : "—"} />
-          <Stat label="Cédulas" value={isAdmin ? licenses.length : "—"} />
-          <Stat label="Imágenes" value={documents.length} />
-          <Stat label="Reseñas" value={reviews.length} />
-          <Stat label="Citas hoy" value={canManageAgenda ? appointmentsToday.length : "—"} />
-          <Stat label="Próximas" value={canManageAgenda ? upcomingAppointments.length : "—"} />
-          <Stat label="Historial" value={canManageAgenda ? appointmentsHistory.length : "—"} />
-        </div>
+        <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-bold text-slate-900">Menú</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Organiza el panel por áreas para evitar tanto scroll.
+              </p>
+            </div>
 
-        {isSecretary ? (
-          <div className="mb-8 rounded-3xl border border-amber-200 bg-amber-50 p-6">
-            <h2 className="text-xl font-bold text-amber-900">
-              Modo secretaria activo
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-amber-800">
-              En esta etapa puedes gestionar la agenda completa, reseñas,
-              publicidad y fotos del consultorio. Configuración global, perfil
-              médico, servicios, credenciales y módulos clínicos sensibles quedan
-              ocultos.
-            </p>
-          </div>
-        ) : null}
+            <div className="space-y-2">
+              {sidebarItems.map((item) => (
+                <SidebarButton
+                  key={item.key}
+                  active={activeSection === item.key}
+                  onClick={() => setActiveSection(item.key)}
+                >
+                  {item.label}
+                </SidebarButton>
+              ))}
+            </div>
+          </aside>
 
-        <div className="space-y-8">
-          {canManageAgenda ? (
-            <>
-              <Card
-                title={
-                  appointmentMode === "create"
-                    ? "Agenda médica — nueva cita"
-                    : "Agenda médica — editar cita"
-                }
-                subtitle="Bloques de 30 minutos, agenda única y sin doble cita. Presencial y en línea comparten el mismo horario."
-              >
-                <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-                  <div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label>Nombre</Label>
-                        <Input
-                          value={appointmentForm.nombre}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              nombre: e.target.value,
-                            }))
-                          }
-                          placeholder="Nombre del paciente"
-                        />
-                      </div>
+          <div className="space-y-8">
+            {activeSection === "dashboard" ? (
+              <>
+                <div className="grid gap-4 md:grid-cols-7">
+                  <Stat label="Servicios" value={isAdmin ? services.length : "—"} />
+                  <Stat label="Cédulas" value={isAdmin ? licenses.length : "—"} />
+                  <Stat label="Imágenes" value={documents.length} />
+                  <Stat label="Reseñas" value={reviews.length} />
+                  <Stat
+                    label="Citas hoy"
+                    value={canManageAgenda ? appointmentsToday.length : "—"}
+                  />
+                  <Stat
+                    label="Próximas"
+                    value={canManageAgenda ? upcomingAppointments.length : "—"}
+                  />
+                  <Stat
+                    label="Historial"
+                    value={canManageAgenda ? appointmentsHistory.length : "—"}
+                  />
+                </div>
 
-                      <div>
-                        <Label>Teléfono</Label>
-                        <Input
-                          value={appointmentForm.telefono}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              telefono: e.target.value,
-                            }))
-                          }
-                          placeholder="Teléfono"
-                        />
-                      </div>
+                {isSecretary ? (
+                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
+                    <h2 className="text-xl font-bold text-amber-900">
+                      Modo secretaria activo
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-amber-800">
+                      En esta etapa puedes gestionar la agenda completa, reseñas,
+                      publicidad y fotos del consultorio. Configuración global, perfil
+                      médico, servicios, credenciales y módulos clínicos sensibles quedan
+                      ocultos.
+                    </p>
+                  </div>
+                ) : null}
 
-                      <div>
-                        <Label>Correo</Label>
-                        <Input
-                          type="email"
-                          value={appointmentForm.correo}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              correo: e.target.value,
-                            }))
-                          }
-                          placeholder="Correo"
-                        />
-                      </div>
+                <Card
+                  title="Resumen operativo"
+                  subtitle="Desde el menú lateral puedes entrar directo a cada área. Aquí queda el resumen general del panel."
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Stat
+                      label="Reseñas verificadas"
+                      value={canManageReviews ? verifiedCount : "—"}
+                    />
+                    <Stat
+                      label="Reseñas pendientes"
+                      value={canManageReviews ? pendingCount : "—"}
+                    />
+                    <Stat
+                      label="Reseñas rechazadas"
+                      value={canManageReviews ? rejectedCount : "—"}
+                    />
+                  </div>
+                </Card>
+              </>
+            ) : null}
 
-                      <div>
-                        <Label>Edad</Label>
-                        <Input
-                          type="number"
-                          value={appointmentForm.edad}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              edad: e.target.value,
-                            }))
-                          }
-                          placeholder="Edad"
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Fecha de nacimiento</Label>
-                        <Input
-                          type="date"
-                          value={appointmentForm.fecha_nacimiento}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              fecha_nacimiento: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Fecha de cita</Label>
-                        <Input
-                          type="date"
-                          value={appointmentForm.fecha_cita}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              fecha_cita: value,
-                            }));
-                            setSlotsDate(value);
-                            fetchAvailableSlots(value);
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Hora de cita</Label>
-                        <Input
-                          type="time"
-                          step="1800"
-                          value={appointmentForm.hora_cita}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              hora_cita: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Tipo de consulta</Label>
-                        <Select
-                          value={appointmentForm.tipo_consulta}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              tipo_consulta: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="presencial">Presencial</option>
-                          <option value="online">Online</option>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label>Estatus</Label>
-                        <Select
-                          value={appointmentForm.status}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              status: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="pending">Pendiente</option>
-                          <option value="confirmed">Confirmada</option>
-                          <option value="completed">Completada</option>
-                          <option value="no_show">No show</option>
-                          <option value="cancelled">Cancelada</option>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-end">
-                        <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(appointmentForm.confirmed)}
+            {activeSection === "agenda" && canManageAgenda ? (
+              <>
+                <Card
+                  title={
+                    appointmentMode === "create"
+                      ? "Agenda médica — nueva cita"
+                      : "Agenda médica — editar cita"
+                  }
+                  subtitle="Bloques de 30 minutos, agenda única y sin doble cita. Presencial y en línea comparten el mismo horario."
+                >
+                  <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+                    <div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Nombre</Label>
+                          <Input
+                            value={appointmentForm.nombre}
                             onChange={(e) =>
                               setAppointmentForm((prev) => ({
                                 ...prev,
-                                confirmed: e.target.checked,
+                                nombre: e.target.value,
                               }))
                             }
-                            className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                            placeholder="Nombre del paciente"
                           />
-                          Confirmar manualmente
-                        </label>
+                        </div>
+
+                        <div>
+                          <Label>Teléfono</Label>
+                          <Input
+                            value={appointmentForm.telefono}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                telefono: e.target.value,
+                              }))
+                            }
+                            placeholder="Teléfono"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Correo</Label>
+                          <Input
+                            type="email"
+                            value={appointmentForm.correo}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                correo: e.target.value,
+                              }))
+                            }
+                            placeholder="Correo"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Edad</Label>
+                          <Input
+                            type="number"
+                            value={appointmentForm.edad}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                edad: e.target.value,
+                              }))
+                            }
+                            placeholder="Edad"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Fecha de nacimiento</Label>
+                          <Input
+                            type="date"
+                            value={appointmentForm.fecha_nacimiento}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                fecha_nacimiento: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Fecha de cita</Label>
+                          <Input
+                            type="date"
+                            value={appointmentForm.fecha_cita}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                fecha_cita: value,
+                              }));
+                              setSlotsDate(value);
+                              fetchAvailableSlots(value);
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Hora de cita</Label>
+                          <Input
+                            type="time"
+                            step="1800"
+                            value={appointmentForm.hora_cita}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                hora_cita: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Tipo de consulta</Label>
+                          <Select
+                            value={appointmentForm.tipo_consulta}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                tipo_consulta: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="presencial">Presencial</option>
+                            <option value="online">Online</option>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Estatus</Label>
+                          <Select
+                            value={appointmentForm.status}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                status: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="pending">Pendiente</option>
+                            <option value="confirmed">Confirmada</option>
+                            <option value="completed">Completada</option>
+                            <option value="no_show">No show</option>
+                            <option value="cancelled">Cancelada</option>
+                          </Select>
+                        </div>
+
+                        <div className="flex items-end">
+                          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(appointmentForm.confirmed)}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  confirmed: e.target.checked,
+                                }))
+                              }
+                              className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                            />
+                            Confirmar manualmente
+                          </label>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <Label>Notas administrativas</Label>
+                          <Textarea
+                            className="min-h-28"
+                            value={appointmentForm.notes_admin}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                notes_admin: e.target.value,
+                              }))
+                            }
+                            placeholder="Notas internas de la cita"
+                          />
+                        </div>
                       </div>
 
-                      <div className="md:col-span-2">
-                        <Label>Notas administrativas</Label>
-                        <Textarea
-                          className="min-h-28"
-                          value={appointmentForm.notes_admin}
-                          onChange={(e) =>
-                            setAppointmentForm((prev) => ({
-                              ...prev,
-                              notes_admin: e.target.value,
-                            }))
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        <AccentButton
+                          onClick={saveAppointmentForm}
+                          disabled={savingAppointment}
+                        >
+                          {savingAppointment
+                            ? appointmentMode === "create"
+                              ? "Creando..."
+                              : "Guardando..."
+                            : appointmentMode === "create"
+                            ? "Crear cita"
+                            : "Guardar cambios"}
+                        </AccentButton>
+
+                        <SecondaryButton
+                          onClick={() =>
+                            resetAppointmentForm(appointmentForm.fecha_cita)
                           }
-                          placeholder="Notas internas de la cita"
-                        />
+                        >
+                          Limpiar formulario
+                        </SecondaryButton>
                       </div>
                     </div>
 
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <AccentButton
-                        onClick={saveAppointmentForm}
-                        disabled={savingAppointment}
-                      >
-                        {savingAppointment
-                          ? appointmentMode === "create"
-                            ? "Creando..."
-                            : "Guardando..."
-                          : appointmentMode === "create"
-                          ? "Crear cita"
-                          : "Guardar cambios"}
-                      </AccentButton>
-
-                      <SecondaryButton
-                        onClick={() =>
-                          resetAppointmentForm(appointmentForm.fecha_cita)
-                        }
-                      >
-                        Limpiar formulario
-                      </SecondaryButton>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900">
                           Horarios disponibles
@@ -1785,992 +1892,992 @@ export default function AdminPage() {
                           Selecciona una fecha para ver bloques de 30 minutos.
                         </p>
                       </div>
-                    </div>
 
-                    <div className="mt-4">
-                      <Label>Fecha para consultar horarios</Label>
+                      <div className="mt-4">
+                        <Label>Fecha para consultar horarios</Label>
+                        <Input
+                          type="date"
+                          value={slotsDate}
+                          onChange={(e) => {
+                            setSlotsDate(e.target.value);
+                            fetchAvailableSlots(e.target.value);
+                          }}
+                        />
+                      </div>
+
+                      {slotsLoading ? (
+                        <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
+                          Cargando horarios...
+                        </div>
+                      ) : availableSlots.length === 0 ? (
+                        <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
+                          No hay horarios configurados o disponibles para esta fecha.
+                        </div>
+                      ) : (
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                          {availableSlots.map((slot, index) => (
+                            <button
+                              key={`${slot.slot}-${index}`}
+                              type="button"
+                              onClick={() =>
+                                slot.available
+                                  ? setAppointmentForm((prev) => ({
+                                      ...prev,
+                                      fecha_cita: slotsDate,
+                                      hora_cita: String(slot.slot).slice(0, 5),
+                                    }))
+                                  : null
+                              }
+                              className="text-left"
+                              disabled={!slot.available}
+                            >
+                              <SlotBadge slot={slot} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+
+                <Card
+                  title="Agenda — filtros y listado completo"
+                  subtitle="Filtra por fecha, estado y tipo de consulta. Desde aquí puedes editar, reprogramar o cancelar."
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                      <Label>Fecha</Label>
                       <Input
                         type="date"
-                        value={slotsDate}
-                        onChange={(e) => {
-                          setSlotsDate(e.target.value);
-                          fetchAvailableSlots(e.target.value);
-                        }}
+                        value={appointmentFilters.fecha}
+                        onChange={(e) =>
+                          setAppointmentFilters((prev) => ({
+                            ...prev,
+                            fecha: e.target.value,
+                          }))
+                        }
                       />
                     </div>
 
-                    {slotsLoading ? (
-                      <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
-                        Cargando horarios...
+                    <div>
+                      <Label>Estatus</Label>
+                      <Select
+                        value={appointmentFilters.status}
+                        onChange={(e) =>
+                          setAppointmentFilters((prev) => ({
+                            ...prev,
+                            status: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="all">Todos</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="confirmed">Confirmada</option>
+                        <option value="completed">Completada</option>
+                        <option value="cancelled">Cancelada</option>
+                        <option value="no_show">No show</option>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>Tipo</Label>
+                      <Select
+                        value={appointmentFilters.tipo}
+                        onChange={(e) =>
+                          setAppointmentFilters((prev) => ({
+                            ...prev,
+                            tipo: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="all">Todos</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="online">Online</option>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <SecondaryButton
+                      onClick={() =>
+                        setAppointmentFilters({
+                          fecha: new Date().toISOString().split("T")[0],
+                          status: "all",
+                          tipo: "all",
+                        })
+                      }
+                    >
+                      Restablecer filtros
+                    </SecondaryButton>
+
+                    <SecondaryButton onClick={() => fetchAppointments()}>
+                      Recargar agenda
+                    </SecondaryButton>
+                  </div>
+
+                  <div className="mt-8 space-y-4">
+                    {appointmentsLoading ? (
+                      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                        Cargando citas...
                       </div>
-                    ) : availableSlots.length === 0 ? (
-                      <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-slate-500">
-                        No hay horarios configurados o disponibles para esta fecha.
+                    ) : filteredAppointments.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                        No hay citas para los filtros seleccionados.
                       </div>
                     ) : (
-                      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                        {availableSlots.map((slot, index) => (
-                          <button
-                            key={`${slot.slot}-${index}`}
-                            type="button"
-                            onClick={() =>
-                              slot.available
-                                ? setAppointmentForm((prev) => ({
-                                    ...prev,
-                                    fecha_cita: slotsDate,
-                                    hora_cita: String(slot.slot).slice(0, 5),
-                                  }))
-                                : null
-                            }
-                            className="text-left"
-                            disabled={!slot.available}
-                          >
-                            <SlotBadge slot={slot} />
-                          </button>
-                        ))}
-                      </div>
+                      filteredAppointments.map((appointment) => (
+                        <div
+                          key={appointment.id}
+                          className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                        >
+                          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Paciente
+                                </p>
+                                <p className="mt-2 font-semibold text-slate-900">
+                                  {appointment.nombre}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {appointment.telefono || "Sin teléfono"}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                  {appointment.correo || "Sin correo"}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Cita
+                                </p>
+                                <p className="mt-2 font-semibold text-slate-900">
+                                  {appointment.fecha_cita}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {String(appointment.hora_cita).slice(0, 5)}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                  {appointment.tipo_consulta === "online"
+                                    ? "Consulta en línea"
+                                    : "Consulta presencial"}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Estado
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <AppointmentStatusBadge
+                                    status={appointment.status}
+                                    confirmed={appointment.confirmed}
+                                  />
+                                  {appointment.confirmed ? (
+                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
+                                      Confirmada manualmente
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Datos administrativos
+                                </p>
+                                <p className="mt-2 text-sm text-slate-700">
+                                  Edad:{" "}
+                                  {appointment.edad === null ||
+                                  appointment.edad === undefined
+                                    ? "Sin dato"
+                                    : appointment.edad}
+                                </p>
+                                <p className="text-sm text-slate-700">
+                                  Nacimiento:{" "}
+                                  {appointment.fecha_nacimiento || "Sin dato"}
+                                </p>
+                              </div>
+
+                              <div className="md:col-span-2 xl:col-span-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Nota administrativa
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-slate-700">
+                                  {appointment.notes_admin || "Sin notas"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 xl:w-[280px] xl:justify-end">
+                              <SecondaryButton
+                                onClick={() => openEditAppointment(appointment)}
+                              >
+                                Editar / reprogramar
+                              </SecondaryButton>
+
+                              <DangerButton
+                                onClick={() => cancelAppointment(appointment)}
+                                disabled={appointment.status === "cancelled"}
+                              >
+                                Cancelar
+                              </DangerButton>
+                            </div>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </>
+            ) : null}
 
+            {activeSection === "config" && canSeeSensitiveConfig ? (
               <Card
-                title="Agenda — resumen operativo"
-                subtitle="Vista rápida para secretaria y admin: citas del día, próximas y seguimiento general."
+                title="Configuración global"
+                subtitle="Aquí editas los textos y enlaces principales que después se mostrarán en la página pública."
               >
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Stat label="Citas del día" value={appointmentsToday.length} />
-                  <Stat label="Próximas citas" value={upcomingAppointments.length} />
-                  <Stat label="Historial" value={appointmentsHistory.length} />
-                </div>
-              </Card>
-
-              <Card
-                title="Agenda — filtros y listado completo"
-                subtitle="Filtra por fecha, estado y tipo de consulta. Desde aquí puedes editar, reprogramar o cancelar."
-              >
-                <div className="grid gap-4 md:grid-cols-3">
+                <ConfigGroupTitle>Enlaces y contacto</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label>Fecha</Label>
+                    <Label>URL de agenda</Label>
                     <Input
-                      type="date"
-                      value={appointmentFilters.fecha}
+                      placeholder="Ej: https://calendar.app.google/..."
+                      value={config.booking_url}
                       onChange={(e) =>
-                        setAppointmentFilters((prev) => ({
-                          ...prev,
-                          fecha: e.target.value,
-                        }))
+                        updateConfigField("booking_url", e.target.value)
                       }
                     />
                   </div>
 
                   <div>
-                    <Label>Estatus</Label>
-                    <Select
-                      value={appointmentFilters.status}
+                    <Label>Número de WhatsApp</Label>
+                    <Input
+                      placeholder="Ej: 5533331304"
+                      value={config.whatsapp_number}
                       onChange={(e) =>
-                        setAppointmentFilters((prev) => ({
-                          ...prev,
-                          status: e.target.value,
-                        }))
+                        updateConfigField("whatsapp_number", e.target.value)
                       }
-                    >
-                      <option value="all">Todos</option>
-                      <option value="pending">Pendiente</option>
-                      <option value="confirmed">Confirmada</option>
-                      <option value="completed">Completada</option>
-                      <option value="cancelled">Cancelada</option>
-                      <option value="no_show">No show</option>
-                    </Select>
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <Label>Mensaje de WhatsApp</Label>
+                  <Textarea
+                    className="min-h-24"
+                    placeholder="Ej: Hola, quiero agendar una consulta médica. ¿Me puedes compartir disponibilidad?"
+                    value={config.whatsapp_message}
+                    onChange={(e) =>
+                      updateConfigField("whatsapp_message", e.target.value)
+                    }
+                  />
+                </div>
+
+                <ConfigGroupTitle>Hero</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Hero Title</Label>
+                    <Input
+                      placeholder="Ej: Médico general en Nezahualcóyotl con consulta médica privada, diagnóstico claro y tratamiento oportuno"
+                      value={config.hero_title}
+                      onChange={(e) =>
+                        updateConfigField("hero_title", e.target.value)
+                      }
+                    />
                   </div>
 
                   <div>
-                    <Label>Tipo</Label>
-                    <Select
-                      value={appointmentFilters.tipo}
+                    <Label>Hero Subtitle</Label>
+                    <Input
+                      placeholder="Ej: Atención médica profesional en Nezahualcóyotl, Estado de México..."
+                      value={config.hero_subtitle}
                       onChange={(e) =>
-                        setAppointmentFilters((prev) => ({
-                          ...prev,
-                          tipo: e.target.value,
-                        }))
+                        updateConfigField("hero_subtitle", e.target.value)
                       }
-                    >
-                      <option value="all">Todos</option>
-                      <option value="presencial">Presencial</option>
-                      <option value="online">Online</option>
-                    </Select>
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Texto CTA Principal</Label>
+                    <Input
+                      placeholder="Ej: Agendar por WhatsApp"
+                      value={config.cta_primary_text}
+                      onChange={(e) =>
+                        updateConfigField("cta_primary_text", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Texto CTA Secundario</Label>
+                    <Input
+                      placeholder="Ej: Reservar en línea"
+                      value={config.cta_secondary_text}
+                      onChange={(e) =>
+                        updateConfigField("cta_secondary_text", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
 
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <SecondaryButton
-                    onClick={() =>
-                      setAppointmentFilters({
-                        fecha: new Date().toISOString().split("T")[0],
-                        status: "all",
-                        tipo: "all",
-                      })
-                    }
-                  >
-                    Restablecer filtros
-                  </SecondaryButton>
+                <ConfigGroupTitle>Agenda</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Título de agenda</Label>
+                    <Input
+                      placeholder="Ej: Da el siguiente paso para cuidar tu salud"
+                      value={config.agenda_title}
+                      onChange={(e) =>
+                        updateConfigField("agenda_title", e.target.value)
+                      }
+                    />
+                  </div>
 
-                  <SecondaryButton onClick={() => fetchAppointments()}>
-                    Recargar agenda
-                  </SecondaryButton>
+                  <div>
+                    <Label>Subtítulo de agenda</Label>
+                    <Input
+                      placeholder="Ej: Recibe atención médica profesional, cercana y con seguimiento..."
+                      value={config.agenda_subtitle}
+                      onChange={(e) =>
+                        updateConfigField("agenda_subtitle", e.target.value)
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-8 space-y-4">
-                  {appointmentsLoading ? (
+                <ConfigGroupTitle>SEO</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>SEO Title</Label>
+                    <Input
+                      placeholder="Ej: Médico general en Nezahualcóyotl | Consulta médica privada"
+                      value={config.seo_title}
+                      onChange={(e) =>
+                        updateConfigField("seo_title", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>SEO Description</Label>
+                    <Input
+                      placeholder="Ej: Consulta médica privada con médico general en Nezahualcóyotl..."
+                      value={config.seo_description}
+                      onChange={(e) =>
+                        updateConfigField("seo_description", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Ciudad SEO</Label>
+                    <Input
+                      placeholder="Ej: Nezahualcóyotl"
+                      value={config.seo_city}
+                      onChange={(e) =>
+                        updateConfigField("seo_city", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Estado SEO</Label>
+                    <Input
+                      placeholder="Ej: Estado de México"
+                      value={config.seo_region}
+                      onChange={(e) =>
+                        updateConfigField("seo_region", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>Qué incluye la consulta</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Qué incluye la consulta 1</Label>
+                    <Input
+                      value={config.include_1}
+                      onChange={(e) =>
+                        updateConfigField("include_1", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Qué incluye la consulta 2</Label>
+                    <Input
+                      value={config.include_2}
+                      onChange={(e) =>
+                        updateConfigField("include_2", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Qué incluye la consulta 3</Label>
+                    <Input
+                      value={config.include_3}
+                      onChange={(e) =>
+                        updateConfigField("include_3", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Qué incluye la consulta 4</Label>
+                    <Input
+                      value={config.include_4}
+                      onChange={(e) =>
+                        updateConfigField("include_4", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>Motivos para consultar</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>Motivo para consultar 1</Label>
+                    <Input
+                      value={config.reason_1}
+                      onChange={(e) =>
+                        updateConfigField("reason_1", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Motivo para consultar 2</Label>
+                    <Input
+                      value={config.reason_2}
+                      onChange={(e) =>
+                        updateConfigField("reason_2", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Motivo para consultar 3</Label>
+                    <Input
+                      value={config.reason_3}
+                      onChange={(e) =>
+                        updateConfigField("reason_3", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Motivo para consultar 4</Label>
+                    <Input
+                      value={config.reason_4}
+                      onChange={(e) =>
+                        updateConfigField("reason_4", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>FAQs</ConfigGroupTitle>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>FAQ Pregunta 1</Label>
+                    <Input
+                      value={config.faq_q1}
+                      onChange={(e) => updateConfigField("faq_q1", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Respuesta 1</Label>
+                    <Input
+                      value={config.faq_a1}
+                      onChange={(e) => updateConfigField("faq_a1", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Pregunta 2</Label>
+                    <Input
+                      value={config.faq_q2}
+                      onChange={(e) => updateConfigField("faq_q2", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Respuesta 2</Label>
+                    <Input
+                      value={config.faq_a2}
+                      onChange={(e) => updateConfigField("faq_a2", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Pregunta 3</Label>
+                    <Input
+                      value={config.faq_q3}
+                      onChange={(e) => updateConfigField("faq_q3", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Respuesta 3</Label>
+                    <Input
+                      value={config.faq_a3}
+                      onChange={(e) => updateConfigField("faq_a3", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Pregunta 4</Label>
+                    <Input
+                      value={config.faq_q4}
+                      onChange={(e) => updateConfigField("faq_q4", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>FAQ Respuesta 4</Label>
+                    <Input
+                      value={config.faq_a4}
+                      onChange={(e) => updateConfigField("faq_a4", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <AccentButton className="mt-6" onClick={saveConfig}>
+                  {savingConfig ? "Guardando..." : "Guardar configuración"}
+                </AccentButton>
+              </Card>
+            ) : null}
+
+            {activeSection === "profile" && canManageProfile ? (
+              <Card
+                title="Perfil profesional"
+                subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input
+                    placeholder="Nombre del médico"
+                    value={profile.doctor_name || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, doctor_name: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Universidad"
+                    value={profile.university || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, university: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Teléfono"
+                    value={profile.phone || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, phone: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Correo"
+                    value={profile.email || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, email: e.target.value })
+                    }
+                  />
+                  <Input
+                    className="md:col-span-2"
+                    placeholder="Horario"
+                    value={profile.schedule || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, schedule: e.target.value })
+                    }
+                  />
+                  <Input
+                    className="md:col-span-2"
+                    placeholder="Dirección"
+                    value={profile.address || ""}
+                    onChange={(e) =>
+                      setProfile({ ...profile, address: e.target.value })
+                    }
+                  />
+                </div>
+
+                <Textarea
+                  className="mt-4 min-h-28"
+                  placeholder="Semblanza profesional"
+                  value={profile.bio || ""}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                />
+
+                <PrimaryButton className="mt-4" onClick={saveProfile}>
+                  Guardar perfil
+                </PrimaryButton>
+              </Card>
+            ) : null}
+
+            {activeSection === "services" && canManageServices ? (
+              <Card
+                title="Servicios"
+                subtitle="Agrega nuevos servicios o modifica los actuales, incluyendo si son destacados y su orden."
+              >
+                <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_140px_auto]">
+                  <Input
+                    placeholder="Nombre del servicio"
+                    value={newService.name}
+                    onChange={(e) =>
+                      setNewService({ ...newService, name: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Descripción"
+                    value={newService.description}
+                    onChange={(e) =>
+                      setNewService({ ...newService, description: e.target.value })
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Precio"
+                    value={newService.price}
+                    onChange={(e) =>
+                      setNewService({ ...newService, price: e.target.value })
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Orden"
+                    value={newService.orden}
+                    onChange={(e) =>
+                      setNewService({ ...newService, orden: e.target.value })
+                    }
+                  />
+                  <AccentButton onClick={addService}>Agregar</AccentButton>
+                </div>
+
+                <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(newService.destacado)}
+                    onChange={(e) =>
+                      setNewService({ ...newService, destacado: e.target.checked })
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                  />
+                  Marcar como destacado
+                </label>
+
+                <div className="mt-6 space-y-4">
+                  {sortedServices.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                      Cargando citas...
-                    </div>
-                  ) : filteredAppointments.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                      No hay citas para los filtros seleccionados.
+                      Aún no hay servicios registrados.
                     </div>
                   ) : (
-                    filteredAppointments.map((appointment) => (
+                    sortedServices.map((service) => (
                       <div
-                        key={appointment.id}
-                        className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                        key={service.id}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                       >
-                        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Paciente
-                              </p>
-                              <p className="mt-2 font-semibold text-slate-900">
-                                {appointment.nombre}
-                              </p>
-                              <p className="mt-1 text-sm text-slate-600">
-                                {appointment.telefono || "Sin teléfono"}
-                              </p>
-                              <p className="text-sm text-slate-600">
-                                {appointment.correo || "Sin correo"}
-                              </p>
-                            </div>
+                        <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_160px_120px_auto_auto] md:items-center">
+                          <Input
+                            value={service.name || ""}
+                            onChange={(e) =>
+                              updateService(service.id, "name", e.target.value)
+                            }
+                          />
+                          <Input
+                            value={service.description || ""}
+                            onChange={(e) =>
+                              updateService(
+                                service.id,
+                                "description",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <Input
+                            type="number"
+                            value={service.price ?? ""}
+                            onChange={(e) =>
+                              updateService(service.id, "price", e.target.value)
+                            }
+                          />
+                          <Input
+                            type="number"
+                            value={service.orden ?? 0}
+                            onChange={(e) =>
+                              updateService(service.id, "orden", e.target.value)
+                            }
+                          />
+                          <SecondaryButton onClick={() => saveService(service)}>
+                            Guardar
+                          </SecondaryButton>
+                          <DangerButton onClick={() => deleteService(service.id)}>
+                            Eliminar
+                          </DangerButton>
+                        </div>
 
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Cita
-                              </p>
-                              <p className="mt-2 font-semibold text-slate-900">
-                                {appointment.fecha_cita}
-                              </p>
-                              <p className="mt-1 text-sm text-slate-600">
-                                {String(appointment.hora_cita).slice(0, 5)}
-                              </p>
-                              <p className="text-sm text-slate-600">
-                                {appointment.tipo_consulta === "online"
-                                  ? "Consulta en línea"
-                                  : "Consulta presencial"}
-                              </p>
-                            </div>
+                        <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(service.destacado)}
+                            onChange={(e) =>
+                              updateService(
+                                service.id,
+                                "destacado",
+                                e.target.checked
+                              )
+                            }
+                            className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
+                          />
+                          Destacado
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+            ) : null}
 
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Estado
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                <AppointmentStatusBadge
-                                  status={appointment.status}
-                                  confirmed={appointment.confirmed}
-                                />
-                                {appointment.confirmed ? (
-                                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-800">
-                                    Confirmada manualmente
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
+            {activeSection === "licenses" && canManageLicenses ? (
+              <Card
+                title="Cédulas"
+                subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado académico."
+              >
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+                  <Input
+                    placeholder="Tipo (Licenciatura, Especialidad, Maestría...)"
+                    value={newLicense.label}
+                    onChange={(e) =>
+                      setNewLicense({ ...newLicense, label: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Número de cédula"
+                    value={newLicense.license_number}
+                    onChange={(e) =>
+                      setNewLicense({
+                        ...newLicense,
+                        license_number: e.target.value,
+                      })
+                    }
+                  />
+                  <AccentButton onClick={addLicense}>Agregar</AccentButton>
+                </div>
 
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Datos administrativos
-                              </p>
-                              <p className="mt-2 text-sm text-slate-700">
-                                Edad:{" "}
-                                {appointment.edad === null ||
-                                appointment.edad === undefined
-                                  ? "Sin dato"
-                                  : appointment.edad}
-                              </p>
-                              <p className="text-sm text-slate-700">
-                                Nacimiento:{" "}
-                                {appointment.fecha_nacimiento || "Sin dato"}
-                              </p>
-                            </div>
-
-                            <div className="md:col-span-2 xl:col-span-2">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Nota administrativa
-                              </p>
-                              <p className="mt-2 text-sm leading-6 text-slate-700">
-                                {appointment.notes_admin || "Sin notas"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 xl:w-[280px] xl:justify-end">
-                            <SecondaryButton
-                              onClick={() => openEditAppointment(appointment)}
-                            >
-                              Editar / reprogramar
-                            </SecondaryButton>
-
-                            <DangerButton
-                              onClick={() => cancelAppointment(appointment)}
-                              disabled={appointment.status === "cancelled"}
-                            >
-                              Cancelar
-                            </DangerButton>
-                          </div>
+                <div className="mt-6 space-y-4">
+                  {licenses.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                      Aún no hay cédulas registradas.
+                    </div>
+                  ) : (
+                    licenses.map((license) => (
+                      <div
+                        key={license.id}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      >
+                        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                          <Input
+                            value={license.label || ""}
+                            onChange={(e) =>
+                              updateLicense(license.id, "label", e.target.value)
+                            }
+                          />
+                          <Input
+                            value={license.license_number || ""}
+                            onChange={(e) =>
+                              updateLicense(
+                                license.id,
+                                "license_number",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <SecondaryButton onClick={() => saveLicense(license)}>
+                            Guardar
+                          </SecondaryButton>
+                          <DangerButton onClick={() => deleteLicense(license.id)}>
+                            Eliminar
+                          </DangerButton>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
               </Card>
-            </>
-          ) : null}
+            ) : null}
 
-          {canSeeSensitiveConfig ? (
-            <Card
-              title="Configuración global"
-              subtitle="Aquí editas los textos y enlaces principales que después se mostrarán en la página pública."
-            >
-              <ConfigGroupTitle>Enlaces y contacto</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>URL de agenda</Label>
+            {activeSection === "credentials" && canManageProfessionalImages ? (
+              <>
+                <ImageAdminSection
+                  title="Foto profesional"
+                  subtitle="Sube la foto principal del médico para el hero o secciones de presentación."
+                  items={profilePhotos}
+                  onFileChange={setProfilePhotoFile}
+                  onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
+                  onDelete={deleteImage}
+                />
+
+                <ImageAdminSection
+                  title="Títulos académicos"
+                  subtitle="Sube imágenes de títulos de licenciatura, especialidad, maestrías u otros grados formales."
+                  items={titleImages}
+                  onFileChange={setTitleFile}
+                  onUpload={() => uploadImage(titleFile, "titulo_academico")}
+                  onDelete={deleteImage}
+                />
+
+                <ImageAdminSection
+                  title="Diplomados y certificaciones"
+                  subtitle="Sube constancias, certificados o diplomados relevantes para tu práctica profesional."
+                  items={diplomaImages}
+                  onFileChange={setDiplomaFile}
+                  onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
+                  onDelete={deleteImage}
+                />
+              </>
+            ) : null}
+
+            {activeSection === "clinic" && canManageClinicImages ? (
+              <ImageAdminSection
+                title="Fotos del consultorio"
+                subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
+                items={clinicImages}
+                onFileChange={setClinicFile}
+                onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
+                onDelete={deleteImage}
+              />
+            ) : null}
+
+            {activeSection === "publicity" && canManagePublicity ? (
+              <ImageAdminSection
+                title="Publicidad"
+                subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
+                items={publicityImages}
+                onFileChange={setPublicityFile}
+                onUpload={() => uploadImage(publicityFile, "publicidad")}
+                onDelete={deleteImage}
+              />
+            ) : null}
+
+            {activeSection === "reviews" && canManageReviews ? (
+              <Card
+                title="Reseñas"
+                subtitle="Gestiona reseñas por apartados: pendientes, verificadas y rechazadas, con opción de borrado permanente."
+              >
+                <div className="grid gap-4 md:grid-cols-2">
                   <Input
-                    placeholder="Ej: https://calendar.app.google/..."
-                    value={config.booking_url}
+                    placeholder="Nombre del paciente"
+                    value={newReview.patient_name}
                     onChange={(e) =>
-                      updateConfigField("booking_url", e.target.value)
+                      setNewReview({ ...newReview, patient_name: e.target.value })
                     }
                   />
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-slate-700">
+                      Calificación
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                          className={`text-3xl transition ${
+                            Number(newReview.rating) >= star
+                              ? "text-yellow-500"
+                              : "text-slate-300"
+                          }`}
+                          aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <Label>Número de WhatsApp</Label>
-                  <Input
-                    placeholder="Ej: 5533331304"
-                    value={config.whatsapp_number}
-                    onChange={(e) =>
-                      updateConfigField("whatsapp_number", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Label>Mensaje de WhatsApp</Label>
                 <Textarea
-                  className="min-h-24"
-                  placeholder="Ej: Hola, quiero agendar una consulta médica. ¿Me puedes compartir disponibilidad?"
-                  value={config.whatsapp_message}
+                  className="mt-4 min-h-24"
+                  placeholder="Texto de la reseña"
+                  value={newReview.review_text}
                   onChange={(e) =>
-                    updateConfigField("whatsapp_message", e.target.value)
+                    setNewReview({ ...newReview, review_text: e.target.value })
                   }
                 />
-              </div>
 
-              <ConfigGroupTitle>Hero</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Hero Title</Label>
-                  <Input
-                    placeholder="Ej: Médico general en Nezahualcóyotl con consulta médica privada, diagnóstico claro y tratamiento oportuno"
-                    value={config.hero_title}
-                    onChange={(e) =>
-                      updateConfigField("hero_title", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Hero Subtitle</Label>
-                  <Input
-                    placeholder="Ej: Atención médica profesional en Nezahualcóyotl, Estado de México, para pacientes que buscan consulta médica cercana..."
-                    value={config.hero_subtitle}
-                    onChange={(e) =>
-                      updateConfigField("hero_subtitle", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Texto CTA Principal</Label>
-                  <Input
-                    placeholder="Ej: Agendar por WhatsApp"
-                    value={config.cta_primary_text}
-                    onChange={(e) =>
-                      updateConfigField("cta_primary_text", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Texto CTA Secundario</Label>
-                  <Input
-                    placeholder="Ej: Reservar en línea"
-                    value={config.cta_secondary_text}
-                    onChange={(e) =>
-                      updateConfigField("cta_secondary_text", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <ConfigGroupTitle>Agenda</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Título de agenda</Label>
-                  <Input
-                    placeholder="Ej: Da el siguiente paso para cuidar tu salud"
-                    value={config.agenda_title}
-                    onChange={(e) =>
-                      updateConfigField("agenda_title", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Subtítulo de agenda</Label>
-                  <Input
-                    placeholder="Ej: Recibe atención médica profesional, cercana y con seguimiento..."
-                    value={config.agenda_subtitle}
-                    onChange={(e) =>
-                      updateConfigField("agenda_subtitle", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <ConfigGroupTitle>SEO</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>SEO Title</Label>
-                  <Input
-                    placeholder="Ej: Médico general en Nezahualcóyotl | Consulta médica privada"
-                    value={config.seo_title}
-                    onChange={(e) =>
-                      updateConfigField("seo_title", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>SEO Description</Label>
-                  <Input
-                    placeholder="Ej: Consulta médica privada con médico general en Nezahualcóyotl, Estado de México..."
-                    value={config.seo_description}
-                    onChange={(e) =>
-                      updateConfigField("seo_description", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Ciudad SEO</Label>
-                  <Input
-                    placeholder="Ej: Nezahualcóyotl"
-                    value={config.seo_city}
-                    onChange={(e) =>
-                      updateConfigField("seo_city", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label>Estado SEO</Label>
-                  <Input
-                    placeholder="Ej: Estado de México"
-                    value={config.seo_region}
-                    onChange={(e) =>
-                      updateConfigField("seo_region", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <ConfigGroupTitle>Qué incluye la consulta</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Qué incluye la consulta 1</Label>
-                  <Input
-                    value={config.include_1}
-                    onChange={(e) =>
-                      updateConfigField("include_1", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Qué incluye la consulta 2</Label>
-                  <Input
-                    value={config.include_2}
-                    onChange={(e) =>
-                      updateConfigField("include_2", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Qué incluye la consulta 3</Label>
-                  <Input
-                    value={config.include_3}
-                    onChange={(e) =>
-                      updateConfigField("include_3", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Qué incluye la consulta 4</Label>
-                  <Input
-                    value={config.include_4}
-                    onChange={(e) =>
-                      updateConfigField("include_4", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <ConfigGroupTitle>Motivos para consultar</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>Motivo para consultar 1</Label>
-                  <Input
-                    value={config.reason_1}
-                    onChange={(e) =>
-                      updateConfigField("reason_1", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Motivo para consultar 2</Label>
-                  <Input
-                    value={config.reason_2}
-                    onChange={(e) =>
-                      updateConfigField("reason_2", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Motivo para consultar 3</Label>
-                  <Input
-                    value={config.reason_3}
-                    onChange={(e) =>
-                      updateConfigField("reason_3", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Motivo para consultar 4</Label>
-                  <Input
-                    value={config.reason_4}
-                    onChange={(e) =>
-                      updateConfigField("reason_4", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <ConfigGroupTitle>FAQs</ConfigGroupTitle>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>FAQ Pregunta 1</Label>
-                  <Input
-                    value={config.faq_q1}
-                    onChange={(e) => updateConfigField("faq_q1", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Respuesta 1</Label>
-                  <Input
-                    value={config.faq_a1}
-                    onChange={(e) => updateConfigField("faq_a1", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Pregunta 2</Label>
-                  <Input
-                    value={config.faq_q2}
-                    onChange={(e) => updateConfigField("faq_q2", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Respuesta 2</Label>
-                  <Input
-                    value={config.faq_a2}
-                    onChange={(e) => updateConfigField("faq_a2", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Pregunta 3</Label>
-                  <Input
-                    value={config.faq_q3}
-                    onChange={(e) => updateConfigField("faq_q3", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Respuesta 3</Label>
-                  <Input
-                    value={config.faq_a3}
-                    onChange={(e) => updateConfigField("faq_a3", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Pregunta 4</Label>
-                  <Input
-                    value={config.faq_q4}
-                    onChange={(e) => updateConfigField("faq_q4", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>FAQ Respuesta 4</Label>
-                  <Input
-                    value={config.faq_a4}
-                    onChange={(e) => updateConfigField("faq_a4", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <AccentButton className="mt-6" onClick={saveConfig}>
-                {savingConfig ? "Guardando..." : "Guardar configuración"}
-              </AccentButton>
-            </Card>
-          ) : null}
-
-          {canManageProfile ? (
-            <Card
-              title="Perfil profesional"
-              subtitle="Actualiza tu nombre, semblanza, universidad, datos de contacto y horario."
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  placeholder="Nombre del médico"
-                  value={profile.doctor_name || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, doctor_name: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Universidad"
-                  value={profile.university || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, university: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Teléfono"
-                  value={profile.phone || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, phone: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Correo"
-                  value={profile.email || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, email: e.target.value })
-                  }
-                />
-                <Input
-                  className="md:col-span-2"
-                  placeholder="Horario"
-                  value={profile.schedule || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, schedule: e.target.value })
-                  }
-                />
-                <Input
-                  className="md:col-span-2"
-                  placeholder="Dirección"
-                  value={profile.address || ""}
-                  onChange={(e) =>
-                    setProfile({ ...profile, address: e.target.value })
-                  }
-                />
-              </div>
-
-              <Textarea
-                className="mt-4 min-h-28"
-                placeholder="Semblanza profesional"
-                value={profile.bio || ""}
-                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-              />
-
-              <PrimaryButton className="mt-4" onClick={saveProfile}>
-                Guardar perfil
-              </PrimaryButton>
-            </Card>
-          ) : null}
-
-          {canManageServices ? (
-            <Card
-              title="Servicios"
-              subtitle="Agrega nuevos servicios o modifica los actuales, incluyendo si son destacados y su orden."
-            >
-              <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_180px_140px_auto]">
-                <Input
-                  placeholder="Nombre del servicio"
-                  value={newService.name}
-                  onChange={(e) =>
-                    setNewService({ ...newService, name: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Descripción"
-                  value={newService.description}
-                  onChange={(e) =>
-                    setNewService({ ...newService, description: e.target.value })
-                  }
-                />
-                <Input
-                  type="number"
-                  placeholder="Precio"
-                  value={newService.price}
-                  onChange={(e) =>
-                    setNewService({ ...newService, price: e.target.value })
-                  }
-                />
-                <Input
-                  type="number"
-                  placeholder="Orden"
-                  value={newService.orden}
-                  onChange={(e) =>
-                    setNewService({ ...newService, orden: e.target.value })
-                  }
-                />
-                <AccentButton onClick={addService}>Agregar</AccentButton>
-              </div>
-
-              <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={Boolean(newService.destacado)}
-                  onChange={(e) =>
-                    setNewService({ ...newService, destacado: e.target.checked })
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
-                />
-                Marcar como destacado
-              </label>
-
-              <div className="mt-6 space-y-4">
-                {sortedServices.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                    Aún no hay servicios registrados.
-                  </div>
-                ) : (
-                  sortedServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-slate-700">
+                      Estado de la reseña
+                    </p>
+                    <Select
+                      value={newReview.review_status}
+                      onChange={(e) =>
+                        setNewReview({
+                          ...newReview,
+                          review_status: e.target.value,
+                        })
+                      }
                     >
-                      <div className="grid gap-4 md:grid-cols-[1fr_1.2fr_160px_120px_auto_auto] md:items-center">
-                        <Input
-                          value={service.name || ""}
-                          onChange={(e) =>
-                            updateService(service.id, "name", e.target.value)
-                          }
-                        />
-                        <Input
-                          value={service.description || ""}
-                          onChange={(e) =>
-                            updateService(
-                              service.id,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <Input
-                          type="number"
-                          value={service.price ?? ""}
-                          onChange={(e) =>
-                            updateService(service.id, "price", e.target.value)
-                          }
-                        />
-                        <Input
-                          type="number"
-                          value={service.orden ?? 0}
-                          onChange={(e) =>
-                            updateService(service.id, "orden", e.target.value)
-                          }
-                        />
-                        <SecondaryButton onClick={() => saveService(service)}>
-                          Guardar
-                        </SecondaryButton>
-                        <DangerButton onClick={() => deleteService(service.id)}>
-                          Eliminar
-                        </DangerButton>
-                      </div>
-
-                      <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(service.destacado)}
-                          onChange={(e) =>
-                            updateService(
-                              service.id,
-                              "destacado",
-                              e.target.checked
-                            )
-                          }
-                          className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-100"
-                        />
-                        Destacado
-                      </label>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-          ) : null}
-
-          {canManageLicenses ? (
-            <Card
-              title="Cédulas"
-              subtitle="Agrega, edita o elimina las cédulas correspondientes a cada grado académico."
-            >
-              <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-                <Input
-                  placeholder="Tipo (Licenciatura, Especialidad, Maestría...)"
-                  value={newLicense.label}
-                  onChange={(e) =>
-                    setNewLicense({ ...newLicense, label: e.target.value })
-                  }
-                />
-                <Input
-                  placeholder="Número de cédula"
-                  value={newLicense.license_number}
-                  onChange={(e) =>
-                    setNewLicense({
-                      ...newLicense,
-                      license_number: e.target.value,
-                    })
-                  }
-                />
-                <AccentButton onClick={addLicense}>Agregar</AccentButton>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {licenses.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
-                    Aún no hay cédulas registradas.
+                      <option value="pending">Pendiente</option>
+                      <option value="verified">Verificada</option>
+                      <option value="rejected">Rechazada</option>
+                    </Select>
                   </div>
-                ) : (
-                  licenses.map((license) => (
-                    <div
-                      key={license.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-slate-700">
+                      Tipo de verificación
+                    </p>
+                    <Select
+                      value={newReview.verification_type}
+                      onChange={(e) =>
+                        setNewReview({
+                          ...newReview,
+                          verification_type: e.target.value,
+                        })
+                      }
                     >
-                      <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
-                        <Input
-                          value={license.label || ""}
-                          onChange={(e) =>
-                            updateLicense(license.id, "label", e.target.value)
-                          }
-                        />
-                        <Input
-                          value={license.license_number || ""}
-                          onChange={(e) =>
-                            updateLicense(
-                              license.id,
-                              "license_number",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <SecondaryButton onClick={() => saveLicense(license)}>
-                          Guardar
-                        </SecondaryButton>
-                        <DangerButton onClick={() => deleteLicense(license.id)}>
-                          Eliminar
-                        </DangerButton>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-          ) : null}
-
-          {canManageProfessionalImages ? (
-            <>
-              <ImageAdminSection
-                title="Foto profesional"
-                subtitle="Sube la foto principal del médico para el hero o secciones de presentación."
-                items={profilePhotos}
-                onFileChange={setProfilePhotoFile}
-                onUpload={() => uploadImage(profilePhotoFile, "foto_profesional")}
-                onDelete={deleteImage}
-              />
-
-              <ImageAdminSection
-                title="Títulos académicos"
-                subtitle="Sube imágenes de títulos de licenciatura, especialidad, maestrías u otros grados formales."
-                items={titleImages}
-                onFileChange={setTitleFile}
-                onUpload={() => uploadImage(titleFile, "titulo_academico")}
-                onDelete={deleteImage}
-              />
-
-              <ImageAdminSection
-                title="Diplomados y certificaciones"
-                subtitle="Sube constancias, certificados o diplomados relevantes para tu práctica profesional."
-                items={diplomaImages}
-                onFileChange={setDiplomaFile}
-                onUpload={() => uploadImage(diplomaFile, "diplomado_certificacion")}
-                onDelete={deleteImage}
-              />
-            </>
-          ) : null}
-
-          {canManageClinicImages ? (
-            <ImageAdminSection
-              title="Fotos del consultorio"
-              subtitle="Muestra el espacio de atención para generar confianza antes de la visita."
-              items={clinicImages}
-              onFileChange={setClinicFile}
-              onUpload={() => uploadImage(clinicFile, "foto_consultorio")}
-              onDelete={deleteImage}
-            />
-          ) : null}
-
-          {canManagePublicity ? (
-            <ImageAdminSection
-              title="Publicidad"
-              subtitle="Gestiona imágenes informativas o promocionales relacionadas con servicios y campañas."
-              items={publicityImages}
-              onFileChange={setPublicityFile}
-              onUpload={() => uploadImage(publicityFile, "publicidad")}
-              onDelete={deleteImage}
-            />
-          ) : null}
-
-          {canManageReviews ? (
-            <Card
-              title="Reseñas"
-              subtitle="Gestiona reseñas por apartados: pendientes, verificadas y rechazadas, con opción de borrado permanente."
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  placeholder="Nombre del paciente"
-                  value={newReview.patient_name}
-                  onChange={(e) =>
-                    setNewReview({ ...newReview, patient_name: e.target.value })
-                  }
-                />
-
-                <div>
-                  <p className="mb-2 text-sm font-medium text-slate-700">
-                    Calificación
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setNewReview({ ...newReview, rating: star })}
-                        className={`text-3xl transition ${
-                          Number(newReview.rating) >= star
-                            ? "text-yellow-500"
-                            : "text-slate-300"
-                        }`}
-                        aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
-                      >
-                        ★
-                      </button>
-                    ))}
+                      <option value="manual">Manual</option>
+                      <option value="agenda">Cita agendada</option>
+                      <option value="consulta">Consulta asistida</option>
+                    </Select>
                   </div>
                 </div>
-              </div>
 
-              <Textarea
-                className="mt-4 min-h-24"
-                placeholder="Texto de la reseña"
-                value={newReview.review_text}
-                onChange={(e) =>
-                  setNewReview({ ...newReview, review_text: e.target.value })
-                }
-              />
+                <AccentButton className="mt-4" onClick={addReview}>
+                  Agregar reseña
+                </AccentButton>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-sm font-medium text-slate-700">
-                    Estado de la reseña
-                  </p>
-                  <Select
-                    value={newReview.review_status}
-                    onChange={(e) =>
-                      setNewReview({
-                        ...newReview,
-                        review_status: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="pending">Pendiente</option>
-                    <option value="verified">Verificada</option>
-                    <option value="rejected">Rechazada</option>
-                  </Select>
+                <ReviewSection
+                  title="Pendientes"
+                  subtitle="Reseñas enviadas por pacientes que aún no se verifican ni publican."
+                  reviews={pendingReviews}
+                  updateReview={updateReview}
+                  saveReview={saveReview}
+                  deleteReviewPermanently={deleteReviewPermanently}
+                />
+
+                <ReviewSection
+                  title="Verificadas"
+                  subtitle="Reseñas confirmadas y publicadas en la página."
+                  reviews={verifiedReviews}
+                  updateReview={updateReview}
+                  saveReview={saveReview}
+                  deleteReviewPermanently={deleteReviewPermanently}
+                />
+
+                <ReviewSection
+                  title="Rechazadas"
+                  subtitle="Reseñas descartadas que no se muestran en la página pública."
+                  reviews={rejectedReviews}
+                  updateReview={updateReview}
+                  saveReview={saveReview}
+                  deleteReviewPermanently={deleteReviewPermanently}
+                />
+              </Card>
+            ) : null}
+
+            {activeSection === "expediente" && isAdmin ? (
+              <Card
+                title="Expediente clínico"
+                subtitle="Este apartado queda preparado para integrar historial por paciente, nota médica, signos vitales, diagnóstico, tratamiento y seguimiento."
+              >
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500">
+                  Próximo paso: aquí vamos a montar pacientes + expediente clínico completo dentro del admin.
                 </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-medium text-slate-700">
-                    Tipo de verificación
-                  </p>
-                  <Select
-                    value={newReview.verification_type}
-                    onChange={(e) =>
-                      setNewReview({
-                        ...newReview,
-                        verification_type: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="manual">Manual</option>
-                    <option value="agenda">Cita agendada</option>
-                    <option value="consulta">Consulta asistida</option>
-                  </Select>
-                </div>
-              </div>
-
-              <AccentButton className="mt-4" onClick={addReview}>
-                Agregar reseña
-              </AccentButton>
-
-              <ReviewSection
-                title="Pendientes"
-                subtitle="Reseñas enviadas por pacientes que aún no se verifican ni publican."
-                reviews={pendingReviews}
-                updateReview={updateReview}
-                saveReview={saveReview}
-                deleteReviewPermanently={deleteReviewPermanently}
-              />
-
-              <ReviewSection
-                title="Verificadas"
-                subtitle="Reseñas confirmadas y publicadas en la página."
-                reviews={verifiedReviews}
-                updateReview={updateReview}
-                saveReview={saveReview}
-                deleteReviewPermanently={deleteReviewPermanently}
-              />
-
-              <ReviewSection
-                title="Rechazadas"
-                subtitle="Reseñas descartadas que no se muestran en la página pública."
-                reviews={rejectedReviews}
-                updateReview={updateReview}
-                saveReview={saveReview}
-                deleteReviewPermanently={deleteReviewPermanently}
-              />
-            </Card>
-          ) : null}
+              </Card>
+            ) : null}
+          </div>
         </div>
       </main>
     </div>

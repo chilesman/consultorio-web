@@ -1,0 +1,10 @@
+project_id = "fyxmowqsrlxlihehdnom"
+
+[functions.send-booking-emails]
+verify_jwt = false
+
+[functions.confirm-appointment]
+verify_jwt = false
+
+[functions.cancel-expired-appointments]
+verify_jwt = false
