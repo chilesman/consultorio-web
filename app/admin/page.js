@@ -153,13 +153,7 @@ function Divider() {
   return <div className="my-6 h-px w-full bg-slate-200" />;
 }
 
-function SidebarButton({
-  active,
-  onClick,
-  icon,
-  label,
-  description,
-}) {
+function SidebarButton({ active, onClick, icon, label, description }) {
   return (
     <button
       type="button"
@@ -409,6 +403,51 @@ function IconExpediente() {
   );
 }
 
+function IconFileText() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6" />
+      <path d="M16 13H8M16 17H8M10 9H8" />
+    </svg>
+  );
+}
+
+function IconHeartbeat() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M3 12h4l2-4 4 8 2-4h6" />
+    </svg>
+  );
+}
+
+function IconClipboard() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    </svg>
+  );
+}
+
 function formatDate(dateString) {
   if (!dateString) return "—";
 
@@ -430,6 +469,15 @@ function formatDateTime(dateString, timeString) {
   return `${datePart} · ${safeTime}`;
 }
 
+function formatDateTimeStamp(dateString) {
+  if (!dateString) return "—";
+  try {
+    return new Date(dateString).toLocaleString("es-MX");
+  } catch {
+    return dateString;
+  }
+}
+
 function calculateAgeFromBirthDate(dateString) {
   if (!dateString) return "";
   const today = new Date();
@@ -442,6 +490,16 @@ function calculateAgeFromBirthDate(dateString) {
   }
 
   return age >= 0 ? String(age) : "";
+}
+
+function calculateImc(pesoKg, tallaCm) {
+  const peso = Number(pesoKg || 0);
+  const tallaMetros = Number(tallaCm || 0) / 100;
+
+  if (!peso || !tallaMetros) return "";
+  const imc = peso / (tallaMetros * tallaMetros);
+  if (!Number.isFinite(imc)) return "";
+  return imc.toFixed(2);
 }
 
 const DEFAULT_CONFIG = {
@@ -484,6 +542,8 @@ const DEFAULT_CONFIG = {
   seo_description: "",
   seo_city: "",
   seo_region: "",
+  reviews_primary_url: "",
+  reviews_secondary_url: "",
 };
 
 const DEFAULT_APPOINTMENT_FORM = {
@@ -517,6 +577,94 @@ const DEFAULT_PATIENT_FORM = {
   notas_identificacion: "",
 };
 
+const DEFAULT_CLINICAL_HISTORY = {
+  id: null,
+  motivo_consulta: "",
+  padecimiento_actual: "",
+  antecedentes_heredofamiliares: "",
+  antecedentes_personales_no_patologicos: "",
+  antecedentes_personales_patologicos: "",
+  antecedentes_gineco_obstetricos: "",
+  antecedentes_perinatales: "",
+  antecedentes_inmunizaciones: "",
+  alergias: "",
+  medicamentos_actuales: "",
+  toxicomanias: "",
+  interrogatorio_aparatos_sistemas: "",
+  exploracion_fisica_general: "",
+};
+
+const DEFAULT_VITAL_FORM = {
+  id: null,
+  taken_at: "",
+  appointment_id: null,
+  peso_kg: "",
+  talla_cm: "",
+  imc: "",
+  temperatura_c: "",
+  frecuencia_cardiaca: "",
+  frecuencia_respiratoria: "",
+  tension_arterial_sistolica: "",
+  tension_arterial_diastolica: "",
+  saturacion_oxigeno: "",
+  glucosa_capilar: "",
+  perimetro_cefalico_cm: "",
+  observaciones: "",
+};
+
+const DEFAULT_MEDICAL_NOTE = {
+  id: null,
+  appointment_id: null,
+  vital_signs_id: null,
+  note_type: "consulta_general",
+  note_date: "",
+  motivo_consulta: "",
+  padecimiento_actual: "",
+  subjetivo: "",
+  objetivo: "",
+  exploracion_fisica: "",
+  analisis: "",
+  impresion_diagnostica: "",
+  pronostico: "",
+  plan_terapeutico: "",
+  indicaciones: "",
+  estudios_solicitados: "",
+  referencia_texto: "",
+  observaciones: "",
+  consultation_status: "open",
+};
+
+const DEFAULT_DIAGNOSIS_FORM = {
+  id: null,
+  diagnosis_type: "principal",
+  cie10_code: "",
+  diagnosis_name: "",
+  observations: "",
+};
+
+const DEFAULT_TREATMENT_FORM = {
+  id: null,
+  medication_name: "",
+  presentation: "",
+  dosage: "",
+  route: "",
+  frequency: "",
+  duration: "",
+  recommendations: "",
+  non_pharmacological_measures: "",
+};
+
+const DEFAULT_FOLLOW_UP_FORM = {
+  id: null,
+  follow_up_date: "",
+  follow_up_reason: "",
+  instructions: "",
+  warning_signs: "",
+  pending_studies: "",
+  next_step: "",
+  status: "pending",
+};
+
 function buildPatientSnapshot(patient) {
   if (!patient) {
     return {
@@ -535,8 +683,36 @@ function buildPatientSnapshot(patient) {
     telefono: patient.telefono || "",
     correo: patient.correo || "",
     edad:
-      patient.edad === null || patient.edad === undefined ? "" : String(patient.edad),
+      patient.edad === null || patient.edad === undefined
+        ? ""
+        : String(patient.edad),
     fecha_nacimiento: patient.fecha_nacimiento || "",
+  };
+}
+
+function normalizeReviewByStatus(review) {
+  const status = review.review_status || "pending";
+
+  if (status === "verified") {
+    return {
+      ...review,
+      verified: true,
+      is_published: true,
+    };
+  }
+
+  if (status === "rejected") {
+    return {
+      ...review,
+      verified: false,
+      is_published: false,
+    };
+  }
+
+  return {
+    ...review,
+    verified: false,
+    is_published: false,
   };
 }
 
@@ -627,6 +803,41 @@ export default function AdminPage() {
   const [patientAppointmentsLoading, setPatientAppointmentsLoading] =
     useState(false);
 
+  const [activeClinicalTab, setActiveClinicalTab] = useState("historia");
+  const [clinicalFile, setClinicalFile] = useState(null);
+  const [clinicalFileLoading, setClinicalFileLoading] = useState(false);
+
+  const [clinicalHistory, setClinicalHistory] = useState(DEFAULT_CLINICAL_HISTORY);
+  const [clinicalHistoryLoading, setClinicalHistoryLoading] = useState(false);
+  const [savingClinicalHistory, setSavingClinicalHistory] = useState(false);
+
+  const [vitalSigns, setVitalSigns] = useState([]);
+  const [vitalSignsLoading, setVitalSignsLoading] = useState(false);
+  const [vitalForm, setVitalForm] = useState(DEFAULT_VITAL_FORM);
+  const [vitalMode, setVitalMode] = useState("create");
+  const [savingVitalSigns, setSavingVitalSigns] = useState(false);
+
+  const [medicalNotes, setMedicalNotes] = useState([]);
+  const [medicalNotesLoading, setMedicalNotesLoading] = useState(false);
+  const [medicalNoteForm, setMedicalNoteForm] = useState(DEFAULT_MEDICAL_NOTE);
+  const [medicalNoteMode, setMedicalNoteMode] = useState("create");
+  const [savingMedicalNote, setSavingMedicalNote] = useState(false);
+
+  const [diagnoses, setDiagnoses] = useState([]);
+  const [diagnosesLoading, setDiagnosesLoading] = useState(false);
+  const [diagnosisForm, setDiagnosisForm] = useState(DEFAULT_DIAGNOSIS_FORM);
+  const [savingDiagnosis, setSavingDiagnosis] = useState(false);
+
+  const [treatments, setTreatments] = useState([]);
+  const [treatmentsLoading, setTreatmentsLoading] = useState(false);
+  const [treatmentForm, setTreatmentForm] = useState(DEFAULT_TREATMENT_FORM);
+  const [savingTreatment, setSavingTreatment] = useState(false);
+
+  const [followUps, setFollowUps] = useState([]);
+  const [followUpsLoading, setFollowUpsLoading] = useState(false);
+  const [followUpForm, setFollowUpForm] = useState(DEFAULT_FOLLOW_UP_FORM);
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+
   const isAdmin = userRole === "admin";
   const isSecretary = userRole === "secretaria";
 
@@ -641,6 +852,15 @@ export default function AdminPage() {
   const canManageLicenses = isAdmin;
   const canManageProfessionalImages = isAdmin;
 
+  const canViewClinicalFile = isAdmin || isSecretary;
+  const canEditIdentification = isAdmin || isSecretary;
+  const canEditVitalSigns = isAdmin || isSecretary;
+  const canEditClinicalHistory = isAdmin;
+  const canEditMedicalNotes = isAdmin;
+  const canEditDiagnoses = isAdmin;
+  const canEditTreatments = isAdmin;
+  const canEditFollowUps = isAdmin;
+
   useEffect(() => {
     init();
   }, []);
@@ -654,7 +874,9 @@ export default function AdminPage() {
         "reviews",
         "clinic",
         "publicity",
+        "expediente",
       ];
+
       if (!allowed.includes(activeSection)) {
         setActiveSection("dashboard");
       }
@@ -684,18 +906,18 @@ export default function AdminPage() {
     setAuthLoading(true);
 
     const {
-      data: { session },
+      data: { session: currentSession },
     } = await supabase.auth.getSession();
 
-    setSession(session);
+    setSession(currentSession);
 
-    if (!session) {
+    if (!currentSession) {
       setUserRole(null);
       setAuthLoading(false);
       return;
     }
 
-    await loadRoleAndData(session);
+    await loadRoleAndData(currentSession);
     setAuthLoading(false);
   }
 
@@ -722,20 +944,11 @@ export default function AdminPage() {
     const tasks = [fetchDocuments(), fetchReviews()];
 
     if (role === "admin") {
-      tasks.push(
-        fetchServices(),
-        fetchLicenses(),
-        fetchProfile(),
-        fetchConfig()
-      );
+      tasks.push(fetchServices(), fetchLicenses(), fetchProfile(), fetchConfig());
     }
 
     if (role === "admin" || role === "secretaria") {
-      tasks.push(
-        fetchAppointments(),
-        fetchAvailableSlots(slotsDate),
-        fetchPatients()
-      );
+      tasks.push(fetchAppointments(), fetchAvailableSlots(slotsDate), fetchPatients());
     }
 
     await Promise.all(tasks);
@@ -1068,36 +1281,24 @@ export default function AdminPage() {
       return;
     }
 
-    setReviews(data || []);
+    setReviews((data || []).map(normalizeReviewByStatus));
   }
 
-  function normalizeReviewByStatus(review) {
-    const status = review.review_status || "pending";
+  function updateReview(id, field, value) {
+    setReviews((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        const updated = { ...r, [field]: value };
 
-    if (status === "verified") {
-      return {
-        ...review,
-        verified: true,
-        is_published: true,
-      };
-    }
+        if (field === "review_status") {
+          return normalizeReviewByStatus(updated);
+        }
 
-    if (status === "rejected") {
-      return {
-        ...review,
-        verified: false,
-        is_published: false,
-      };
-    }
-
-    return {
-      ...review,
-      verified: false,
-      is_published: false,
-    };
+        return updated;
+      })
+    );
   }
-
-  async function addReview() {
+    async function addReview() {
     if (!canManageReviews) {
       alert("No tienes permisos para esta acción.");
       return;
@@ -1136,21 +1337,6 @@ export default function AdminPage() {
       });
       fetchReviews();
     }
-  }
-
-  function updateReview(id, field, value) {
-    setReviews((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const updated = { ...r, [field]: value };
-
-        if (field === "review_status") {
-          return normalizeReviewByStatus(updated);
-        }
-
-        return updated;
-      })
-    );
   }
 
   async function saveReview(review) {
@@ -1315,6 +1501,24 @@ export default function AdminPage() {
     setPatientForm(DEFAULT_PATIENT_FORM);
   }
 
+  function resetClinicalState() {
+    setClinicalFile(null);
+    setClinicalHistory(DEFAULT_CLINICAL_HISTORY);
+    setVitalSigns([]);
+    setVitalForm(DEFAULT_VITAL_FORM);
+    setVitalMode("create");
+    setMedicalNotes([]);
+    setMedicalNoteForm(DEFAULT_MEDICAL_NOTE);
+    setMedicalNoteMode("create");
+    setDiagnoses([]);
+    setDiagnosisForm(DEFAULT_DIAGNOSIS_FORM);
+    setTreatments([]);
+    setTreatmentForm(DEFAULT_TREATMENT_FORM);
+    setFollowUps([]);
+    setFollowUpForm(DEFAULT_FOLLOW_UP_FORM);
+    setActiveClinicalTab("historia");
+  }
+
   function openCreatePatient(prefill = {}) {
     setPatientMode("create");
     setPatientForm({
@@ -1329,11 +1533,12 @@ export default function AdminPage() {
     });
     setSelectedPatientId(null);
     setSelectedPatientAppointments([]);
+    resetClinicalState();
     setActiveSection("patients");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function openEditPatient(patient) {
+  async function openEditPatient(patient) {
     setPatientMode("edit");
     setPatientForm({
       id: patient.id,
@@ -1354,9 +1559,15 @@ export default function AdminPage() {
       contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
       notas_identificacion: patient.notas_identificacion || "",
     });
+
     setSelectedPatientId(patient.id);
-    fetchPatientAppointments(patient.id);
     setActiveSection("patients");
+
+    await Promise.all([
+      fetchPatientAppointments(patient.id),
+      loadClinicalFile(patient.id),
+    ]);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1376,7 +1587,7 @@ export default function AdminPage() {
   }
 
   async function savePatientForm() {
-    if (!canManagePatients) {
+    if (!canEditIdentification) {
       alert("No tienes permisos para esta acción.");
       return;
     }
@@ -1436,7 +1647,10 @@ export default function AdminPage() {
 
     if (savedPatient) {
       setSelectedPatientId(savedPatient.id);
-      await fetchPatientAppointments(savedPatient.id);
+      await Promise.all([
+        fetchPatientAppointments(savedPatient.id),
+        loadClinicalFile(savedPatient.id),
+      ]);
       attachPatientToAppointment(savedPatient);
     }
 
@@ -1659,6 +1873,891 @@ export default function AdminPage() {
     fetchAvailableSlots(appointment.fecha_cita);
   }
 
+  async function loadClinicalFile(patientId) {
+    if (!canViewClinicalFile || !patientId) {
+      setClinicalFile(null);
+      return;
+    }
+
+    setClinicalFileLoading(true);
+
+    const { data, error } = await supabase
+      .from("patient_clinical_files")
+      .select("*")
+      .eq("patient_id", patientId)
+      .single();
+
+    setClinicalFileLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setClinicalFile(data || null);
+
+    if (data?.id) {
+      await Promise.all([
+        fetchClinicalHistory(patientId, data.id),
+        fetchVitalSigns(patientId, data.id),
+        fetchMedicalNotes(patientId, data.id),
+      ]);
+    } else {
+      setClinicalHistory(DEFAULT_CLINICAL_HISTORY);
+      setVitalSigns([]);
+      setMedicalNotes([]);
+    }
+  }
+
+  async function fetchClinicalHistory(patientId, clinicalFileId) {
+    if (!patientId || !clinicalFileId) return;
+
+    setClinicalHistoryLoading(true);
+
+    const { data, error } = await supabase
+      .from("clinical_histories")
+      .select("*")
+      .eq("patient_id", patientId)
+      .eq("clinical_file_id", clinicalFileId)
+      .maybeSingle();
+
+    setClinicalHistoryLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setClinicalHistory(
+      data
+        ? {
+            id: data.id,
+            motivo_consulta: data.motivo_consulta || "",
+            padecimiento_actual: data.padecimiento_actual || "",
+            antecedentes_heredofamiliares:
+              data.antecedentes_heredofamiliares || "",
+            antecedentes_personales_no_patologicos:
+              data.antecedentes_personales_no_patologicos || "",
+            antecedentes_personales_patologicos:
+              data.antecedentes_personales_patologicos || "",
+            antecedentes_gineco_obstetricos:
+              data.antecedentes_gineco_obstetricos || "",
+            antecedentes_perinatales: data.antecedentes_perinatales || "",
+            antecedentes_inmunizaciones: data.antecedentes_inmunizaciones || "",
+            alergias: data.alergias || "",
+            medicamentos_actuales: data.medicamentos_actuales || "",
+            toxicomanias: data.toxicomanias || "",
+            interrogatorio_aparatos_sistemas:
+              data.interrogatorio_aparatos_sistemas || "",
+            exploracion_fisica_general: data.exploracion_fisica_general || "",
+          }
+        : DEFAULT_CLINICAL_HISTORY
+    );
+  }
+
+  async function saveClinicalHistory() {
+    if (!canEditClinicalHistory) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!selectedPatientId || !clinicalFile?.id) {
+      alert("Selecciona un paciente con expediente clínico.");
+      return;
+    }
+
+    setSavingClinicalHistory(true);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      motivo_consulta: clinicalHistory.motivo_consulta || null,
+      padecimiento_actual: clinicalHistory.padecimiento_actual || null,
+      antecedentes_heredofamiliares:
+        clinicalHistory.antecedentes_heredofamiliares || null,
+      antecedentes_personales_no_patologicos:
+        clinicalHistory.antecedentes_personales_no_patologicos || null,
+      antecedentes_personales_patologicos:
+        clinicalHistory.antecedentes_personales_patologicos || null,
+      antecedentes_gineco_obstetricos:
+        clinicalHistory.antecedentes_gineco_obstetricos || null,
+      antecedentes_perinatales: clinicalHistory.antecedentes_perinatales || null,
+      antecedentes_inmunizaciones:
+        clinicalHistory.antecedentes_inmunizaciones || null,
+      alergias: clinicalHistory.alergias || null,
+      medicamentos_actuales: clinicalHistory.medicamentos_actuales || null,
+      toxicomanias: clinicalHistory.toxicomanias || null,
+      interrogatorio_aparatos_sistemas:
+        clinicalHistory.interrogatorio_aparatos_sistemas || null,
+      exploracion_fisica_general:
+        clinicalHistory.exploracion_fisica_general || null,
+    };
+
+    let response;
+
+    if (clinicalHistory.id) {
+      response = await supabase
+        .from("clinical_histories")
+        .update(payload)
+        .eq("id", clinicalHistory.id)
+        .select()
+        .single();
+    } else {
+      response = await supabase
+        .from("clinical_histories")
+        .insert(payload)
+        .select()
+        .single();
+    }
+
+    setSavingClinicalHistory(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    await fetchClinicalHistory(selectedPatientId, clinicalFile.id);
+    alert("Historia clínica guardada.");
+  }
+
+  async function fetchVitalSigns(patientId, clinicalFileId) {
+    if (!patientId || !clinicalFileId) return;
+
+    setVitalSignsLoading(true);
+
+    const { data, error } = await supabase
+      .from("vital_signs")
+      .select("*")
+      .eq("patient_id", patientId)
+      .eq("clinical_file_id", clinicalFileId)
+      .order("taken_at", { ascending: false });
+
+    setVitalSignsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setVitalSigns(data || []);
+  }
+
+  function resetVitalForm() {
+    setVitalMode("create");
+    setVitalForm(DEFAULT_VITAL_FORM);
+  }
+
+  function openEditVital(vital) {
+    setVitalMode("edit");
+    setVitalForm({
+      id: vital.id,
+      taken_at: vital.taken_at
+        ? new Date(vital.taken_at).toISOString().slice(0, 16)
+        : "",
+      appointment_id: vital.appointment_id || null,
+      peso_kg:
+        vital.peso_kg === null || vital.peso_kg === undefined
+          ? ""
+          : String(vital.peso_kg),
+      talla_cm:
+        vital.talla_cm === null || vital.talla_cm === undefined
+          ? ""
+          : String(vital.talla_cm),
+      imc:
+        vital.imc === null || vital.imc === undefined ? "" : String(vital.imc),
+      temperatura_c:
+        vital.temperatura_c === null || vital.temperatura_c === undefined
+          ? ""
+          : String(vital.temperatura_c),
+      frecuencia_cardiaca:
+        vital.frecuencia_cardiaca === null ||
+        vital.frecuencia_cardiaca === undefined
+          ? ""
+          : String(vital.frecuencia_cardiaca),
+      frecuencia_respiratoria:
+        vital.frecuencia_respiratoria === null ||
+        vital.frecuencia_respiratoria === undefined
+          ? ""
+          : String(vital.frecuencia_respiratoria),
+      tension_arterial_sistolica:
+        vital.tension_arterial_sistolica === null ||
+        vital.tension_arterial_sistolica === undefined
+          ? ""
+          : String(vital.tension_arterial_sistolica),
+      tension_arterial_diastolica:
+        vital.tension_arterial_diastolica === null ||
+        vital.tension_arterial_diastolica === undefined
+          ? ""
+          : String(vital.tension_arterial_diastolica),
+      saturacion_oxigeno:
+        vital.saturacion_oxigeno === null || vital.saturacion_oxigeno === undefined
+          ? ""
+          : String(vital.saturacion_oxigeno),
+      glucosa_capilar:
+        vital.glucosa_capilar === null || vital.glucosa_capilar === undefined
+          ? ""
+          : String(vital.glucosa_capilar),
+      perimetro_cefalico_cm:
+        vital.perimetro_cefalico_cm === null ||
+        vital.perimetro_cefalico_cm === undefined
+          ? ""
+          : String(vital.perimetro_cefalico_cm),
+      observaciones: vital.observaciones || "",
+    });
+    setActiveClinicalTab("vitales");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveVitalForm() {
+    if (!canEditVitalSigns) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!selectedPatientId || !clinicalFile?.id) {
+      alert("Selecciona un paciente con expediente clínico.");
+      return;
+    }
+
+    setSavingVitalSigns(true);
+
+    const safeImc =
+      vitalForm.imc || calculateImc(vitalForm.peso_kg, vitalForm.talla_cm);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      appointment_id: vitalForm.appointment_id || null,
+      taken_at: vitalForm.taken_at || new Date().toISOString(),
+      peso_kg: vitalForm.peso_kg === "" ? null : Number(vitalForm.peso_kg),
+      talla_cm: vitalForm.talla_cm === "" ? null : Number(vitalForm.talla_cm),
+      imc: safeImc === "" ? null : Number(safeImc),
+      temperatura_c:
+        vitalForm.temperatura_c === "" ? null : Number(vitalForm.temperatura_c),
+      frecuencia_cardiaca:
+        vitalForm.frecuencia_cardiaca === ""
+          ? null
+          : Number(vitalForm.frecuencia_cardiaca),
+      frecuencia_respiratoria:
+        vitalForm.frecuencia_respiratoria === ""
+          ? null
+          : Number(vitalForm.frecuencia_respiratoria),
+      tension_arterial_sistolica:
+        vitalForm.tension_arterial_sistolica === ""
+          ? null
+          : Number(vitalForm.tension_arterial_sistolica),
+      tension_arterial_diastolica:
+        vitalForm.tension_arterial_diastolica === ""
+          ? null
+          : Number(vitalForm.tension_arterial_diastolica),
+      saturacion_oxigeno:
+        vitalForm.saturacion_oxigeno === ""
+          ? null
+          : Number(vitalForm.saturacion_oxigeno),
+      glucosa_capilar:
+        vitalForm.glucosa_capilar === ""
+          ? null
+          : Number(vitalForm.glucosa_capilar),
+      perimetro_cefalico_cm:
+        vitalForm.perimetro_cefalico_cm === ""
+          ? null
+          : Number(vitalForm.perimetro_cefalico_cm),
+      observaciones: vitalForm.observaciones || null,
+    };
+
+    let response;
+
+    if (vitalMode === "create") {
+      response = await supabase
+        .from("vital_signs")
+        .insert(payload)
+        .select()
+        .single();
+    } else {
+      response = await supabase
+        .from("vital_signs")
+        .update(payload)
+        .eq("id", vitalForm.id)
+        .select()
+        .single();
+    }
+
+    setSavingVitalSigns(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    await fetchVitalSigns(selectedPatientId, clinicalFile.id);
+    resetVitalForm();
+    alert("Signos vitales guardados.");
+  }
+
+  async function deleteVital(id) {
+    if (!isAdmin) {
+      alert("Solo el administrador puede borrar signos vitales.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar este registro de signos vitales?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("vital_signs").delete().eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await fetchVitalSigns(selectedPatientId, clinicalFile.id);
+  }
+
+  async function fetchMedicalNotes(patientId, clinicalFileId) {
+    if (!patientId || !clinicalFileId) return;
+
+    setMedicalNotesLoading(true);
+
+    const { data, error } = await supabase
+      .from("medical_notes")
+      .select("*")
+      .eq("patient_id", patientId)
+      .eq("clinical_file_id", clinicalFileId)
+      .order("note_date", { ascending: false });
+
+    setMedicalNotesLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMedicalNotes(data || []);
+  }
+
+  function resetMedicalNoteForm() {
+    setMedicalNoteMode("create");
+    setMedicalNoteForm(DEFAULT_MEDICAL_NOTE);
+    setDiagnosisForm(DEFAULT_DIAGNOSIS_FORM);
+    setTreatmentForm(DEFAULT_TREATMENT_FORM);
+    setFollowUpForm(DEFAULT_FOLLOW_UP_FORM);
+    setDiagnoses([]);
+    setTreatments([]);
+    setFollowUps([]);
+  }
+
+  async function openEditMedicalNote(note) {
+    setMedicalNoteMode("edit");
+    setMedicalNoteForm({
+      id: note.id,
+      appointment_id: note.appointment_id || null,
+      vital_signs_id: note.vital_signs_id || null,
+      note_type: note.note_type || "consulta_general",
+      note_date: note.note_date
+        ? new Date(note.note_date).toISOString().slice(0, 16)
+        : "",
+      motivo_consulta: note.motivo_consulta || "",
+      padecimiento_actual: note.padecimiento_actual || "",
+      subjetivo: note.subjetivo || "",
+      objetivo: note.objetivo || "",
+      exploracion_fisica: note.exploracion_fisica || "",
+      analisis: note.analisis || "",
+      impresion_diagnostica: note.impresion_diagnostica || "",
+      pronostico: note.pronostico || "",
+      plan_terapeutico: note.plan_terapeutico || "",
+      indicaciones: note.indicaciones || "",
+      estudios_solicitados: note.estudios_solicitados || "",
+      referencia_texto: note.referencia_texto || "",
+      observaciones: note.observaciones || "",
+      consultation_status: note.consultation_status || "open",
+    });
+
+    setActiveClinicalTab("nota");
+    await Promise.all([
+      fetchDiagnoses(note.id),
+      fetchTreatments(note.id),
+      fetchFollowUps(note.id),
+    ]);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+    async function saveMedicalNoteForm(closeConsultation = false) {
+    if (!canEditMedicalNotes) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!selectedPatientId || !clinicalFile?.id) {
+      alert("Selecciona un paciente con expediente clínico.");
+      return;
+    }
+
+    setSavingMedicalNote(true);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      appointment_id: medicalNoteForm.appointment_id || null,
+      vital_signs_id: medicalNoteForm.vital_signs_id || null,
+      note_type: medicalNoteForm.note_type || "consulta_general",
+      note_date: medicalNoteForm.note_date || new Date().toISOString(),
+      motivo_consulta: medicalNoteForm.motivo_consulta || null,
+      padecimiento_actual: medicalNoteForm.padecimiento_actual || null,
+      subjetivo: medicalNoteForm.subjetivo || null,
+      objetivo: medicalNoteForm.objetivo || null,
+      exploracion_fisica: medicalNoteForm.exploracion_fisica || null,
+      analisis: medicalNoteForm.analisis || null,
+      impresion_diagnostica: medicalNoteForm.impresion_diagnostica || null,
+      pronostico: medicalNoteForm.pronostico || null,
+      plan_terapeutico: medicalNoteForm.plan_terapeutico || null,
+      indicaciones: medicalNoteForm.indicaciones || null,
+      estudios_solicitados: medicalNoteForm.estudios_solicitados || null,
+      referencia_texto: medicalNoteForm.referencia_texto || null,
+      observaciones: medicalNoteForm.observaciones || null,
+      consultation_status: closeConsultation
+        ? "closed"
+        : medicalNoteForm.consultation_status || "open",
+    };
+
+    let response;
+
+    if (medicalNoteMode === "create") {
+      response = await supabase
+        .from("medical_notes")
+        .insert(payload)
+        .select()
+        .single();
+    } else {
+      response = await supabase
+        .from("medical_notes")
+        .update(payload)
+        .eq("id", medicalNoteForm.id)
+        .select()
+        .single();
+    }
+
+    setSavingMedicalNote(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    const savedNote = response.data;
+
+    if (closeConsultation && savedNote?.appointment_id) {
+      await supabase
+        .from("appointments")
+        .update({
+          status: "completed",
+        })
+        .eq("id", savedNote.appointment_id);
+    }
+
+    await fetchMedicalNotes(selectedPatientId, clinicalFile.id);
+    setMedicalNoteMode("edit");
+    setMedicalNoteForm({
+      id: savedNote.id,
+      appointment_id: savedNote.appointment_id || null,
+      vital_signs_id: savedNote.vital_signs_id || null,
+      note_type: savedNote.note_type || "consulta_general",
+      note_date: savedNote.note_date
+        ? new Date(savedNote.note_date).toISOString().slice(0, 16)
+        : "",
+      motivo_consulta: savedNote.motivo_consulta || "",
+      padecimiento_actual: savedNote.padecimiento_actual || "",
+      subjetivo: savedNote.subjetivo || "",
+      objetivo: savedNote.objetivo || "",
+      exploracion_fisica: savedNote.exploracion_fisica || "",
+      analisis: savedNote.analisis || "",
+      impresion_diagnostica: savedNote.impresion_diagnostica || "",
+      pronostico: savedNote.pronostico || "",
+      plan_terapeutico: savedNote.plan_terapeutico || "",
+      indicaciones: savedNote.indicaciones || "",
+      estudios_solicitados: savedNote.estudios_solicitados || "",
+      referencia_texto: savedNote.referencia_texto || "",
+      observaciones: savedNote.observaciones || "",
+      consultation_status: savedNote.consultation_status || "open",
+    });
+
+    await Promise.all([
+      fetchDiagnoses(savedNote.id),
+      fetchTreatments(savedNote.id),
+      fetchFollowUps(savedNote.id),
+    ]);
+
+    alert(
+      closeConsultation
+        ? "Consulta cerrada correctamente."
+        : "Nota médica guardada."
+    );
+  }
+
+  async function deleteMedicalNote(id) {
+    if (!isAdmin) {
+      alert("Solo el administrador puede borrar notas médicas.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar esta nota médica?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("medical_notes").delete().eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await fetchMedicalNotes(selectedPatientId, clinicalFile.id);
+    resetMedicalNoteForm();
+  }
+
+  async function fetchDiagnoses(medicalNoteId) {
+    if (!medicalNoteId) {
+      setDiagnoses([]);
+      return;
+    }
+
+    setDiagnosesLoading(true);
+
+    const { data, error } = await supabase
+      .from("medical_diagnoses")
+      .select("*")
+      .eq("medical_note_id", medicalNoteId)
+      .order("id", { ascending: true });
+
+    setDiagnosesLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setDiagnoses(data || []);
+  }
+
+  async function saveDiagnosis() {
+    if (!canEditDiagnoses) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!medicalNoteForm.id) {
+      alert("Primero guarda la nota médica.");
+      return;
+    }
+
+    if (!diagnosisForm.diagnosis_name.trim()) {
+      alert("El nombre del diagnóstico es obligatorio.");
+      return;
+    }
+
+    setSavingDiagnosis(true);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      medical_note_id: medicalNoteForm.id,
+      diagnosis_type: diagnosisForm.diagnosis_type || "principal",
+      cie10_code: diagnosisForm.cie10_code.trim() || null,
+      diagnosis_name: diagnosisForm.diagnosis_name.trim(),
+      observations: diagnosisForm.observations.trim() || null,
+    };
+
+    let response;
+
+    if (diagnosisForm.id) {
+      response = await supabase
+        .from("medical_diagnoses")
+        .update(payload)
+        .eq("id", diagnosisForm.id);
+    } else {
+      response = await supabase.from("medical_diagnoses").insert(payload);
+    }
+
+    setSavingDiagnosis(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    await fetchDiagnoses(medicalNoteForm.id);
+    setDiagnosisForm(DEFAULT_DIAGNOSIS_FORM);
+  }
+
+  function openEditDiagnosis(diagnosis) {
+    setDiagnosisForm({
+      id: diagnosis.id,
+      diagnosis_type: diagnosis.diagnosis_type || "principal",
+      cie10_code: diagnosis.cie10_code || "",
+      diagnosis_name: diagnosis.diagnosis_name || "",
+      observations: diagnosis.observations || "",
+    });
+  }
+
+  async function deleteDiagnosis(id) {
+    if (!isAdmin) {
+      alert("Solo el administrador puede borrar diagnósticos.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar este diagnóstico?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("medical_diagnoses")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await fetchDiagnoses(medicalNoteForm.id);
+    setDiagnosisForm(DEFAULT_DIAGNOSIS_FORM);
+  }
+
+  async function fetchTreatments(medicalNoteId) {
+    if (!medicalNoteId) {
+      setTreatments([]);
+      return;
+    }
+
+    setTreatmentsLoading(true);
+
+    const { data, error } = await supabase
+      .from("medical_treatments")
+      .select("*")
+      .eq("medical_note_id", medicalNoteId)
+      .order("id", { ascending: true });
+
+    setTreatmentsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setTreatments(data || []);
+  }
+
+  async function saveTreatment() {
+    if (!canEditTreatments) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!medicalNoteForm.id) {
+      alert("Primero guarda la nota médica.");
+      return;
+    }
+
+    setSavingTreatment(true);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      medical_note_id: medicalNoteForm.id,
+      medication_name: treatmentForm.medication_name.trim() || null,
+      presentation: treatmentForm.presentation.trim() || null,
+      dosage: treatmentForm.dosage.trim() || null,
+      route: treatmentForm.route.trim() || null,
+      frequency: treatmentForm.frequency.trim() || null,
+      duration: treatmentForm.duration.trim() || null,
+      recommendations: treatmentForm.recommendations.trim() || null,
+      non_pharmacological_measures:
+        treatmentForm.non_pharmacological_measures.trim() || null,
+    };
+
+    let response;
+
+    if (treatmentForm.id) {
+      response = await supabase
+        .from("medical_treatments")
+        .update(payload)
+        .eq("id", treatmentForm.id);
+    } else {
+      response = await supabase.from("medical_treatments").insert(payload);
+    }
+
+    setSavingTreatment(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    await fetchTreatments(medicalNoteForm.id);
+    setTreatmentForm(DEFAULT_TREATMENT_FORM);
+  }
+
+  function openEditTreatment(treatment) {
+    setTreatmentForm({
+      id: treatment.id,
+      medication_name: treatment.medication_name || "",
+      presentation: treatment.presentation || "",
+      dosage: treatment.dosage || "",
+      route: treatment.route || "",
+      frequency: treatment.frequency || "",
+      duration: treatment.duration || "",
+      recommendations: treatment.recommendations || "",
+      non_pharmacological_measures:
+        treatment.non_pharmacological_measures || "",
+    });
+  }
+
+  async function deleteTreatment(id) {
+    if (!isAdmin) {
+      alert("Solo el administrador puede borrar tratamientos.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar este tratamiento?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("medical_treatments")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await fetchTreatments(medicalNoteForm.id);
+    setTreatmentForm(DEFAULT_TREATMENT_FORM);
+  }
+
+  async function fetchFollowUps(medicalNoteId) {
+    if (!medicalNoteId) {
+      setFollowUps([]);
+      return;
+    }
+
+    setFollowUpsLoading(true);
+
+    const { data, error } = await supabase
+      .from("medical_follow_ups")
+      .select("*")
+      .eq("medical_note_id", medicalNoteId)
+      .order("id", { ascending: true });
+
+    setFollowUpsLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setFollowUps(data || []);
+  }
+
+  async function saveFollowUp() {
+    if (!canEditFollowUps) {
+      alert("No tienes permisos para esta acción.");
+      return;
+    }
+
+    if (!medicalNoteForm.id) {
+      alert("Primero guarda la nota médica.");
+      return;
+    }
+
+    setSavingFollowUp(true);
+
+    const payload = {
+      patient_id: selectedPatientId,
+      clinical_file_id: clinicalFile.id,
+      medical_note_id: medicalNoteForm.id,
+      follow_up_date: followUpForm.follow_up_date || null,
+      follow_up_reason: followUpForm.follow_up_reason.trim() || null,
+      instructions: followUpForm.instructions.trim() || null,
+      warning_signs: followUpForm.warning_signs.trim() || null,
+      pending_studies: followUpForm.pending_studies.trim() || null,
+      next_step: followUpForm.next_step.trim() || null,
+      status: followUpForm.status || "pending",
+    };
+
+    let response;
+
+    if (followUpForm.id) {
+      response = await supabase
+        .from("medical_follow_ups")
+        .update(payload)
+        .eq("id", followUpForm.id);
+    } else {
+      response = await supabase.from("medical_follow_ups").insert(payload);
+    }
+
+    setSavingFollowUp(false);
+
+    if (response.error) {
+      alert(response.error.message);
+      return;
+    }
+
+    await fetchFollowUps(medicalNoteForm.id);
+    setFollowUpForm(DEFAULT_FOLLOW_UP_FORM);
+  }
+
+  function openEditFollowUp(followUp) {
+    setFollowUpForm({
+      id: followUp.id,
+      follow_up_date: followUp.follow_up_date
+        ? new Date(followUp.follow_up_date).toISOString().slice(0, 16)
+        : "",
+      follow_up_reason: followUp.follow_up_reason || "",
+      instructions: followUp.instructions || "",
+      warning_signs: followUp.warning_signs || "",
+      pending_studies: followUp.pending_studies || "",
+      next_step: followUp.next_step || "",
+      status: followUp.status || "pending",
+    });
+  }
+
+  async function deleteFollowUp(id) {
+    if (!isAdmin) {
+      alert("Solo el administrador puede borrar seguimientos.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar este seguimiento?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("medical_follow_ups")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await fetchFollowUps(medicalNoteForm.id);
+    setFollowUpForm(DEFAULT_FOLLOW_UP_FORM);
+  }
+
   const profilePhotos = documents.filter(
     (d) => d.category === "foto_profesional"
   );
@@ -1751,6 +2850,10 @@ export default function AdminPage() {
     );
   }, [appointments]);
 
+  const patientsWithClinicalFile = useMemo(() => {
+    return patients.filter((patient) => Boolean(patient.id));
+  }, [patients]);
+
   const verifiedCount = verifiedReviews.length;
   const pendingCount = pendingReviews.length;
   const rejectedCount = rejectedReviews.length;
@@ -1777,6 +2880,13 @@ export default function AdminPage() {
         icon: <IconPatients />,
         description: "Listado, búsqueda, ficha y citas ligadas",
         group: "operacion",
+      },
+      {
+        key: "expediente",
+        label: "Expediente",
+        icon: <IconExpediente />,
+        description: "Historia clínica, vitales y notas",
+        group: "clinico",
       },
       {
         key: "reviews",
@@ -1846,14 +2956,6 @@ export default function AdminPage() {
           group: "operacion",
         }
       );
-
-      items.push({
-        key: "expediente",
-        label: "Expediente",
-        icon: <IconExpediente />,
-        description: "Módulo clínico en preparación",
-        group: "clinico",
-      });
     }
 
     return items;
@@ -1967,6 +3069,9 @@ export default function AdminPage() {
     );
   }
 
+  const selectedPatient =
+    patients.find((patient) => patient.id === selectedPatientId) || null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50 to-emerald-50">
       <div className="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur lg:hidden">
@@ -2005,8 +3110,8 @@ export default function AdminPage() {
                 Administración médica
               </h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Administra agenda, pacientes, reseñas, credenciales y contenido
-                visual del sitio.
+                Administra agenda, pacientes, expediente, reseñas, credenciales y
+                contenido visual del sitio.
               </p>
             </div>
 
@@ -2055,7 +3160,7 @@ export default function AdminPage() {
             {activeSection === "dashboard" ? (
               <Card
                 title="Resumen del sistema"
-                subtitle="Vista rápida de agenda, pacientes y reseñas."
+                subtitle="Vista rápida de agenda, pacientes, expediente y reputación digital."
               >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <InfoStat
@@ -2079,769 +3184,6 @@ export default function AdminPage() {
                     helper="Publicadas"
                   />
                 </div>
-
-                <Divider />
-
-                <div className="grid gap-6 xl:grid-cols-2">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Actividad reciente
-                    </h3>
-                    <div className="mt-4 space-y-3">
-                      {appointments.slice(0, 5).map((appointment) => (
-                        <div
-                          key={appointment.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-slate-900">
-                                {appointment.nombre || "Paciente sin nombre"}
-                              </p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                {formatDateTime(
-                                  appointment.fecha_cita,
-                                  appointment.hora_cita
-                                )}
-                              </p>
-                            </div>
-
-                            <StatusBadge
-                              tone={
-                                appointment.status === "completed"
-                                  ? "success"
-                                  : appointment.status === "cancelled"
-                                  ? "danger"
-                                  : appointment.status === "confirmed"
-                                  ? "info"
-                                  : appointment.status === "no_show"
-                                  ? "warning"
-                                  : "default"
-                              }
-                            >
-                              {appointment.status || "pending"}
-                            </StatusBadge>
-                          </div>
-                        </div>
-                      ))}
-
-                      {!appointments.length ? (
-                        <EmptyState
-                          title="Aún no hay citas registradas"
-                          description="Cuando empieces a operar la agenda, aquí verás el movimiento reciente."
-                        />
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Estado de reseñas
-                    </h3>
-
-                    <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                      <InfoStat
-                        label="Pendientes"
-                        value={pendingCount}
-                        helper="Por moderar"
-                      />
-                      <InfoStat
-                        label="Verificadas"
-                        value={verifiedCount}
-                        helper="Publicadas"
-                      />
-                      <InfoStat
-                        label="Rechazadas"
-                        value={rejectedCount}
-                        helper="No visibles"
-                      />
-                    </div>
-
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                      <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Avance actual
-                      </h4>
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        El paso 2 ya quedó integrado: listado de pacientes,
-                        buscador, ficha individual, alta/edición y vínculo con citas
-                        desde agenda.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "config" && canSeeSensitiveConfig ? (
-              <Card
-                title="Configuración global"
-                subtitle="Textos principales, SEO y enlaces generales del sitio."
-              >
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <Label>Booking URL</Label>
-                    <Input
-                      value={config.booking_url}
-                      onChange={(e) =>
-                        updateConfigField("booking_url", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>WhatsApp principal</Label>
-                    <Input
-                      value={config.whatsapp_number}
-                      onChange={(e) =>
-                        updateConfigField("whatsapp_number", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label>Mensaje de WhatsApp</Label>
-                    <Textarea
-                      rows={3}
-                      value={config.whatsapp_message}
-                      onChange={(e) =>
-                        updateConfigField("whatsapp_message", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <ConfigGroupTitle>Hero principal</ConfigGroupTitle>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <Label>Hero title</Label>
-                    <Input
-                      value={config.hero_title}
-                      onChange={(e) =>
-                        updateConfigField("hero_title", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Hero subtitle</Label>
-                    <Input
-                      value={config.hero_subtitle}
-                      onChange={(e) =>
-                        updateConfigField("hero_subtitle", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>CTA principal</Label>
-                    <Input
-                      value={config.cta_primary_text}
-                      onChange={(e) =>
-                        updateConfigField("cta_primary_text", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>CTA secundario</Label>
-                    <Input
-                      value={config.cta_secondary_text}
-                      onChange={(e) =>
-                        updateConfigField("cta_secondary_text", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <ConfigGroupTitle>Agenda</ConfigGroupTitle>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <Label>Título de agenda</Label>
-                    <Input
-                      value={config.agenda_title}
-                      onChange={(e) =>
-                        updateConfigField("agenda_title", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Subtítulo de agenda</Label>
-                    <Input
-                      value={config.agenda_subtitle}
-                      onChange={(e) =>
-                        updateConfigField("agenda_subtitle", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <ConfigGroupTitle>SEO</ConfigGroupTitle>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <Label>SEO title</Label>
-                    <Input
-                      value={config.seo_title}
-                      onChange={(e) =>
-                        updateConfigField("seo_title", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>SEO description</Label>
-                    <Input
-                      value={config.seo_description}
-                      onChange={(e) =>
-                        updateConfigField("seo_description", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Ciudad SEO</Label>
-                    <Input
-                      value={config.seo_city}
-                      onChange={(e) =>
-                        updateConfigField("seo_city", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Región SEO</Label>
-                    <Input
-                      value={config.seo_region}
-                      onChange={(e) =>
-                        updateConfigField("seo_region", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-end">
-                  <PrimaryButton onClick={saveConfig} disabled={savingConfig}>
-                    {savingConfig ? "Guardando..." : "Guardar configuración"}
-                  </PrimaryButton>
-                </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "profile" && canManageProfile ? (
-              <Card
-                title="Perfil del médico"
-                subtitle="Datos profesionales y de contacto."
-              >
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <Label>Nombre</Label>
-                    <Input
-                      value={profile.doctor_name || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          doctor_name: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Universidad</Label>
-                    <Input
-                      value={profile.university || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          university: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Teléfono</Label>
-                    <Input
-                      value={profile.phone || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          phone: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Correo</Label>
-                    <Input
-                      value={profile.email || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <Label>Dirección</Label>
-                    <Textarea
-                      rows={3}
-                      value={profile.address || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          address: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Horario</Label>
-                    <Input
-                      value={profile.schedule || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          schedule: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <Label>Biografía</Label>
-                    <Textarea
-                      rows={5}
-                      value={profile.bio || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          bio: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-end">
-                  <PrimaryButton onClick={saveProfile}>
-                    Guardar perfil
-                  </PrimaryButton>
-                </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "services" && canManageServices ? (
-              <Card
-                title="Servicios"
-                subtitle="Servicios médicos mostrados en la página."
-              >
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Nombre</Label>
-                      <Input
-                        value={newService.name}
-                        onChange={(e) =>
-                          setNewService((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Precio</Label>
-                      <Input
-                        type="number"
-                        value={newService.price}
-                        onChange={(e) =>
-                          setNewService((prev) => ({
-                            ...prev,
-                            price: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Orden</Label>
-                      <Input
-                        type="number"
-                        value={newService.orden}
-                        onChange={(e) =>
-                          setNewService((prev) => ({
-                            ...prev,
-                            orden: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-end">
-                      <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(newService.destacado)}
-                          onChange={(e) =>
-                            setNewService((prev) => ({
-                              ...prev,
-                              destacado: e.target.checked,
-                            }))
-                          }
-                        />
-                        Marcar como destacado
-                      </label>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <Label>Descripción</Label>
-                      <Textarea
-                        rows={4}
-                        value={newService.description}
-                        onChange={(e) =>
-                          setNewService((prev) => ({
-                            ...prev,
-                            description: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <PrimaryButton onClick={addService}>
-                      Agregar servicio
-                    </PrimaryButton>
-                  </div>
-                </div>
-
-                <Divider />
-
-                <div className="grid gap-4">
-                  {sortedServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                    >
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label>Nombre</Label>
-                          <Input
-                            value={service.name || ""}
-                            onChange={(e) =>
-                              updateService(service.id, "name", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Precio</Label>
-                          <Input
-                            type="number"
-                            value={service.price || ""}
-                            onChange={(e) =>
-                              updateService(service.id, "price", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Orden</Label>
-                          <Input
-                            type="number"
-                            value={service.orden || 0}
-                            onChange={(e) =>
-                              updateService(service.id, "orden", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(service.destacado)}
-                              onChange={(e) =>
-                                updateService(
-                                  service.id,
-                                  "destacado",
-                                  e.target.checked
-                                )
-                              }
-                            />
-                            Destacado
-                          </label>
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label>Descripción</Label>
-                          <Textarea
-                            rows={4}
-                            value={service.description || ""}
-                            onChange={(e) =>
-                              updateService(
-                                service.id,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-5 flex flex-wrap gap-3">
-                        <PrimaryButton onClick={() => saveService(service)}>
-                          Guardar cambios
-                        </PrimaryButton>
-                        <DangerButton onClick={() => deleteService(service.id)}>
-                          Borrar
-                        </DangerButton>
-                      </div>
-                    </div>
-                  ))}
-
-                  {!sortedServices.length ? (
-                    <EmptyState
-                      title="No hay servicios"
-                      description="Agrega aquí los servicios médicos disponibles."
-                    />
-                  ) : null}
-                </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "licenses" && canManageLicenses ? (
-              <Card
-                title="Cédulas"
-                subtitle="Registro de cédulas profesionales y grados."
-              >
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>Tipo / etiqueta</Label>
-                      <Input
-                        value={newLicense.label}
-                        onChange={(e) =>
-                          setNewLicense((prev) => ({
-                            ...prev,
-                            label: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Número de cédula</Label>
-                      <Input
-                        value={newLicense.license_number}
-                        onChange={(e) =>
-                          setNewLicense((prev) => ({
-                            ...prev,
-                            license_number: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <PrimaryButton onClick={addLicense}>
-                      Agregar cédula
-                    </PrimaryButton>
-                  </div>
-                </div>
-
-                <Divider />
-
-                <div className="grid gap-4">
-                  {licenses.map((license) => (
-                    <div
-                      key={license.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                    >
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label>Etiqueta</Label>
-                          <Input
-                            value={license.label || ""}
-                            onChange={(e) =>
-                              updateLicense(license.id, "label", e.target.value)
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Número</Label>
-                          <Input
-                            value={license.license_number || ""}
-                            onChange={(e) =>
-                              updateLicense(
-                                license.id,
-                                "license_number",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-5 flex flex-wrap gap-3">
-                        <PrimaryButton onClick={() => saveLicense(license)}>
-                          Guardar cambios
-                        </PrimaryButton>
-                        <DangerButton onClick={() => deleteLicense(license.id)}>
-                          Borrar
-                        </DangerButton>
-                      </div>
-                    </div>
-                  ))}
-
-                  {!licenses.length ? (
-                    <EmptyState
-                      title="No hay cédulas registradas"
-                      description="Agrega aquí los datos académicos y profesionales."
-                    />
-                  ) : null}
-                </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "credentials" && canManageProfessionalImages ? (
-              <Card
-                title="Credenciales"
-                subtitle="Sube fotos profesionales, títulos y certificaciones."
-              >
-                <div className="grid gap-6 xl:grid-cols-3">
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <Label>Foto profesional</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
-                    />
-                    <div className="mt-4">
-                      <PrimaryButton
-                        onClick={() => uploadImage(profilePhotoFile, "foto_profesional")}
-                      >
-                        Subir
-                      </PrimaryButton>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <Label>Título académico</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setTitleFile(e.target.files?.[0] || null)}
-                    />
-                    <div className="mt-4">
-                      <PrimaryButton
-                        onClick={() => uploadImage(titleFile, "titulo_academico")}
-                      >
-                        Subir
-                      </PrimaryButton>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <Label>Diplomado o certificación</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setDiplomaFile(e.target.files?.[0] || null)}
-                    />
-                    <div className="mt-4">
-                      <PrimaryButton
-                        onClick={() =>
-                          uploadImage(diplomaFile, "diplomado_certificacion")
-                        }
-                      >
-                        Subir
-                      </PrimaryButton>
-                    </div>
-                  </div>
-                </div>
-
-                <Divider />
-
-                <div className="grid gap-6 xl:grid-cols-3">
-                  <div>
-                    <h3 className="mb-4 text-lg font-bold text-slate-900">
-                      Fotos profesionales
-                    </h3>
-                    <div className="space-y-4">
-                      {profilePhotos.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                        >
-                          <img
-                            src={doc.file_url}
-                            alt="Foto profesional"
-                            className="h-40 w-full rounded-2xl object-cover"
-                          />
-                          <div className="mt-4">
-                            <DangerButton
-                              onClick={() => deleteImage(doc.id, doc.file_url)}
-                            >
-                              Borrar
-                            </DangerButton>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-4 text-lg font-bold text-slate-900">
-                      Títulos académicos
-                    </h3>
-                    <div className="space-y-4">
-                      {titleImages.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                        >
-                          <img
-                            src={doc.file_url}
-                            alt="Título"
-                            className="h-40 w-full rounded-2xl object-cover"
-                          />
-                          <div className="mt-4">
-                            <DangerButton
-                              onClick={() => deleteImage(doc.id, doc.file_url)}
-                            >
-                              Borrar
-                            </DangerButton>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-4 text-lg font-bold text-slate-900">
-                      Diplomas y certificaciones
-                    </h3>
-                    <div className="space-y-4">
-                      {diplomaImages.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                        >
-                          <img
-                            src={doc.file_url}
-                            alt="Certificación"
-                            className="h-40 w-full rounded-2xl object-cover"
-                          />
-                          <div className="mt-4">
-                            <DangerButton
-                              onClick={() => deleteImage(doc.id, doc.file_url)}
-                            >
-                              Borrar
-                            </DangerButton>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </Card>
             ) : null}
 
@@ -2857,7 +3199,6 @@ export default function AdminPage() {
                         <h3 className="text-lg font-bold text-slate-900">
                           {appointmentMode === "create" ? "Nueva cita" : "Editar cita"}
                         </h3>
-
                         {appointmentMode === "edit" ? (
                           <SecondaryButton onClick={() => resetAppointmentForm()}>
                             Nueva
@@ -2866,40 +3207,6 @@ export default function AdminPage() {
                       </div>
 
                       <div className="mt-5 space-y-4">
-                        <div>
-                          <Label>Paciente vinculado</Label>
-                          {appointmentForm.patient_id ? (
-                            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
-                              <p className="text-sm font-semibold text-cyan-900">
-                                Paciente #{appointmentForm.patient_id}
-                              </p>
-                              <p className="mt-1 text-sm text-cyan-800">
-                                {appointmentForm.nombre}
-                              </p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <SecondaryButton onClick={removePatientFromAppointment}>
-                                  Desvincular
-                                </SecondaryButton>
-                                <SecondaryButton
-                                  onClick={() => {
-                                    const currentPatient = patients.find(
-                                      (patient) =>
-                                        patient.id === appointmentForm.patient_id
-                                    );
-                                    if (currentPatient) openEditPatient(currentPatient);
-                                  }}
-                                >
-                                  Ver ficha
-                                </SecondaryButton>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
-                              Esta cita aún no está ligada a un paciente del sistema.
-                            </div>
-                          )}
-                        </div>
-
                         <div>
                           <Label>Nombre del paciente</Label>
                           <Input
@@ -2943,50 +3250,16 @@ export default function AdminPage() {
 
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div>
-                            <Label>Edad</Label>
-                            <Input
-                              type="number"
-                              value={appointmentForm.edad}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  edad: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label>Fecha de nacimiento</Label>
-                            <Input
-                              type="date"
-                              value={appointmentForm.fecha_nacimiento}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  fecha_nacimiento: e.target.value,
-                                  edad: e.target.value
-                                    ? calculateAgeFromBirthDate(e.target.value)
-                                    : prev.edad,
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
                             <Label>Fecha de cita</Label>
                             <Input
                               type="date"
                               value={appointmentForm.fecha_cita}
-                              onChange={(e) => {
+                              onChange={(e) =>
                                 setAppointmentForm((prev) => ({
                                   ...prev,
                                   fecha_cita: e.target.value,
-                                }));
-                                setSlotsDate(e.target.value);
-                                fetchAvailableSlots(e.target.value);
-                              }}
+                                }))
+                              }
                             />
                           </div>
                           <div>
@@ -3020,7 +3293,6 @@ export default function AdminPage() {
                               <option value="online">En línea</option>
                             </Select>
                           </div>
-
                           <div>
                             <Label>Estatus</Label>
                             <Select
@@ -3039,22 +3311,6 @@ export default function AdminPage() {
                               <option value="no_show">No asistió</option>
                             </Select>
                           </div>
-                        </div>
-
-                        <div>
-                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(appointmentForm.confirmed)}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  confirmed: e.target.checked,
-                                }))
-                              }
-                            />
-                            Cita confirmada por el paciente
-                          </label>
                         </div>
 
                         <div>
@@ -3082,148 +3338,15 @@ export default function AdminPage() {
                               ? "Guardar cita"
                               : "Actualizar cita"}
                           </PrimaryButton>
-
-                          <SecondaryButton
-                            onClick={() =>
-                              openCreatePatient(buildPatientSnapshot(appointmentForm))
-                            }
-                          >
-                            Crear paciente con estos datos
-                          </SecondaryButton>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-lg font-bold text-slate-900">
-                          Horarios disponibles
-                        </h3>
-                        <SecondaryButton
-                          onClick={() => fetchAvailableSlots(slotsDate)}
-                          disabled={!slotsDate || slotsLoading}
-                        >
-                          Actualizar
-                        </SecondaryButton>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label>Fecha para revisar</Label>
-                        <Input
-                          type="date"
-                          value={slotsDate}
-                          onChange={(e) => {
-                            setSlotsDate(e.target.value);
-                            fetchAvailableSlots(e.target.value);
-                          }}
-                        />
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {(availableSlots || []).map((slot) => (
-                          <button
-                            key={slot.hora}
-                            type="button"
-                            onClick={() =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                fecha_cita: slotsDate,
-                                hora_cita: slot.hora,
-                              }))
-                            }
-                            className={`rounded-full border px-3 py-2 text-sm font-semibold ${
-                              slot.disponible
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : "border-slate-200 bg-slate-100 text-slate-400"
-                            }`}
-                            disabled={!slot.disponible}
-                          >
-                            {slot.hora}
-                          </button>
-                        ))}
-                      </div>
-
-                      {!availableSlots.length ? (
-                        <p className="mt-4 text-sm text-slate-500">
-                          {slotsLoading
-                            ? "Consultando horarios..."
-                            : "Selecciona una fecha para revisar la disponibilidad."}
-                        </p>
-                      ) : null}
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <h3 className="text-lg font-bold text-slate-900">
-                        Filtros de agenda
-                      </h3>
-
-                      <div className="mt-4 grid gap-4 md:grid-cols-3">
-                        <div>
-                          <Label>Fecha</Label>
-                          <Select
-                            value={appointmentFilters.fecha}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                fecha: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todas</option>
-                            {[...new Set(appointments.map((a) => a.fecha_cita))]
-                              .filter(Boolean)
-                              .map((date) => (
-                                <option key={date} value={date}>
-                                  {formatDate(date)}
-                                </option>
-                              ))}
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Estatus</Label>
-                          <Select
-                            value={appointmentFilters.status}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                status: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todos</option>
-                            <option value="pending">Pendiente</option>
-                            <option value="confirmed">Confirmada</option>
-                            <option value="completed">Completada</option>
-                            <option value="cancelled">Cancelada</option>
-                            <option value="no_show">No asistió</option>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Tipo</Label>
-                          <Select
-                            value={appointmentFilters.tipo}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                tipo: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todos</option>
-                            <option value="presencial">Presencial</option>
-                            <option value="online">En línea</option>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
                     <Card
                       title="Citas registradas"
-                      subtitle="Listado completo con edición, cancelación y vínculo con pacientes."
+                      subtitle="Listado completo con edición y cancelación."
                     >
                       <div className="grid gap-4">
                         {filteredAppointments.map((appointment) => (
@@ -3232,59 +3355,16 @@ export default function AdminPage() {
                             className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
                           >
                             <div className="flex flex-wrap items-start justify-between gap-4">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-lg font-bold text-slate-900">
-                                    {appointment.nombre || "Paciente sin nombre"}
-                                  </p>
-
-                                  <StatusBadge
-                                    tone={
-                                      appointment.status === "completed"
-                                        ? "success"
-                                        : appointment.status === "cancelled"
-                                        ? "danger"
-                                        : appointment.status === "confirmed"
-                                        ? "info"
-                                        : appointment.status === "no_show"
-                                        ? "warning"
-                                        : "default"
-                                    }
-                                  >
-                                    {appointment.status || "pending"}
-                                  </StatusBadge>
-
-                                  {appointment.confirmed ? (
-                                    <StatusBadge tone="success">
-                                      Confirmada
-                                    </StatusBadge>
-                                  ) : null}
-                                </div>
-
+                              <div>
+                                <p className="text-lg font-bold text-slate-900">
+                                  {appointment.nombre || "Paciente sin nombre"}
+                                </p>
                                 <p className="mt-2 text-sm text-slate-600">
                                   {formatDateTime(
                                     appointment.fecha_cita,
                                     appointment.hora_cita
                                   )}
                                 </p>
-
-                                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
-                                  <span>Tipo: {appointment.tipo_consulta || "—"}</span>
-                                  <span>Tel: {appointment.telefono || "—"}</span>
-                                  <span>Correo: {appointment.correo || "—"}</span>
-                                  <span>
-                                    Paciente ligado:{" "}
-                                    {appointment.patient_id
-                                      ? `#${appointment.patient_id}`
-                                      : "No"}
-                                  </span>
-                                </div>
-
-                                {appointment.notes_admin ? (
-                                  <p className="mt-3 text-sm leading-6 text-slate-500">
-                                    {appointment.notes_admin}
-                                  </p>
-                                ) : null}
                               </div>
 
                               <div className="flex flex-wrap gap-2">
@@ -3293,39 +3373,6 @@ export default function AdminPage() {
                                 >
                                   Editar
                                 </SecondaryButton>
-
-                                {appointment.patient_id ? (
-                                  <SecondaryButton
-                                    onClick={() => {
-                                      const patient = patients.find(
-                                        (item) => item.id === appointment.patient_id
-                                      );
-                                      if (patient) openEditPatient(patient);
-                                    }}
-                                  >
-                                    Ver paciente
-                                  </SecondaryButton>
-                                ) : (
-                                  <SecondaryButton
-                                    onClick={() =>
-                                      openCreatePatient({
-                                        nombre: appointment.nombre || "",
-                                        telefono: appointment.telefono || "",
-                                        correo: appointment.correo || "",
-                                        edad:
-                                          appointment.edad === null ||
-                                          appointment.edad === undefined
-                                            ? ""
-                                            : String(appointment.edad),
-                                        fecha_nacimiento:
-                                          appointment.fecha_nacimiento || "",
-                                      })
-                                    }
-                                  >
-                                    Crear paciente
-                                  </SecondaryButton>
-                                )}
-
                                 <DangerButton
                                   onClick={() => cancelAppointment(appointment)}
                                 >
@@ -3339,26 +3386,29 @@ export default function AdminPage() {
                         {!filteredAppointments.length ? (
                           <EmptyState
                             title="No hay citas para mostrar"
-                            description="Ajusta filtros o crea la primera cita desde el formulario lateral."
+                            description="Ajusta filtros o crea la primera cita."
                           />
                         ) : null}
                       </div>
-
-                      {appointmentsLoading ? (
-                        <p className="mt-4 text-sm text-slate-500">
-                          Cargando agenda...
-                        </p>
-                      ) : null}
                     </Card>
                   </div>
                 </div>
               </Card>
             ) : null}
 
-            {activeSection === "patients" && canManagePatients ? (
+            {(activeSection === "patients" || activeSection === "expediente") &&
+            canViewClinicalFile ? (
               <Card
-                title="Pacientes"
-                subtitle="Listado general, buscador por nombre / teléfono / correo, ficha individual y citas ligadas."
+                title={
+                  activeSection === "patients"
+                    ? "Pacientes"
+                    : "Expediente clínico"
+                }
+                subtitle={
+                  activeSection === "patients"
+                    ? "Listado general, buscador, ficha individual y acceso al expediente."
+                    : "Historia clínica, signos vitales, nota médica, diagnósticos, tratamientos y seguimiento."
+                }
               >
                 <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
                   <div className="space-y-6">
@@ -3367,9 +3417,8 @@ export default function AdminPage() {
                         <h3 className="text-lg font-bold text-slate-900">
                           {patientMode === "create"
                             ? "Nuevo paciente"
-                            : "Ficha individual"}
+                            : "Ficha de identificación"}
                         </h3>
-
                         <div className="flex gap-2">
                           <SecondaryButton onClick={() => openCreatePatient()}>
                             Nuevo
@@ -3407,7 +3456,6 @@ export default function AdminPage() {
                               }
                             />
                           </div>
-
                           <div>
                             <Label>Correo</Label>
                             <Input
@@ -3440,7 +3488,6 @@ export default function AdminPage() {
                               }
                             />
                           </div>
-
                           <div>
                             <Label>Edad</Label>
                             <Input
@@ -3474,7 +3521,6 @@ export default function AdminPage() {
                               <option value="Otro">Otro</option>
                             </Select>
                           </div>
-
                           <div>
                             <Label>CURP</Label>
                             <Input
@@ -3516,7 +3562,6 @@ export default function AdminPage() {
                               }
                             />
                           </div>
-
                           <div>
                             <Label>Teléfono de emergencia</Label>
                             <Input
@@ -3559,51 +3604,18 @@ export default function AdminPage() {
 
                           {selectedPatientId ? (
                             <SecondaryButton
-                              onClick={() => {
-                                const currentPatient = patients.find(
-                                  (patient) => patient.id === selectedPatientId
-                                );
-                                if (currentPatient) attachPatientToAppointment(currentPatient);
-                                setActiveSection("agenda");
-                              }}
+                              onClick={() => setActiveSection("expediente")}
                             >
-                              Vincular a agenda
+                              Abrir expediente
                             </SecondaryButton>
                           ) : null}
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <h3 className="text-lg font-bold text-slate-900">
-                        Resumen del paciente
-                      </h3>
-
-                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <InfoStat
-                          label="Paciente"
-                          value={selectedPatientId ? `#${selectedPatientId}` : "Nuevo"}
-                          helper="Identificador interno"
-                        />
-                        <InfoStat
-                          label="Citas ligadas"
-                          value={selectedPatientAppointments.length}
-                          helper="Historial relacionado"
-                        />
-                      </div>
-
-                      {!selectedPatientId ? (
-                        <p className="mt-4 text-sm text-slate-500">
-                          Guarda el paciente para habilitar su historial y ligarlo a la agenda.
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
                     <Card
                       title="Listado general de pacientes"
-                      subtitle="Busca por nombre, teléfono o correo y entra a la vista individual."
+                      subtitle="Busca por nombre, teléfono o correo."
                     >
                       <div className="flex flex-col gap-3 md:flex-row">
                         <Input
@@ -3616,36 +3628,7 @@ export default function AdminPage() {
                         </SecondaryButton>
                       </div>
 
-                      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <InfoStat
-                          label="Pacientes registrados"
-                          value={patients.length}
-                          helper="Resultados cargados"
-                        />
-                        <InfoStat
-                          label="Con teléfono"
-                          value={patients.filter((p) => p.telefono).length}
-                          helper="Contacto disponible"
-                        />
-                        <InfoStat
-                          label="Con correo"
-                          value={patients.filter((p) => p.correo).length}
-                          helper="Comunicación digital"
-                        />
-                        <InfoStat
-                          label="Con citas ligadas"
-                          value={
-                            patients.filter((patient) =>
-                              appointments.some((a) => a.patient_id === patient.id)
-                            ).length
-                          }
-                          helper="Pacientes vinculados"
-                        />
-                      </div>
-
-                      <Divider />
-
-                      <div className="grid gap-4">
+                      <div className="mt-5 grid gap-4">
                         {patients.map((patient) => (
                           <div
                             key={patient.id}
@@ -3657,21 +3640,9 @@ export default function AdminPage() {
                           >
                             <div className="flex flex-wrap items-start justify-between gap-4">
                               <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-lg font-bold">
-                                    {patient.nombre || "Sin nombre"}
-                                  </p>
-                                  <StatusBadge
-                                    tone={
-                                      selectedPatientId === patient.id
-                                        ? "info"
-                                        : "default"
-                                    }
-                                  >
-                                    #{patient.id}
-                                  </StatusBadge>
-                                </div>
-
+                                <p className="text-lg font-bold">
+                                  {patient.nombre || "Sin nombre"}
+                                </p>
                                 <div
                                   className={`mt-3 grid gap-2 text-sm ${
                                     selectedPatientId === patient.id
@@ -3681,18 +3652,6 @@ export default function AdminPage() {
                                 >
                                   <p>Teléfono: {patient.telefono || "—"}</p>
                                   <p>Correo: {patient.correo || "—"}</p>
-                                  <p>
-                                    Nacimiento:{" "}
-                                    {patient.fecha_nacimiento
-                                      ? formatDate(patient.fecha_nacimiento)
-                                      : "—"}
-                                  </p>
-                                  <p>
-                                    Actualizado:{" "}
-                                    {patient.updated_at
-                                      ? new Date(patient.updated_at).toLocaleString("es-MX")
-                                      : "—"}
-                                  </p>
                                 </div>
                               </div>
 
@@ -3701,9 +3660,12 @@ export default function AdminPage() {
                                   Ver paciente
                                 </SecondaryButton>
                                 <SecondaryButton
-                                  onClick={() => attachPatientToAppointment(patient)}
+                                  onClick={() => {
+                                    openEditPatient(patient);
+                                    setActiveSection("expediente");
+                                  }}
                                 >
-                                  Vincular a cita
+                                  Expediente
                                 </SecondaryButton>
                               </div>
                             </div>
@@ -3713,104 +3675,634 @@ export default function AdminPage() {
                         {!patients.length ? (
                           <EmptyState
                             title="No hay pacientes registrados"
-                            description="Puedes crearlos desde este módulo o desde agenda usando los datos de una cita."
+                            description="Puedes crearlos desde este módulo o desde agenda."
                           />
                         ) : null}
                       </div>
-
-                      {patientsLoading ? (
-                        <p className="mt-4 text-sm text-slate-500">
-                          Cargando pacientes...
-                        </p>
-                      ) : null}
                     </Card>
+                  </div>
 
-                    <Card
-                      title="Citas ligadas al paciente"
-                      subtitle={
-                        selectedPatientId
-                          ? `Historial vinculado del paciente ${
-                              patients.find((patient) => patient.id === selectedPatientId)
-                                ?.nombre || ""
-                            }`
-                          : "Selecciona o guarda un paciente para ver su historial."
-                      }
-                    >
-                      {!selectedPatientId ? (
-                        <EmptyState
-                          title="Sin paciente seleccionado"
-                          description="Elige un paciente del listado o guarda uno nuevo para consultar sus citas."
-                        />
-                      ) : (
-                        <div className="grid gap-4">
-                          {selectedPatientAppointments.map((appointment) => (
-                            <div
-                              key={appointment.id}
-                              className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                            >
-                              <div className="flex flex-wrap items-start justify-between gap-4">
-                                <div>
-                                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="space-y-6">
+                    {activeSection === "patients" ? (
+                      <Card
+                        title="Citas ligadas al paciente"
+                        subtitle={
+                          selectedPatient
+                            ? `Historial vinculado del paciente ${selectedPatient.nombre || ""}`
+                            : "Selecciona o guarda un paciente para ver su historial."
+                        }
+                      >
+                        {!selectedPatientId ? (
+                          <EmptyState
+                            title="Sin paciente seleccionado"
+                            description="Elige un paciente del listado o guarda uno nuevo."
+                          />
+                        ) : (
+                          <div className="grid gap-4">
+                            {selectedPatientAppointments.map((appointment) => (
+                              <div
+                                key={appointment.id}
+                                className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                              >
+                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                  <div>
                                     <p className="text-lg font-bold text-slate-900">
                                       {formatDateTime(
                                         appointment.fecha_cita,
                                         appointment.hora_cita
                                       )}
                                     </p>
-                                    <StatusBadge
-                                      tone={
-                                        appointment.status === "completed"
-                                          ? "success"
-                                          : appointment.status === "cancelled"
-                                          ? "danger"
-                                          : appointment.status === "confirmed"
-                                          ? "info"
-                                          : appointment.status === "no_show"
-                                          ? "warning"
-                                          : "default"
-                                      }
-                                    >
-                                      {appointment.status || "pending"}
-                                    </StatusBadge>
+                                    <p className="mt-2 text-sm text-slate-500">
+                                      Tipo: {appointment.tipo_consulta || "—"}
+                                    </p>
                                   </div>
 
-                                  <p className="mt-2 text-sm text-slate-500">
-                                    Tipo: {appointment.tipo_consulta || "—"}
-                                  </p>
-
-                                  {appointment.notes_admin ? (
-                                    <p className="mt-3 text-sm leading-6 text-slate-500">
-                                      {appointment.notes_admin}
-                                    </p>
-                                  ) : null}
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                  <SecondaryButton
-                                    onClick={() => openEditAppointment(appointment)}
-                                  >
-                                    Editar cita
-                                  </SecondaryButton>
+                                  <div className="flex flex-wrap gap-2">
+                                    <SecondaryButton
+                                      onClick={() => openEditAppointment(appointment)}
+                                    >
+                                      Editar cita
+                                    </SecondaryButton>
+                                  </div>
                                 </div>
                               </div>
+                            ))}
+
+                            {!selectedPatientAppointments.length ? (
+                              <EmptyState
+                                title="Sin citas ligadas"
+                                description="Este paciente todavía no tiene consultas vinculadas."
+                              />
+                            ) : null}
+                          </div>
+                        )}
+                      </Card>
+                    ) : null}
+
+                    {activeSection === "expediente" ? (
+                      <Card
+                        title="Expediente clínico"
+                        subtitle={
+                          selectedPatient
+                            ? `Paciente: ${selectedPatient.nombre || ""}`
+                            : "Selecciona un paciente para trabajar el expediente."
+                        }
+                      >
+                        {!selectedPatientId ? (
+                          <EmptyState
+                            title="Sin paciente seleccionado"
+                            description="Abre un paciente desde el listado para trabajar su expediente."
+                          />
+                        ) : !clinicalFile ? (
+                          <EmptyState
+                            title="Sin expediente disponible"
+                            description="Guarda o vuelve a abrir el paciente para cargar su expediente."
+                          />
+                        ) : (
+                          <div className="space-y-6">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setActiveClinicalTab("historia")}
+                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+                                  activeClinicalTab === "historia"
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-300 bg-white text-slate-700"
+                                }`}
+                              >
+                                <IconFileText />
+                                Historia clínica
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveClinicalTab("vitales")}
+                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+                                  activeClinicalTab === "vitales"
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-300 bg-white text-slate-700"
+                                }`}
+                              >
+                                <IconHeartbeat />
+                                Signos vitales
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveClinicalTab("nota")}
+                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+                                  activeClinicalTab === "nota"
+                                    ? "border-slate-900 bg-slate-900 text-white"
+                                    : "border-slate-300 bg-white text-slate-700"
+                                }`}
+                              >
+                                <IconClipboard />
+                                Nota médica
+                              </button>
                             </div>
-                          ))}
 
-                          {!selectedPatientAppointments.length ? (
-                            <EmptyState
-                              title="Sin citas ligadas"
-                              description="Este paciente todavía no tiene consultas vinculadas en el sistema."
-                            />
-                          ) : null}
-                        </div>
-                      )}
+                            {activeClinicalTab === "historia" ? (
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>Motivo de consulta</Label>
+                                  <Textarea
+                                    rows={3}
+                                    value={clinicalHistory.motivo_consulta}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        motivo_consulta: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
 
-                      {patientAppointmentsLoading ? (
-                        <p className="mt-4 text-sm text-slate-500">
-                          Cargando historial del paciente...
-                        </p>
-                      ) : null}
-                    </Card>
+                                <div>
+                                  <Label>Padecimiento actual</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.padecimiento_actual}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        padecimiento_actual: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Antecedentes heredofamiliares</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.antecedentes_heredofamiliares}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        antecedentes_heredofamiliares: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Antecedentes personales no patológicos</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.antecedentes_personales_no_patologicos}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        antecedentes_personales_no_patologicos:
+                                          e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Antecedentes personales patológicos</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.antecedentes_personales_patologicos}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        antecedentes_personales_patologicos:
+                                          e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Alergias</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.alergias}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        alergias: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Medicamentos actuales</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={clinicalHistory.medicamentos_actuales}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        medicamentos_actuales: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Interrogatorio por aparatos y sistemas</Label>
+                                  <Textarea
+                                    rows={5}
+                                    value={clinicalHistory.interrogatorio_aparatos_sistemas}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        interrogatorio_aparatos_sistemas:
+                                          e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label>Exploración física general</Label>
+                                  <Textarea
+                                    rows={5}
+                                    value={clinicalHistory.exploracion_fisica_general}
+                                    onChange={(e) =>
+                                      setClinicalHistory((prev) => ({
+                                        ...prev,
+                                        exploracion_fisica_general: e.target.value,
+                                      }))
+                                    }
+                                  />
+                                </div>
+
+                                <div className="flex justify-end">
+                                  <PrimaryButton
+                                    onClick={saveClinicalHistory}
+                                    disabled={savingClinicalHistory || !canEditClinicalHistory}
+                                  >
+                                    {savingClinicalHistory
+                                      ? "Guardando..."
+                                      : "Guardar historia clínica"}
+                                  </PrimaryButton>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {activeClinicalTab === "vitales" ? (
+                              <div className="space-y-6">
+                                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                  <div className="grid gap-4 md:grid-cols-3">
+                                    <div>
+                                      <Label>Fecha y hora</Label>
+                                      <Input
+                                        type="datetime-local"
+                                        value={vitalForm.taken_at}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            taken_at: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Peso (kg)</Label>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={vitalForm.peso_kg}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            peso_kg: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Talla (cm)</Label>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={vitalForm.talla_cm}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            talla_cm: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>IMC</Label>
+                                      <Input
+                                        value={vitalForm.imc}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            imc: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Temperatura °C</Label>
+                                      <Input
+                                        type="number"
+                                        step="0.1"
+                                        value={vitalForm.temperatura_c}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            temperatura_c: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Frecuencia cardíaca</Label>
+                                      <Input
+                                        type="number"
+                                        value={vitalForm.frecuencia_cardiaca}
+                                        onChange={(e) =>
+                                          setVitalForm((prev) => ({
+                                            ...prev,
+                                            frecuencia_cardiaca: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-5 flex flex-wrap gap-3">
+                                    <PrimaryButton
+                                      onClick={saveVitalForm}
+                                      disabled={savingVitalSigns || !canEditVitalSigns}
+                                    >
+                                      {savingVitalSigns
+                                        ? "Guardando..."
+                                        : vitalMode === "create"
+                                        ? "Guardar signos vitales"
+                                        : "Actualizar signos vitales"}
+                                    </PrimaryButton>
+                                  </div>
+                                </div>
+
+                                <div className="grid gap-4">
+                                  {vitalSigns.map((vital) => (
+                                    <div
+                                      key={vital.id}
+                                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                                    >
+                                      <div className="flex flex-wrap items-start justify-between gap-4">
+                                        <div>
+                                          <p className="text-lg font-bold text-slate-900">
+                                            {formatDateTimeStamp(vital.taken_at)}
+                                          </p>
+                                          <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
+                                            <p>Peso: {vital.peso_kg ?? "—"} kg</p>
+                                            <p>Talla: {vital.talla_cm ?? "—"} cm</p>
+                                            <p>IMC: {vital.imc ?? "—"}</p>
+                                            <p>Temp: {vital.temperatura_c ?? "—"} °C</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                          <SecondaryButton onClick={() => openEditVital(vital)}>
+                                            Editar
+                                          </SecondaryButton>
+                                          {isAdmin ? (
+                                            <DangerButton onClick={() => deleteVital(vital.id)}>
+                                              Borrar
+                                            </DangerButton>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  {!vitalSigns.length ? (
+                                    <EmptyState
+                                      title="Sin signos vitales registrados"
+                                      description="Aquí aparecerán los parámetros capturados."
+                                    />
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {activeClinicalTab === "nota" ? (
+                              <div className="space-y-6">
+                                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div>
+                                      <Label>Tipo de nota</Label>
+                                      <Select
+                                        value={medicalNoteForm.note_type}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            note_type: e.target.value,
+                                          }))
+                                        }
+                                      >
+                                        <option value="consulta_general">Consulta general</option>
+                                        <option value="primera_vez">Primera vez</option>
+                                        <option value="subsecuente">Subsecuente</option>
+                                        <option value="urgencias">Urgencias</option>
+                                        <option value="evolucion">Evolución</option>
+                                      </Select>
+                                    </div>
+
+                                    <div>
+                                      <Label>Fecha y hora</Label>
+                                      <Input
+                                        type="datetime-local"
+                                        value={medicalNoteForm.note_date}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            note_date: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <Label>Motivo de consulta</Label>
+                                      <Textarea
+                                        rows={3}
+                                        value={medicalNoteForm.motivo_consulta}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            motivo_consulta: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <Label>Padecimiento actual</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.padecimiento_actual}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            padecimiento_actual: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <Label>Subjetivo</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.subjetivo}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            subjetivo: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <Label>Objetivo</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.objetivo}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            objetivo: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <Label>Exploración física</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.exploracion_fisica}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            exploracion_fisica: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <Label>Impresión diagnóstica</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.impresion_diagnostica}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            impresion_diagnostica: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <Label>Indicaciones</Label>
+                                      <Textarea
+                                        rows={4}
+                                        value={medicalNoteForm.indicaciones}
+                                        onChange={(e) =>
+                                          setMedicalNoteForm((prev) => ({
+                                            ...prev,
+                                            indicaciones: e.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-5 flex flex-wrap gap-3">
+                                    <PrimaryButton
+                                      onClick={() => saveMedicalNoteForm(false)}
+                                      disabled={savingMedicalNote || !canEditMedicalNotes}
+                                    >
+                                      {savingMedicalNote ? "Guardando..." : "Guardar nota"}
+                                    </PrimaryButton>
+
+                                    <SecondaryButton
+                                      onClick={() => saveMedicalNoteForm(true)}
+                                      disabled={savingMedicalNote || !canEditMedicalNotes}
+                                    >
+                                      Cerrar consulta
+                                    </SecondaryButton>
+                                  </div>
+                                </div>
+
+                                <Card
+                                  title="Notas médicas previas"
+                                  subtitle="Historial cronológico de evolución y consultas."
+                                >
+                                  <div className="grid gap-4">
+                                    {medicalNotes.map((note) => (
+                                      <div
+                                        key={note.id}
+                                        className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                                      >
+                                        <div className="flex flex-wrap items-start justify-between gap-4">
+                                          <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                              <p className="text-lg font-bold text-slate-900">
+                                                {formatDateTimeStamp(note.note_date)}
+                                              </p>
+                                              <StatusBadge
+                                                tone={
+                                                  note.consultation_status === "closed"
+                                                    ? "success"
+                                                    : "warning"
+                                                }
+                                              >
+                                                {note.consultation_status === "closed"
+                                                  ? "Cerrada"
+                                                  : "Abierta"}
+                                              </StatusBadge>
+                                            </div>
+                                          </div>
+
+                                          <div className="flex flex-wrap gap-2">
+                                            <SecondaryButton
+                                              onClick={() => openEditMedicalNote(note)}
+                                            >
+                                              Editar nota
+                                            </SecondaryButton>
+                                            {isAdmin ? (
+                                              <DangerButton
+                                                onClick={() => deleteMedicalNote(note.id)}
+                                              >
+                                                Borrar
+                                              </DangerButton>
+                                            ) : null}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+
+                                    {!medicalNotes.length ? (
+                                      <EmptyState
+                                        title="Sin notas médicas"
+                                        description="Crea la primera nota médica para registrar evolución."
+                                      />
+                                    ) : null}
+                                  </div>
+                                </Card>
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </Card>
+                    ) : null}
                   </div>
                 </div>
               </Card>
@@ -3821,81 +4313,6 @@ export default function AdminPage() {
                 title="Reseñas"
                 subtitle="Moderación, edición y publicación."
               >
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <div>
-                      <Label>Nombre del paciente</Label>
-                      <Input
-                        value={newReview.patient_name}
-                        onChange={(e) =>
-                          setNewReview((prev) => ({
-                            ...prev,
-                            patient_name: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="xl:col-span-2">
-                      <Label>Reseña</Label>
-                      <Textarea
-                        rows={3}
-                        value={newReview.review_text}
-                        onChange={(e) =>
-                          setNewReview((prev) => ({
-                            ...prev,
-                            review_text: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Calificación</Label>
-                      <Select
-                        value={String(newReview.rating)}
-                        onChange={(e) =>
-                          setNewReview((prev) => ({
-                            ...prev,
-                            rating: Number(e.target.value),
-                          }))
-                        }
-                      >
-                        <option value="5">5</option>
-                        <option value="4">4</option>
-                        <option value="3">3</option>
-                        <option value="2">2</option>
-                        <option value="1">1</option>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Estatus</Label>
-                      <Select
-                        value={newReview.review_status}
-                        onChange={(e) =>
-                          setNewReview((prev) => ({
-                            ...prev,
-                            review_status: e.target.value,
-                          }))
-                        }
-                      >
-                        <option value="pending">Pendiente</option>
-                        <option value="verified">Verificada</option>
-                        <option value="rejected">Rechazada</option>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="mt-5">
-                    <PrimaryButton onClick={addReview}>
-                      Agregar reseña
-                    </PrimaryButton>
-                  </div>
-                </div>
-
-                <Divider />
-
                 <div className="grid gap-4">
                   {reviews.map((review) => (
                     <div
@@ -3929,11 +4346,7 @@ export default function AdminPage() {
                           <Select
                             value={String(review.rating || 5)}
                             onChange={(e) =>
-                              updateReview(
-                                review.id,
-                                "rating",
-                                Number(e.target.value)
-                              )
+                              updateReview(review.id, "rating", Number(e.target.value))
                             }
                           >
                             <option value="5">5</option>
@@ -3949,11 +4362,7 @@ export default function AdminPage() {
                           <Select
                             value={review.review_status || "pending"}
                             onChange={(e) =>
-                              updateReview(
-                                review.id,
-                                "review_status",
-                                e.target.value
-                              )
+                              updateReview(review.id, "review_status", e.target.value)
                             }
                           >
                             <option value="pending">Pendiente</option>
@@ -4087,18 +4496,6 @@ export default function AdminPage() {
                     />
                   ) : null}
                 </div>
-              </Card>
-            ) : null}
-
-            {activeSection === "expediente" && isAdmin ? (
-              <Card
-                title="Expediente clínico"
-                subtitle="Este módulo se desarrollará en el paso 3."
-              >
-                <EmptyState
-                  title="Módulo en preparación"
-                  description="El siguiente paso será construir historia clínica, signos vitales, nota médica, diagnóstico, tratamiento y seguimiento."
-                />
               </Card>
             ) : null}
           </main>
