@@ -570,8 +570,6 @@ const DEFAULT_PATIENT_FORM = {
   fecha_nacimiento: "",
   edad: "",
   sexo: "",
-  direccion: "",
-  notas_identificacion: "",
 };
 
 const DEFAULT_CLINICAL_HISTORY = {
@@ -1550,8 +1548,6 @@ export default function AdminPage() {
             : ""
           : String(patient.edad),
       sexo: patient.sexo || "",
-      direccion: patient.direccion || "",
-      notas_identificacion: patient.notas_identificacion || "",
     });
 
     setSelectedPatientId(patient.id);
@@ -1608,8 +1604,6 @@ export default function AdminPage() {
       fecha_nacimiento: safeBirthDate,
       edad: Number.isFinite(safeAge) ? safeAge : null,
       sexo: patientForm.sexo || null,
-      direccion: patientForm.direccion.trim() || null,
-      notas_identificacion: patientForm.notas_identificacion.trim() || null,
     };
 
     let response;
@@ -1665,8 +1659,6 @@ export default function AdminPage() {
             : ""
           : String(savedPatient.edad),
       sexo: savedPatient.sexo || "",
-      direccion: savedPatient.direccion || "",
-      notas_identificacion: savedPatient.notas_identificacion || "",
     });
   }
 
@@ -3505,34 +3497,6 @@ export default function AdminPage() {
                               <option value="Otro">Otro</option>
                             </Select>
                           </div>
-                        </div>
-
-                        <div>
-                          <Label>Dirección</Label>
-                          <Textarea
-                            rows={3}
-                            value={patientForm.direccion}
-                            onChange={(e) =>
-                              setPatientForm((prev) => ({
-                                ...prev,
-                                direccion: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Notas de identificación</Label>
-                          <Textarea
-                            rows={4}
-                            value={patientForm.notas_identificacion}
-                            onChange={(e) =>
-                              setPatientForm((prev) => ({
-                                ...prev,
-                                notas_identificacion: e.target.value,
-                              }))
-                            }
-                          />
                         </div>
 
                         <div className="flex flex-wrap gap-3">
