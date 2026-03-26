@@ -570,10 +570,7 @@ const DEFAULT_PATIENT_FORM = {
   fecha_nacimiento: "",
   edad: "",
   sexo: "",
-  curp: "",
   direccion: "",
-  contacto_emergencia_nombre: "",
-  contacto_emergencia_telefono: "",
   notas_identificacion: "",
 };
 
@@ -1553,10 +1550,7 @@ export default function AdminPage() {
             : ""
           : String(patient.edad),
       sexo: patient.sexo || "",
-      curp: patient.curp || "",
       direccion: patient.direccion || "",
-      contacto_emergencia_nombre: patient.contacto_emergencia_nombre || "",
-      contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
       notas_identificacion: patient.notas_identificacion || "",
     });
 
@@ -1614,12 +1608,7 @@ export default function AdminPage() {
       fecha_nacimiento: safeBirthDate,
       edad: Number.isFinite(safeAge) ? safeAge : null,
       sexo: patientForm.sexo || null,
-      curp: patientForm.curp.trim().toUpperCase() || null,
       direccion: patientForm.direccion.trim() || null,
-      contacto_emergencia_nombre:
-        patientForm.contacto_emergencia_nombre.trim() || null,
-      contacto_emergencia_telefono:
-        patientForm.contacto_emergencia_telefono.trim() || null,
       notas_identificacion: patientForm.notas_identificacion.trim() || null,
     };
 
@@ -1676,12 +1665,7 @@ export default function AdminPage() {
             : ""
           : String(savedPatient.edad),
       sexo: savedPatient.sexo || "",
-      curp: savedPatient.curp || "",
       direccion: savedPatient.direccion || "",
-      contacto_emergencia_nombre:
-        savedPatient.contacto_emergencia_nombre || "",
-      contacto_emergencia_telefono:
-        savedPatient.contacto_emergencia_telefono || "",
       notas_identificacion: savedPatient.notas_identificacion || "",
     });
   }
@@ -3521,18 +3505,6 @@ export default function AdminPage() {
                               <option value="Otro">Otro</option>
                             </Select>
                           </div>
-                          <div>
-                            <Label>CURP</Label>
-                            <Input
-                              value={patientForm.curp}
-                              onChange={(e) =>
-                                setPatientForm((prev) => ({
-                                  ...prev,
-                                  curp: e.target.value.toUpperCase(),
-                                }))
-                              }
-                            />
-                          </div>
                         </div>
 
                         <div>
@@ -3547,33 +3519,6 @@ export default function AdminPage() {
                               }))
                             }
                           />
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label>Contacto de emergencia</Label>
-                            <Input
-                              value={patientForm.contacto_emergencia_nombre}
-                              onChange={(e) =>
-                                setPatientForm((prev) => ({
-                                  ...prev,
-                                  contacto_emergencia_nombre: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label>Teléfono de emergencia</Label>
-                            <Input
-                              value={patientForm.contacto_emergencia_telefono}
-                              onChange={(e) =>
-                                setPatientForm((prev) => ({
-                                  ...prev,
-                                  contacto_emergencia_telefono: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
                         </div>
 
                         <div>
