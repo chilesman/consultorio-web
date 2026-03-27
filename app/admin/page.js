@@ -4028,8 +4028,464 @@ export default function AdminPage() {
                           </SecondaryButton>
                         ) : null}
                       </div>
-                      
-            {activeSection === "schedule_blocks" && canManageScheduleBlocks ? (
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <Label>Paciente vinculado</Label>
+                          {appointmentForm.patient_id ? (
+                            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
+                              <p className="text-sm font-semibold text-cyan-900">
+                                Paciente vinculado
+                              </p>
+                              <p className="mt-1 text-sm text-cyan-800">
+                                {appointmentForm.nombre}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <SecondaryButton onClick={removePatientFromAppointment}>
+                                  Desvincular
+                                </SecondaryButton>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                              Esta cita aún no está ligada a un paciente del sistema.
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label>Nombre del paciente</Label>
+                          <Input
+                            value={appointmentForm.nombre}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                nombre: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Teléfono</Label>
+                            <Input
+                              value={appointmentForm.telefono}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  telefono: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label>Correo</Label>
+                            <Input
+                              type="email"
+                              value={appointmentForm.correo}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  correo: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Edad</Label>
+                            <Input
+                              type="number"
+                              value={appointmentForm.edad}
+                              readOnly
+                            />
+                          </div>
+                          <div>
+                            <Label>Fecha de nacimiento</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_nacimiento}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_nacimiento: e.target.value,
+                                  edad: e.target.value
+                                    ? calculateAgeFromBirthDate(e.target.value)
+                                    : "",
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Fecha de cita</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_cita}
+                              onChange={(e) => {
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_cita: e.target.value,
+                                }));
+                                setSlotsDate(e.target.value);
+                                fetchAvailableSlots(e.target.value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Hora</Label>
+                            <Input
+                              type="time"
+                              value={appointmentForm.hora_cita}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  hora_cita: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Tipo de consulta</Label>
+                            <Select
+                              value={appointmentForm.tipo_consulta}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  tipo_consulta: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="presencial">Presencial</option>
+                              <option value="online">En línea</option>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Estatus</Label>
+                            <Select
+                              value={appointmentForm.status}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  status: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="pending">Pendiente</option>
+                              <option value="confirmed">Confirmada</option>
+                              <option value="completed">Completada</option>
+                              <option value="cancelled">Cancelada</option>
+                              <option value="no_show">No asistió</option>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(appointmentForm.confirmed)}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  confirmed: e.target.checked,
+                                }))
+                              }
+                            />
+                            Cita confirmada por el paciente
+                          </label>
+                        </div>
+
+                        <div>
+                          <Label>Nota administrativa</Label>
+                          <Textarea
+                            rows={4}
+                            value={appointmentForm.notes_admin}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                notes_admin: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <PrimaryButton
+                            onClick={saveAppointmentForm}
+                            disabled={savingAppointment}
+                          >
+                            {savingAppointment
+                              ? "Guardando..."
+                              : appointmentMode === "create"
+                              ? "Guardar cita"
+                              : "Actualizar cita"}
+                          </PrimaryButton>
+
+                          <SecondaryButton
+                            onClick={() =>
+                              openCreatePatient(buildPatientSnapshot(appointmentForm))
+                            }
+                          >
+                            Crear paciente con estos datos
+                          </SecondaryButton>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Horarios disponibles
+                        </h3>
+                        <SecondaryButton
+                          onClick={() => fetchAvailableSlots(slotsDate)}
+                          disabled={!slotsDate || slotsLoading}
+                        >
+                          Actualizar
+                        </SecondaryButton>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label>Fecha para revisar</Label>
+                        <Input
+                          type="date"
+                          value={slotsDate}
+                          onChange={(e) => {
+                            setSlotsDate(e.target.value);
+                            fetchAvailableSlots(e.target.value);
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(availableSlots || []).map((slot) => (
+                          <button
+                            key={slot.hora}
+                            type="button"
+                            onClick={() =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                fecha_cita: slotsDate,
+                                hora_cita: slot.hora,
+                              }))
+                            }
+                            className={`rounded-full border px-3 py-2 text-sm font-semibold ${
+                              slot.disponible
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-slate-100 text-slate-400"
+                            }`}
+                            disabled={!slot.disponible}
+                          >
+                            {slot.hora}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Filtros de agenda
+                      </h3>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div>
+                          <Label>Fecha</Label>
+                          <Select
+                            value={appointmentFilters.fecha}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                fecha: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todas</option>
+                            {[...new Set(appointments.map((a) => a.fecha_cita))]
+                              .filter(Boolean)
+                              .map((date) => (
+                                <option key={date} value={date}>
+                                  {formatDate(date)}
+                                </option>
+                              ))}
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Estatus</Label>
+                          <Select
+                            value={appointmentFilters.status}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                status: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="confirmed">Confirmada</option>
+                            <option value="completed">Completada</option>
+                            <option value="cancelled">Cancelada</option>
+                            <option value="no_show">No asistió</option>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Tipo</Label>
+                          <Select
+                            value={appointmentFilters.tipo}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                tipo: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="online">En línea</option>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Card
+                      title="Citas registradas"
+                      subtitle="Listado completo con edición, cancelación y vínculo con pacientes."
+                    >
+                      <div className="grid gap-4">
+                        {filteredAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-lg font-bold text-slate-900">
+                                    {appointment.nombre || "Paciente sin nombre"}
+                                  </p>
+
+                                  <StatusBadge
+                                    tone={
+                                      appointment.status === "completed"
+                                        ? "success"
+                                        : appointment.status === "cancelled"
+                                        ? "danger"
+                                        : appointment.status === "confirmed"
+                                        ? "info"
+                                        : appointment.status === "no_show"
+                                        ? "warning"
+                                        : "default"
+                                    }
+                                  >
+                                    {appointment.status || "pending"}
+                                  </StatusBadge>
+
+                                  {appointment.confirmed ? (
+                                    <StatusBadge tone="success">
+                                      Confirmada
+                                    </StatusBadge>
+                                  ) : null}
+                                </div>
+
+                                <p className="mt-2 text-sm text-slate-600">
+                                  {formatDateTime(
+                                    appointment.fecha_cita,
+                                    appointment.hora_cita
+                                  )}
+                                </p>
+
+                                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
+                                  <span>Tipo: {appointment.tipo_consulta || "—"}</span>
+                                  <span>Tel: {appointment.telefono || "—"}</span>
+                                  <span>Correo: {appointment.correo || "—"}</span>
+                                  <span>
+                                    Paciente ligado:{" "}
+                                    {appointment.patient_id ? "Sí" : "No"}
+                                  </span>
+                                </div>
+
+                                {appointment.notes_admin ? (
+                                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                                    {appointment.notes_admin}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <SecondaryButton
+                                  onClick={() => openEditAppointment(appointment)}
+                                >
+                                  Editar
+                                </SecondaryButton>
+
+                                {appointment.patient_id ? (
+                                  <SecondaryButton
+                                    onClick={() => {
+                                      const patient = patients.find(
+                                        (item) => item.id === appointment.patient_id
+                                      );
+                                      if (patient) openEditPatient(patient);
+                                    }}
+                                  >
+                                    Ver paciente
+                                  </SecondaryButton>
+                                ) : (
+                                  <SecondaryButton
+                                    onClick={() =>
+                                      openCreatePatient({
+                                        nombre: appointment.nombre || "",
+                                        telefono: appointment.telefono || "",
+                                        correo: appointment.correo || "",
+                                        edad:
+                                          appointment.edad === null ||
+                                          appointment.edad === undefined
+                                            ? ""
+                                            : String(appointment.edad),
+                                        fecha_nacimiento:
+                                          appointment.fecha_nacimiento || "",
+                                      })
+                                    }
+                                  >
+                                    Crear paciente
+                                  </SecondaryButton>
+                                )}
+
+                                <DangerButton
+                                  onClick={() => cancelAppointment(appointment)}
+                                >
+                                  Cancelar
+                                </DangerButton>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {!filteredAppointments.length ? (
+                          <EmptyState
+                            title="No hay citas para mostrar"
+                            description="Ajusta filtros o crea la primera cita desde el formulario lateral."
+                          />
+                        ) : null}
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+             {activeSection === "schedule_blocks" && canManageScheduleBlocks ? (
               <Card
                 title="Bloqueos de horario"
                 subtitle="Administra días completos o rangos de horas no disponibles para agenda."
@@ -4516,28 +4972,438 @@ export default function AdminPage() {
             ) : null}
 
             {activeSection === "expediente" && canViewClinicalFile ? (
-              <Card
-                title="Expediente clínico"
-                subtitle={
-                  selectedPatient
-                    ? `Paciente: ${selectedPatient.nombre || ""}`
-                    : "Selecciona un paciente para trabajar el expediente."
-                }
+  <Card
+    title="Expediente clínico"
+    subtitle={
+      selectedPatient
+        ? `Paciente: ${selectedPatient.nombre || ""}`
+        : "Selecciona un paciente para trabajar el expediente."
+    }
+  >
+    {!selectedPatientId ? (
+      <EmptyState
+        title="Sin paciente seleccionado"
+        description="Abre un paciente desde el listado para trabajar su expediente."
+      />
+    ) : (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <InfoStat
+            label="Historia clínica"
+            value={clinicalHistory?.id ? "1" : "0"}
+            helper="Registro principal"
+          />
+          <InfoStat
+            label="Signos vitales"
+            value={vitalSigns.length}
+            helper="Capturas registradas"
+          />
+          <InfoStat
+            label="Notas médicas"
+            value={medicalNotes.length}
+            helper="Notas del expediente"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveClinicalTab("historia")}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+              activeClinicalTab === "historia"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-700"
+            }`}
+          >
+            Historia clínica
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveClinicalTab("vitales")}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+              activeClinicalTab === "vitales"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-700"
+            }`}
+          >
+            Signos vitales
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveClinicalTab("nota")}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
+              activeClinicalTab === "nota"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-300 bg-white text-slate-700"
+            }`}
+          >
+            Nota médica
+          </button>
+        </div>
+
+        {activeClinicalTab === "historia" ? (
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <Label>Motivo de consulta</Label>
+                <Textarea
+                  rows={3}
+                  value={clinicalHistory.motivo_consulta}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      motivo_consulta: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Padecimiento actual</Label>
+                <Textarea
+                  rows={4}
+                  value={clinicalHistory.padecimiento_actual}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      padecimiento_actual: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Antecedentes heredofamiliares</Label>
+                <Textarea
+                  rows={4}
+                  value={clinicalHistory.antecedentes_heredofamiliares}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      antecedentes_heredofamiliares: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Antecedentes personales patológicos</Label>
+                <Textarea
+                  rows={4}
+                  value={clinicalHistory.antecedentes_personales_patologicos}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      antecedentes_personales_patologicos: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Alergias</Label>
+                <Textarea
+                  rows={3}
+                  value={clinicalHistory.alergias}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      alergias: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Medicamentos actuales</Label>
+                <Textarea
+                  rows={3}
+                  value={clinicalHistory.medicamentos_actuales}
+                  onChange={(e) =>
+                    setClinicalHistory((prev) => ({
+                      ...prev,
+                      medicamentos_actuales: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <PrimaryButton
+                onClick={saveClinicalHistory}
+                disabled={savingClinicalHistory || !canEditClinicalHistory}
               >
-                {!selectedPatientId ? (
-                  <EmptyState
-                    title="Sin paciente seleccionado"
-                    description="Abre un paciente desde el listado para trabajar su expediente."
-                  />
-                ) : (
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <p className="text-sm text-slate-500">
-                      El módulo clínico quedó cargado en lógica arriba. Si aquí no te muestra todo el contenido clínico que esperas, lo siguiente correcto es que te entregue el expediente completo y aislado, ya limpio, para no seguir parchando una versión que se fue fragmentando.
+                {savingClinicalHistory ? "Guardando..." : "Guardar historia clínica"}
+              </PrimaryButton>
+            </div>
+          </div>
+        ) : null}
+
+        {activeClinicalTab === "vitales" ? (
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label>Fecha y hora</Label>
+                <Input
+                  type="datetime-local"
+                  value={vitalForm.taken_at}
+                  onChange={(e) =>
+                    setVitalForm((prev) => ({
+                      ...prev,
+                      taken_at: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Peso (kg)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={vitalForm.peso_kg}
+                  onChange={(e) =>
+                    setVitalForm((prev) => ({
+                      ...prev,
+                      peso_kg: e.target.value,
+                      imc: calculateImc(e.target.value, prev.talla_cm),
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Talla (cm)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={vitalForm.talla_cm}
+                  onChange={(e) =>
+                    setVitalForm((prev) => ({
+                      ...prev,
+                      talla_cm: e.target.value,
+                      imc: calculateImc(prev.peso_kg, e.target.value),
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>IMC</Label>
+                <Input value={vitalForm.imc} readOnly />
+              </div>
+
+              <div>
+                <Label>Temperatura °C</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={vitalForm.temperatura_c}
+                  onChange={(e) =>
+                    setVitalForm((prev) => ({
+                      ...prev,
+                      temperatura_c: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Frecuencia cardíaca</Label>
+                <Input
+                  type="number"
+                  value={vitalForm.frecuencia_cardiaca}
+                  onChange={(e) =>
+                    setVitalForm((prev) => ({
+                      ...prev,
+                      frecuencia_cardiaca: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <PrimaryButton
+                onClick={saveVitalForm}
+                disabled={savingVitalSigns || !canEditVitalSigns}
+              >
+                {savingVitalSigns ? "Guardando..." : "Guardar signos vitales"}
+              </PrimaryButton>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              {vitalSigns.map((vital) => (
+                <div
+                  key={vital.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                >
+                  <p className="font-semibold text-slate-900">
+                    {formatDateTimeStamp(vital.taken_at)}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Peso: {vital.peso_kg ?? "—"} kg · Talla: {vital.talla_cm ?? "—"} cm · IMC: {vital.imc ?? "—"}
+                  </p>
+                </div>
+              ))}
+
+              {!vitalSigns.length ? (
+                <EmptyState
+                  title="Sin signos vitales"
+                  description="Aquí aparecerán los registros capturados."
+                />
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {activeClinicalTab === "nota" ? (
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Tipo de nota</Label>
+                <Select
+                  value={medicalNoteForm.note_type}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      note_type: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="consulta_general">Consulta general</option>
+                  <option value="primera_vez">Primera vez</option>
+                  <option value="subsecuente">Subsecuente</option>
+                  <option value="evolucion">Evolución</option>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Fecha y hora</Label>
+                <Input
+                  type="datetime-local"
+                  value={medicalNoteForm.note_date}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      note_date: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Motivo de consulta</Label>
+                <Textarea
+                  rows={3}
+                  value={medicalNoteForm.motivo_consulta}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      motivo_consulta: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Padecimiento actual</Label>
+                <Textarea
+                  rows={4}
+                  value={medicalNoteForm.padecimiento_actual}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      padecimiento_actual: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Impresión diagnóstica</Label>
+                <Textarea
+                  rows={4}
+                  value={medicalNoteForm.impresion_diagnostica}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      impresion_diagnostica: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Indicaciones</Label>
+                <Textarea
+                  rows={4}
+                  value={medicalNoteForm.indicaciones}
+                  onChange={(e) =>
+                    setMedicalNoteForm((prev) => ({
+                      ...prev,
+                      indicaciones: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <PrimaryButton
+                onClick={() => saveMedicalNoteForm(false)}
+                disabled={savingMedicalNote || !canEditMedicalNotes}
+              >
+                {savingMedicalNote ? "Guardando..." : "Guardar nota"}
+              </PrimaryButton>
+
+              <SecondaryButton
+                onClick={() => saveMedicalNoteForm(true)}
+                disabled={savingMedicalNote || !canEditMedicalNotes}
+              >
+                Cerrar consulta
+              </SecondaryButton>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              {medicalNotes.map((note) => (
+                <div
+                  key={note.id}
+                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-slate-900">
+                      {formatDateTimeStamp(note.note_date)}
                     </p>
+                    <StatusBadge
+                      tone={note.consultation_status === "closed" ? "success" : "warning"}
+                    >
+                      {note.consultation_status === "closed" ? "Cerrada" : "Abierta"}
+                    </StatusBadge>
                   </div>
-                )}
-              </Card>
-            ) : null}
+
+                  <p className="mt-2 text-sm text-slate-500">
+                    {note.impresion_diagnostica || "Sin impresión diagnóstica"}
+                  </p>
+                </div>
+              ))}
+
+              {!medicalNotes.length ? (
+                <EmptyState
+                  title="Sin notas médicas"
+                  description="Aquí aparecerán las notas del expediente."
+                />
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )}
+  </Card>
+) : null}
 
             {activeSection === "reviews" && canManageReviews ? (
               <Card
@@ -4726,463 +5592,6 @@ export default function AdminPage() {
                       description="Sube recursos gráficos para campañas y presencia visual."
                     />
                   ) : null}
-                </div>
-              </Card>
-            ) : null}
-                      <div className="mt-5 space-y-4">
-                        <div>
-                          <Label>Paciente vinculado</Label>
-                          {appointmentForm.patient_id ? (
-                            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
-                              <p className="text-sm font-semibold text-cyan-900">
-                                Paciente vinculado
-                              </p>
-                              <p className="mt-1 text-sm text-cyan-800">
-                                {appointmentForm.nombre}
-                              </p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <SecondaryButton onClick={removePatientFromAppointment}>
-                                  Desvincular
-                                </SecondaryButton>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
-                              Esta cita aún no está ligada a un paciente del sistema.
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <Label>Nombre del paciente</Label>
-                          <Input
-                            value={appointmentForm.nombre}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                nombre: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label>Teléfono</Label>
-                            <Input
-                              value={appointmentForm.telefono}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  telefono: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label>Correo</Label>
-                            <Input
-                              type="email"
-                              value={appointmentForm.correo}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  correo: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label>Edad</Label>
-                            <Input
-                              type="number"
-                              value={appointmentForm.edad}
-                              readOnly
-                            />
-                          </div>
-                          <div>
-                            <Label>Fecha de nacimiento</Label>
-                            <Input
-                              type="date"
-                              value={appointmentForm.fecha_nacimiento}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  fecha_nacimiento: e.target.value,
-                                  edad: e.target.value
-                                    ? calculateAgeFromBirthDate(e.target.value)
-                                    : "",
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label>Fecha de cita</Label>
-                            <Input
-                              type="date"
-                              value={appointmentForm.fecha_cita}
-                              onChange={(e) => {
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  fecha_cita: e.target.value,
-                                }));
-                                setSlotsDate(e.target.value);
-                                fetchAvailableSlots(e.target.value);
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label>Hora</Label>
-                            <Input
-                              type="time"
-                              value={appointmentForm.hora_cita}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  hora_cita: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label>Tipo de consulta</Label>
-                            <Select
-                              value={appointmentForm.tipo_consulta}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  tipo_consulta: e.target.value,
-                                }))
-                              }
-                            >
-                              <option value="presencial">Presencial</option>
-                              <option value="online">En línea</option>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label>Estatus</Label>
-                            <Select
-                              value={appointmentForm.status}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  status: e.target.value,
-                                }))
-                              }
-                            >
-                              <option value="pending">Pendiente</option>
-                              <option value="confirmed">Confirmada</option>
-                              <option value="completed">Completada</option>
-                              <option value="cancelled">Cancelada</option>
-                              <option value="no_show">No asistió</option>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(appointmentForm.confirmed)}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  confirmed: e.target.checked,
-                                }))
-                              }
-                            />
-                            Cita confirmada por el paciente
-                          </label>
-                        </div>
-
-                        <div>
-                          <Label>Nota administrativa</Label>
-                          <Textarea
-                            rows={4}
-                            value={appointmentForm.notes_admin}
-                            onChange={(e) =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                notes_admin: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-
-                        <div className="flex flex-wrap gap-3">
-                          <PrimaryButton
-                            onClick={saveAppointmentForm}
-                            disabled={savingAppointment}
-                          >
-                            {savingAppointment
-                              ? "Guardando..."
-                              : appointmentMode === "create"
-                              ? "Guardar cita"
-                              : "Actualizar cita"}
-                          </PrimaryButton>
-
-                          <SecondaryButton
-                            onClick={() =>
-                              openCreatePatient(buildPatientSnapshot(appointmentForm))
-                            }
-                          >
-                            Crear paciente con estos datos
-                          </SecondaryButton>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-lg font-bold text-slate-900">
-                          Horarios disponibles
-                        </h3>
-                        <SecondaryButton
-                          onClick={() => fetchAvailableSlots(slotsDate)}
-                          disabled={!slotsDate || slotsLoading}
-                        >
-                          Actualizar
-                        </SecondaryButton>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label>Fecha para revisar</Label>
-                        <Input
-                          type="date"
-                          value={slotsDate}
-                          onChange={(e) => {
-                            setSlotsDate(e.target.value);
-                            fetchAvailableSlots(e.target.value);
-                          }}
-                        />
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {(availableSlots || []).map((slot) => (
-                          <button
-                            key={slot.hora}
-                            type="button"
-                            onClick={() =>
-                              setAppointmentForm((prev) => ({
-                                ...prev,
-                                fecha_cita: slotsDate,
-                                hora_cita: slot.hora,
-                              }))
-                            }
-                            className={`rounded-full border px-3 py-2 text-sm font-semibold ${
-                              slot.disponible
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : "border-slate-200 bg-slate-100 text-slate-400"
-                            }`}
-                            disabled={!slot.disponible}
-                          >
-                            {slot.hora}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <h3 className="text-lg font-bold text-slate-900">
-                        Filtros de agenda
-                      </h3>
-
-                      <div className="mt-4 grid gap-4 md:grid-cols-3">
-                        <div>
-                          <Label>Fecha</Label>
-                          <Select
-                            value={appointmentFilters.fecha}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                fecha: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todas</option>
-                            {[...new Set(appointments.map((a) => a.fecha_cita))]
-                              .filter(Boolean)
-                              .map((date) => (
-                                <option key={date} value={date}>
-                                  {formatDate(date)}
-                                </option>
-                              ))}
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Estatus</Label>
-                          <Select
-                            value={appointmentFilters.status}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                status: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todos</option>
-                            <option value="pending">Pendiente</option>
-                            <option value="confirmed">Confirmada</option>
-                            <option value="completed">Completada</option>
-                            <option value="cancelled">Cancelada</option>
-                            <option value="no_show">No asistió</option>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label>Tipo</Label>
-                          <Select
-                            value={appointmentFilters.tipo}
-                            onChange={(e) =>
-                              setAppointmentFilters((prev) => ({
-                                ...prev,
-                                tipo: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="all">Todos</option>
-                            <option value="presencial">Presencial</option>
-                            <option value="online">En línea</option>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Card
-                      title="Citas registradas"
-                      subtitle="Listado completo con edición, cancelación y vínculo con pacientes."
-                    >
-                      <div className="grid gap-4">
-                        {filteredAppointments.map((appointment) => (
-                          <div
-                            key={appointment.id}
-                            className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                          >
-                            <div className="flex flex-wrap items-start justify-between gap-4">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-lg font-bold text-slate-900">
-                                    {appointment.nombre || "Paciente sin nombre"}
-                                  </p>
-
-                                  <StatusBadge
-                                    tone={
-                                      appointment.status === "completed"
-                                        ? "success"
-                                        : appointment.status === "cancelled"
-                                        ? "danger"
-                                        : appointment.status === "confirmed"
-                                        ? "info"
-                                        : appointment.status === "no_show"
-                                        ? "warning"
-                                        : "default"
-                                    }
-                                  >
-                                    {appointment.status || "pending"}
-                                  </StatusBadge>
-
-                                  {appointment.confirmed ? (
-                                    <StatusBadge tone="success">
-                                      Confirmada
-                                    </StatusBadge>
-                                  ) : null}
-                                </div>
-
-                                <p className="mt-2 text-sm text-slate-600">
-                                  {formatDateTime(
-                                    appointment.fecha_cita,
-                                    appointment.hora_cita
-                                  )}
-                                </p>
-
-                                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
-                                  <span>Tipo: {appointment.tipo_consulta || "—"}</span>
-                                  <span>Tel: {appointment.telefono || "—"}</span>
-                                  <span>Correo: {appointment.correo || "—"}</span>
-                                  <span>
-                                    Paciente ligado:{" "}
-                                    {appointment.patient_id ? "Sí" : "No"}
-                                  </span>
-                                </div>
-
-                                {appointment.notes_admin ? (
-                                  <p className="mt-3 text-sm leading-6 text-slate-500">
-                                    {appointment.notes_admin}
-                                  </p>
-                                ) : null}
-                              </div>
-
-                              <div className="flex flex-wrap gap-2">
-                                <SecondaryButton
-                                  onClick={() => openEditAppointment(appointment)}
-                                >
-                                  Editar
-                                </SecondaryButton>
-
-                                {appointment.patient_id ? (
-                                  <SecondaryButton
-                                    onClick={() => {
-                                      const patient = patients.find(
-                                        (item) => item.id === appointment.patient_id
-                                      );
-                                      if (patient) openEditPatient(patient);
-                                    }}
-                                  >
-                                    Ver paciente
-                                  </SecondaryButton>
-                                ) : (
-                                  <SecondaryButton
-                                    onClick={() =>
-                                      openCreatePatient({
-                                        nombre: appointment.nombre || "",
-                                        telefono: appointment.telefono || "",
-                                        correo: appointment.correo || "",
-                                        edad:
-                                          appointment.edad === null ||
-                                          appointment.edad === undefined
-                                            ? ""
-                                            : String(appointment.edad),
-                                        fecha_nacimiento:
-                                          appointment.fecha_nacimiento || "",
-                                      })
-                                    }
-                                  >
-                                    Crear paciente
-                                  </SecondaryButton>
-                                )}
-
-                                <DangerButton
-                                  onClick={() => cancelAppointment(appointment)}
-                                >
-                                  Cancelar
-                                </DangerButton>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        {!filteredAppointments.length ? (
-                          <EmptyState
-                            title="No hay citas para mostrar"
-                            description="Ajusta filtros o crea la primera cita desde el formulario lateral."
-                          />
-                        ) : null}
-                      </div>
-                    </Card>
-                  </div>
                 </div>
               </Card>
             ) : null}
