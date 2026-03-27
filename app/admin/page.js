@@ -419,6 +419,81 @@ function IconClockBlock() {
   );
 }
 
+function formatDate(dateString) {
+  if (!dateString) return "—";
+
+  try {
+    return new Date(`${dateString}T00:00:00`).toLocaleDateString("es-MX", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+function formatDateTime(dateString, timeString) {
+  if (!dateString) return "—";
+  const datePart = formatDate(dateString);
+  const safeTime = timeString ? String(timeString).slice(0, 5) : "—";
+  return `${datePart} · ${safeTime}`;
+}
+
+function formatDateTimeStamp(dateString) {
+  if (!dateString) return "—";
+  try {
+    return new Date(dateString).toLocaleString("es-MX");
+  } catch {
+    return dateString;
+  }
+}
+
+function calculateAgeFromBirthDate(dateString) {
+  if (!dateString || typeof dateString !== "string") return "";
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return "";
+
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  if (!year || !month || !day) return "";
+  if (month < 1 || month > 12) return "";
+  if (day < 1 || day > 31) return "";
+
+  const birth = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(birth.getTime()) ||
+    birth.getFullYear() !== year ||
+    birth.getMonth() !== month - 1 ||
+    birth.getDate() !== day
+  ) {
+    return "";
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age -= 1;
+  }
+
+  if (!Number.isFinite(age) || age < 0 || age > 130) return "";
+
+  return String(age);
+}
+
+function calculateImc(pesoKg, tallaCm) {
+  const peso = Number(pesoKg || 0);
+  const tallaMetros = Number(tallaCm || 0) / 100;
+
+  if (!peso || !tallaMetros) return "";
+  const imc = peso / (tallaMetros * tallaMetros);
+  if (!Number.isFinite(imc)) return "";
+  return imc.toFixed(2);
+}
+
 const DEFAULT_CONFIG = {
   booking_url: "",
   whatsapp_number: "",
@@ -4105,18 +4180,18 @@ export default function AdminPage() {
                           <div>
                             <Label>Fecha de nacimiento</Label>
                             <Input
-                              type="date"
-                              value={appointmentForm.fecha_nacimiento}
-                              onChange={(e) =>
-                                setAppointmentForm((prev) => ({
-                                  ...prev,
-                                  fecha_nacimiento: e.target.value,
-                                  edad: e.target.value
-                                    ? calculateAgeFromBirthDate(e.target.value)
-                                    : "",
-                                }))
-                              }
-                            />
+  type="date"
+  value={appointmentForm.fecha_nacimiento}
+  onChange={(e) => {
+    const nextDate = e.target.value;
+
+    setAppointmentForm((prev) => ({
+      ...prev,
+      fecha_nacimiento: nextDate,
+      edad: calculateAgeFromBirthDate(nextDate),
+    }));
+  }}
+/>
                           </div>
                         </div>
 
@@ -4742,18 +4817,18 @@ export default function AdminPage() {
                           <div>
                             <Label>Fecha de nacimiento</Label>
                             <Input
-                              type="date"
-                              value={patientForm.fecha_nacimiento}
-                              onChange={(e) =>
-                                setPatientForm((prev) => ({
-                                  ...prev,
-                                  fecha_nacimiento: e.target.value,
-                                  edad: e.target.value
-                                    ? calculateAgeFromBirthDate(e.target.value)
-                                    : "",
-                                }))
-                              }
-                            />
+  type="date"
+  value={patientForm.fecha_nacimiento}
+  onChange={(e) => {
+    const nextDate = e.target.value;
+
+    setPatientForm((prev) => ({
+      ...prev,
+      fecha_nacimiento: nextDate,
+      edad: calculateAgeFromBirthDate(nextDate),
+    }));
+  }}
+/>
                           </div>
                           <div>
                             <Label>Edad</Label>
