@@ -562,7 +562,6 @@ const DEFAULT_PATIENT_FORM = {
   fecha_nacimiento: "",
   edad: "",
   sexo: "",
-  curp: "",
 };
 
 const DEFAULT_CLINICAL_HISTORY = {
@@ -1601,7 +1600,6 @@ export default function AdminPage() {
             : ""
           : String(patient.edad),
       sexo: patient.sexo || "",
-      curp: patient.curp || "",
     });
 
     setSelectedPatientId(patient.id);
@@ -1656,7 +1654,6 @@ export default function AdminPage() {
       fecha_nacimiento: safeBirthDate,
       edad: Number.isFinite(safeAge) ? safeAge : null,
       sexo: patientForm.sexo || null,
-      curp: patientForm.curp.trim().toUpperCase() || null,
     };
 
     let response;
@@ -1712,7 +1709,6 @@ export default function AdminPage() {
             : ""
           : String(savedPatient.edad),
       sexo: savedPatient.sexo || "",
-      curp: savedPatient.curp || "",
     });
   }
 
@@ -4857,18 +4853,6 @@ export default function AdminPage() {
                               <option value="Femenino">Femenino</option>
                               <option value="Otro">Otro</option>
                             </Select>
-                          </div>
-                          <div>
-                            <Label>CURP</Label>
-                            <Input
-                              value={patientForm.curp}
-                              onChange={(e) =>
-                                setPatientForm((prev) => ({
-                                  ...prev,
-                                  curp: e.target.value.toUpperCase(),
-                                }))
-                              }
-                            />
                           </div>
                         </div>
 
