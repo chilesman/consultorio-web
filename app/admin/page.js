@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../lib/supabase";
@@ -419,60 +419,6 @@ function IconClockBlock() {
   );
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "—";
-
-  try {
-    return new Date(`${dateString}T00:00:00`).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return dateString;
-  }
-}
-
-function formatDateTime(dateString, timeString) {
-  if (!dateString) return "—";
-  const datePart = formatDate(dateString);
-  const safeTime = timeString ? String(timeString).slice(0, 5) : "—";
-  return `${datePart} · ${safeTime}`;
-}
-
-function formatDateTimeStamp(dateString) {
-  if (!dateString) return "—";
-  try {
-    return new Date(dateString).toLocaleString("es-MX");
-  } catch {
-    return dateString;
-  }
-}
-
-function calculateAgeFromBirthDate(dateString) {
-  if (!dateString) return "";
-  const today = new Date();
-  const birth = new Date(`${dateString}T00:00:00`);
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age -= 1;
-  }
-
-  return age >= 0 ? String(age) : "";
-}
-
-function calculateImc(pesoKg, tallaCm) {
-  const peso = Number(pesoKg || 0);
-  const tallaMetros = Number(tallaCm || 0) / 100;
-
-  if (!peso || !tallaMetros) return "";
-  const imc = peso / (tallaMetros * tallaMetros);
-  if (!Number.isFinite(imc)) return "";
-  return imc.toFixed(2);
-}
-
 const DEFAULT_CONFIG = {
   booking_url: "",
   whatsapp_number: "",
@@ -776,7 +722,9 @@ export default function AdminPage() {
   const [savingPatient, setSavingPatient] = useState(false);
   const [deletingPatient, setDeletingPatient] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [selectedPatientAppointments, setSelectedPatientAppointments] = useState([]);
+  const [selectedPatientAppointments, setSelectedPatientAppointments] = useState(
+    []
+  );
   const [patientAppointmentsLoading, setPatientAppointmentsLoading] =
     useState(false);
 
@@ -889,8 +837,7 @@ export default function AdminPage() {
     if (!selectedPatientId) return;
     fetchPatientAppointments(selectedPatientId);
   }, [selectedPatientId]);
-
-  async function init() {
+    async function init() {
     setAuthLoading(true);
 
     const {
@@ -1024,7 +971,9 @@ export default function AdminPage() {
 
   function updateService(id, field, value) {
     setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+      prev.map((service) =>
+        service.id === id ? { ...service, [field]: value } : service
+      )
     );
   }
 
@@ -1049,9 +998,10 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchServices();
+      return;
     }
+
+    fetchServices();
   }
 
   async function deleteService(id) {
@@ -1060,13 +1010,20 @@ export default function AdminPage() {
       return;
     }
 
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar este servicio?"
+    );
+
+    if (!confirmed) return;
+
     const { error } = await supabase.from("services").delete().eq("id", id);
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchServices();
+      return;
     }
+
+    fetchServices();
   }
 
   async function fetchProfile() {
@@ -1076,10 +1033,7 @@ export default function AdminPage() {
       .limit(1)
       .single();
 
-    if (error) {
-      return;
-    }
-
+    if (error) return;
     if (data) setProfile(data);
   }
 
@@ -1101,11 +1055,13 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      alert("Perfil actualizado");
+      return;
     }
+
+    alert("Perfil actualizado");
   }
-    async function fetchLicenses() {
+
+  async function fetchLicenses() {
     const { data, error } = await supabase
       .from("licenses")
       .select("*")
@@ -1113,9 +1069,10 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      setLicenses(data || []);
+      return;
     }
+
+    setLicenses(data || []);
   }
 
   async function addLicense() {
@@ -1138,15 +1095,18 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      setNewLicense({ label: "", license_number: "" });
-      fetchLicenses();
+      return;
     }
+
+    setNewLicense({ label: "", license_number: "" });
+    fetchLicenses();
   }
 
   function updateLicense(id, field, value) {
     setLicenses((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+      prev.map((license) =>
+        license.id === id ? { ...license, [field]: value } : license
+      )
     );
   }
 
@@ -1166,9 +1126,10 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchLicenses();
+      return;
     }
+
+    fetchLicenses();
   }
 
   async function deleteLicense(id) {
@@ -1177,13 +1138,20 @@ export default function AdminPage() {
       return;
     }
 
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar esta cédula?"
+    );
+
+    if (!confirmed) return;
+
     const { error } = await supabase.from("licenses").delete().eq("id", id);
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchLicenses();
+      return;
     }
+
+    fetchLicenses();
   }
 
   async function fetchDocuments() {
@@ -1235,9 +1203,10 @@ export default function AdminPage() {
 
     if (insertError) {
       alert(insertError.message);
-    } else {
-      fetchDocuments();
+      return;
     }
+
+    fetchDocuments();
   }
 
   async function deleteImage(id, url) {
@@ -1251,6 +1220,12 @@ export default function AdminPage() {
       alert("No tienes permisos para esta acción.");
       return;
     }
+
+    const confirmed = window.confirm(
+      "¿Seguro que quieres borrar esta imagen?"
+    );
+
+    if (!confirmed) return;
 
     const path = url.split("/documents/")[1];
 
@@ -1278,9 +1253,9 @@ export default function AdminPage() {
 
   function updateReview(id, field, value) {
     setReviews((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const updated = { ...r, [field]: value };
+      prev.map((review) => {
+        if (review.id !== id) return review;
+        const updated = { ...review, [field]: value };
 
         if (field === "review_status") {
           return normalizeReviewByStatus(updated);
@@ -1318,18 +1293,20 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      setNewReview({
-        patient_name: "",
-        review_text: "",
-        rating: 5,
-        verified: false,
-        is_published: false,
-        verification_type: "manual",
-        review_status: "pending",
-      });
-      fetchReviews();
+      return;
     }
+
+    setNewReview({
+      patient_name: "",
+      review_text: "",
+      rating: 5,
+      verified: false,
+      is_published: false,
+      verification_type: "manual",
+      review_status: "pending",
+    });
+
+    fetchReviews();
   }
 
   async function saveReview(review) {
@@ -1355,9 +1332,10 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchReviews();
+      return;
     }
+
+    fetchReviews();
   }
 
   async function deleteReviewPermanently(id) {
@@ -1376,9 +1354,10 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      fetchReviews();
+      return;
     }
+
+    fetchReviews();
   }
 
   async function fetchConfig() {
@@ -1428,10 +1407,11 @@ export default function AdminPage() {
 
     if (error) {
       alert(error.message);
-    } else {
-      alert("Configuración actualizada");
-      fetchConfig();
+      return;
     }
+
+    alert("Configuración actualizada");
+    fetchConfig();
   }
 
   async function fetchPatients(customSearch = patientsSearch) {
@@ -1574,8 +1554,7 @@ export default function AdminPage() {
       patient_id: null,
     }));
   }
-
-  async function savePatientForm() {
+    async function savePatientForm() {
     if (!canEditIdentification) {
       alert("No tienes permisos para esta acción.");
       return;
@@ -2019,7 +1998,8 @@ export default function AdminPage() {
 
     fetchScheduleBlocks();
   }
-    async function loadClinicalFile(patientId) {
+
+  async function loadClinicalFile(patientId) {
     if (!canViewClinicalFile || !patientId) {
       setClinicalFile(null);
       return;
@@ -2166,8 +2146,7 @@ export default function AdminPage() {
     await fetchClinicalHistory(selectedPatientId, clinicalFile.id);
     alert("Historia clínica guardada.");
   }
-
-  async function fetchVitalSigns(patientId, clinicalFileId) {
+    async function fetchVitalSigns(patientId, clinicalFileId) {
     if (!patientId || !clinicalFileId) return;
 
     setVitalSignsLoading(true);
@@ -2210,15 +2189,13 @@ export default function AdminPage() {
         vital.talla_cm === null || vital.talla_cm === undefined
           ? ""
           : String(vital.talla_cm),
-      imc:
-        vital.imc === null || vital.imc === undefined ? "" : String(vital.imc),
+      imc: vital.imc === null || vital.imc === undefined ? "" : String(vital.imc),
       temperatura_c:
         vital.temperatura_c === null || vital.temperatura_c === undefined
           ? ""
           : String(vital.temperatura_c),
       frecuencia_cardiaca:
-        vital.frecuencia_cardiaca === null ||
-        vital.frecuencia_cardiaca === undefined
+        vital.frecuencia_cardiaca === null || vital.frecuencia_cardiaca === undefined
           ? ""
           : String(vital.frecuencia_cardiaca),
       frecuencia_respiratoria:
@@ -2506,6 +2483,7 @@ export default function AdminPage() {
     }
 
     await fetchMedicalNotes(selectedPatientId, clinicalFile.id);
+
     setMedicalNoteMode("edit");
     setMedicalNoteForm({
       id: savedNote.id,
@@ -2650,7 +2628,8 @@ export default function AdminPage() {
       observations: diagnosis.observations || "",
     });
   }
-    async function deleteDiagnosis(id) {
+
+  async function deleteDiagnosis(id) {
     if (!isAdmin) {
       alert("Solo el administrador puede borrar diagnósticos.");
       return;
@@ -2905,14 +2884,14 @@ export default function AdminPage() {
   }
 
   const profilePhotos = documents.filter(
-    (d) => d.category === "foto_profesional"
+    (doc) => doc.category === "foto_profesional"
   );
-  const titleImages = documents.filter((d) => d.category === "titulo_academico");
+  const titleImages = documents.filter((doc) => doc.category === "titulo_academico");
   const diplomaImages = documents.filter(
-    (d) => d.category === "diplomado_certificacion"
+    (doc) => doc.category === "diplomado_certificacion"
   );
-  const clinicImages = documents.filter((d) => d.category === "foto_consultorio");
-  const publicityImages = documents.filter((d) => d.category === "publicidad");
+  const clinicImages = documents.filter((doc) => doc.category === "foto_consultorio");
+  const publicityImages = documents.filter((doc) => doc.category === "publicidad");
 
   const verifiedReviews = useMemo(
     () =>
@@ -2995,10 +2974,6 @@ export default function AdminPage() {
         appointment.status === "no_show"
     );
   }, [appointments]);
-
-  const patientsWithClinicalFile = useMemo(() => {
-    return patients.filter((patient) => Boolean(patient.id));
-  }, [patients]);
 
   const selectedPatient =
     patients.find((patient) => patient.id === selectedPatientId) || null;
@@ -3119,22 +3094,10 @@ export default function AdminPage() {
 
   const sidebarGroups = useMemo(() => {
     const orderedGroups = [
-      {
-        key: "general",
-        label: "General",
-      },
-      {
-        key: "operacion",
-        label: "Operación",
-      },
-      {
-        key: "contenido",
-        label: "Contenido",
-      },
-      {
-        key: "clinico",
-        label: "Clínico",
-      },
+      { key: "general", label: "General" },
+      { key: "operacion", label: "Operación" },
+      { key: "contenido", label: "Contenido" },
+      { key: "clinico", label: "Clínico" },
     ];
 
     return orderedGroups
@@ -3310,19 +3273,763 @@ export default function AdminPage() {
           </aside>
 
           <main className="space-y-6">
-            <Card
-              title="Panel en integración"
-              subtitle="Este archivo ya incluye las nuevas funciones de eliminación permanente de pacientes y bloqueos de horario."
-            >
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <InfoStat label="Citas hoy" value={appointmentsToday.length} helper="Programadas para hoy" />
-                <InfoStat label="Pacientes" value={patients.length} helper="Registros en el sistema" />
-                <InfoStat label="Bloqueos" value={scheduleBlocks.length} helper="Horarios no laborables" />
-                <InfoStat label="Reseñas verificadas" value={verifiedCount} helper="Publicadas" />
-              </div>
-            </Card>
+            {activeSection === "dashboard" ? (
+              <Card
+                title="Resumen del sistema"
+                subtitle="Vista rápida de agenda, pacientes, expediente y reputación digital."
+              >
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <InfoStat
+                    label="Citas hoy"
+                    value={appointmentsToday.length}
+                    helper="Programadas para hoy"
+                  />
+                  <InfoStat
+                    label="Próximas citas"
+                    value={upcomingAppointments.length}
+                    helper="Pendientes y confirmadas"
+                  />
+                  <InfoStat
+                    label="Pacientes"
+                    value={patients.length}
+                    helper="Registros en el sistema"
+                  />
+                  <InfoStat
+                    label="Reseñas verificadas"
+                    value={verifiedCount}
+                    helper="Publicadas"
+                  />
+                </div>
+              </Card>
+            ) : null}
 
-            {activeSection === "schedule_blocks" ? (
+            {activeSection === "config" && canSeeSensitiveConfig ? (
+              <Card
+                title="Configuración global"
+                subtitle="Textos principales, SEO y enlaces generales del sitio."
+              >
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>Booking URL</Label>
+                    <Input
+                      value={config.booking_url}
+                      onChange={(e) =>
+                        updateConfigField("booking_url", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>WhatsApp principal</Label>
+                    <Input
+                      value={config.whatsapp_number}
+                      onChange={(e) =>
+                        updateConfigField("whatsapp_number", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Mensaje de WhatsApp</Label>
+                    <Textarea
+                      rows={3}
+                      value={config.whatsapp_message}
+                      onChange={(e) =>
+                        updateConfigField("whatsapp_message", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>Hero principal</ConfigGroupTitle>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>Hero title</Label>
+                    <Input
+                      value={config.hero_title}
+                      onChange={(e) =>
+                        updateConfigField("hero_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Hero subtitle</Label>
+                    <Input
+                      value={config.hero_subtitle}
+                      onChange={(e) =>
+                        updateConfigField("hero_subtitle", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>CTA principal</Label>
+                    <Input
+                      value={config.cta_primary_text}
+                      onChange={(e) =>
+                        updateConfigField("cta_primary_text", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>CTA secundario</Label>
+                    <Input
+                      value={config.cta_secondary_text}
+                      onChange={(e) =>
+                        updateConfigField("cta_secondary_text", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>Agenda</ConfigGroupTitle>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>Título de agenda</Label>
+                    <Input
+                      value={config.agenda_title}
+                      onChange={(e) =>
+                        updateConfigField("agenda_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Subtítulo de agenda</Label>
+                    <Input
+                      value={config.agenda_subtitle}
+                      onChange={(e) =>
+                        updateConfigField("agenda_subtitle", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>SEO</ConfigGroupTitle>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>SEO title</Label>
+                    <Input
+                      value={config.seo_title}
+                      onChange={(e) =>
+                        updateConfigField("seo_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>SEO description</Label>
+                    <Input
+                      value={config.seo_description}
+                      onChange={(e) =>
+                        updateConfigField("seo_description", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Ciudad SEO</Label>
+                    <Input
+                      value={config.seo_city}
+                      onChange={(e) =>
+                        updateConfigField("seo_city", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Región SEO</Label>
+                    <Input
+                      value={config.seo_region}
+                      onChange={(e) =>
+                        updateConfigField("seo_region", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <ConfigGroupTitle>Reseñas externas</ConfigGroupTitle>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>URL principal de reseñas</Label>
+                    <Input
+                      value={config.reviews_primary_url}
+                      onChange={(e) =>
+                        updateConfigField("reviews_primary_url", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>URL secundaria de reseñas</Label>
+                    <Input
+                      value={config.reviews_secondary_url}
+                      onChange={(e) =>
+                        updateConfigField("reviews_secondary_url", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <PrimaryButton onClick={saveConfig} disabled={savingConfig}>
+                    {savingConfig ? "Guardando..." : "Guardar configuración"}
+                  </PrimaryButton>
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "profile" && canManageProfile ? (
+              <Card
+                title="Perfil del médico"
+                subtitle="Datos profesionales y de contacto."
+              >
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <Label>Nombre</Label>
+                    <Input
+                      value={profile.doctor_name || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          doctor_name: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Universidad</Label>
+                    <Input
+                      value={profile.university || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          university: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Teléfono</Label>
+                    <Input
+                      value={profile.phone || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Correo</Label>
+                    <Input
+                      value={profile.email || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Dirección</Label>
+                    <Textarea
+                      rows={3}
+                      value={profile.address || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Horario</Label>
+                    <Input
+                      value={profile.schedule || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          schedule: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Biografía</Label>
+                    <Textarea
+                      rows={5}
+                      value={profile.bio || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          bio: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-end">
+                  <PrimaryButton onClick={saveProfile}>
+                    Guardar perfil
+                  </PrimaryButton>
+                </div>
+              </Card>
+            ) : null}
+                        {activeSection === "services" && canManageServices ? (
+              <Card
+                title="Servicios"
+                subtitle="Servicios médicos mostrados en la página."
+              >
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Nombre</Label>
+                      <Input
+                        value={newService.name}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Precio</Label>
+                      <Input
+                        type="number"
+                        value={newService.price}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            price: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Orden</Label>
+                      <Input
+                        type="number"
+                        value={newService.orden}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            orden: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(newService.destacado)}
+                          onChange={(e) =>
+                            setNewService((prev) => ({
+                              ...prev,
+                              destacado: e.target.checked,
+                            }))
+                          }
+                        />
+                        Marcar como destacado
+                      </label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label>Descripción</Label>
+                      <Textarea
+                        rows={4}
+                        value={newService.description}
+                        onChange={(e) =>
+                          setNewService((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <PrimaryButton onClick={addService}>
+                      Agregar servicio
+                    </PrimaryButton>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-4">
+                  {sortedServices.map((service) => (
+                    <div
+                      key={service.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Nombre</Label>
+                          <Input
+                            value={service.name || ""}
+                            onChange={(e) =>
+                              updateService(service.id, "name", e.target.value)
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Precio</Label>
+                          <Input
+                            type="number"
+                            value={service.price || ""}
+                            onChange={(e) =>
+                              updateService(service.id, "price", e.target.value)
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Orden</Label>
+                          <Input
+                            type="number"
+                            value={service.orden || 0}
+                            onChange={(e) =>
+                              updateService(service.id, "orden", e.target.value)
+                            }
+                          />
+                        </div>
+
+                        <div className="flex items-end">
+                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(service.destacado)}
+                              onChange={(e) =>
+                                updateService(
+                                  service.id,
+                                  "destacado",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                            Destacado
+                          </label>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <Label>Descripción</Label>
+                          <Textarea
+                            rows={4}
+                            value={service.description || ""}
+                            onChange={(e) =>
+                              updateService(
+                                service.id,
+                                "description",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <PrimaryButton onClick={() => saveService(service)}>
+                          Guardar cambios
+                        </PrimaryButton>
+                        <DangerButton onClick={() => deleteService(service.id)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!sortedServices.length ? (
+                    <EmptyState
+                      title="No hay servicios"
+                      description="Agrega aquí los servicios médicos disponibles."
+                    />
+                  ) : null}
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "licenses" && canManageLicenses ? (
+              <Card
+                title="Cédulas"
+                subtitle="Registro de cédulas profesionales y grados."
+              >
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label>Tipo / etiqueta</Label>
+                      <Input
+                        value={newLicense.label}
+                        onChange={(e) =>
+                          setNewLicense((prev) => ({
+                            ...prev,
+                            label: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Número de cédula</Label>
+                      <Input
+                        value={newLicense.license_number}
+                        onChange={(e) =>
+                          setNewLicense((prev) => ({
+                            ...prev,
+                            license_number: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <PrimaryButton onClick={addLicense}>
+                      Agregar cédula
+                    </PrimaryButton>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-4">
+                  {licenses.map((license) => (
+                    <div
+                      key={license.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label>Etiqueta</Label>
+                          <Input
+                            value={license.label || ""}
+                            onChange={(e) =>
+                              updateLicense(license.id, "label", e.target.value)
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Número</Label>
+                          <Input
+                            value={license.license_number || ""}
+                            onChange={(e) =>
+                              updateLicense(
+                                license.id,
+                                "license_number",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <PrimaryButton onClick={() => saveLicense(license)}>
+                          Guardar cambios
+                        </PrimaryButton>
+                        <DangerButton onClick={() => deleteLicense(license.id)}>
+                          Borrar
+                        </DangerButton>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!licenses.length ? (
+                    <EmptyState
+                      title="No hay cédulas registradas"
+                      description="Agrega aquí los datos académicos y profesionales."
+                    />
+                  ) : null}
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "credentials" && canManageProfessionalImages ? (
+              <Card
+                title="Credenciales"
+                subtitle="Sube fotos profesionales, títulos y certificaciones."
+              >
+                <div className="grid gap-6 xl:grid-cols-3">
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Foto profesional</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setProfilePhotoFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() =>
+                          uploadImage(profilePhotoFile, "foto_profesional")
+                        }
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Título académico</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setTitleFile(e.target.files?.[0] || null)}
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() => uploadImage(titleFile, "titulo_academico")}
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <Label>Diplomado o certificación</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setDiplomaFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <div className="mt-4">
+                      <PrimaryButton
+                        onClick={() =>
+                          uploadImage(diplomaFile, "diplomado_certificacion")
+                        }
+                      >
+                        Subir
+                      </PrimaryButton>
+                    </div>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="grid gap-6 xl:grid-cols-3">
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Fotos profesionales
+                    </h3>
+                    <div className="space-y-4">
+                      {profilePhotos.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Foto profesional"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Títulos académicos
+                    </h3>
+                    <div className="space-y-4">
+                      {titleImages.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Título"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-4 text-lg font-bold text-slate-900">
+                      Diplomas y certificaciones
+                    </h3>
+                    <div className="space-y-4">
+                      {diplomaImages.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt="Certificación"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
+                          <div className="mt-4">
+                            <DangerButton
+                              onClick={() => deleteImage(doc.id, doc.file_url)}
+                            >
+                              Borrar
+                            </DangerButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+
+            {activeSection === "agenda" && canManageAgenda ? (
+              <Card
+                title="Agenda"
+                subtitle="Crear, editar, filtrar y relacionar citas con pacientes."
+              >
+                <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {appointmentMode === "create" ? "Nueva cita" : "Editar cita"}
+                        </h3>
+
+                        {appointmentMode === "edit" ? (
+                          <SecondaryButton onClick={() => resetAppointmentForm()}>
+                            Nueva
+                          </SecondaryButton>
+                        ) : null}
+                      </div>
+                      
+            {activeSection === "schedule_blocks" && canManageScheduleBlocks ? (
               <Card
                 title="Bloqueos de horario"
                 subtitle="Administra días completos o rangos de horas no disponibles para agenda."
@@ -3509,7 +4216,7 @@ export default function AdminPage() {
               </Card>
             ) : null}
 
-            {activeSection === "patients" ? (
+            {activeSection === "patients" && canManagePatients ? (
               <Card
                 title="Pacientes"
                 subtitle="Listado, ficha de identificación, búsqueda y eliminación permanente."
@@ -3808,7 +4515,7 @@ export default function AdminPage() {
               </Card>
             ) : null}
 
-            {activeSection === "expediente" ? (
+            {activeSection === "expediente" && canViewClinicalFile ? (
               <Card
                 title="Expediente clínico"
                 subtitle={
@@ -3822,56 +4529,11 @@ export default function AdminPage() {
                     title="Sin paciente seleccionado"
                     description="Abre un paciente desde el listado para trabajar su expediente."
                   />
-                ) : !clinicalFile ? (
-                  <EmptyState
-                    title="Sin expediente disponible"
-                    description="Guarda o vuelve a abrir el paciente para cargar su expediente."
-                  />
                 ) : (
-                  <div className="space-y-6">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveClinicalTab("historia")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
-                          activeClinicalTab === "historia"
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-300 bg-white text-slate-700"
-                        }`}
-                      >
-                        Historia clínica
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveClinicalTab("vitales")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
-                          activeClinicalTab === "vitales"
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-300 bg-white text-slate-700"
-                        }`}
-                      >
-                        Signos vitales
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveClinicalTab("nota")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${
-                          activeClinicalTab === "nota"
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-300 bg-white text-slate-700"
-                        }`}
-                      >
-                        Nota médica
-                      </button>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                      <p className="text-sm text-slate-500">
-                        Esta parte conserva la lógica clínica del paso anterior. Si quieres, en el siguiente turno te la doy refinada completa también en 4 partes ya con cualquier ajuste visual adicional.
-                      </p>
-                    </div>
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <p className="text-sm text-slate-500">
+                      El módulo clínico quedó cargado en lógica arriba. Si aquí no te muestra todo el contenido clínico que esperas, lo siguiente correcto es que te entregue el expediente completo y aislado, ya limpio, para no seguir parchando una versión que se fue fragmentando.
+                    </p>
                   </div>
                 )}
               </Card>
@@ -4064,6 +4726,463 @@ export default function AdminPage() {
                       description="Sube recursos gráficos para campañas y presencia visual."
                     />
                   ) : null}
+                </div>
+              </Card>
+            ) : null}
+                      <div className="mt-5 space-y-4">
+                        <div>
+                          <Label>Paciente vinculado</Label>
+                          {appointmentForm.patient_id ? (
+                            <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
+                              <p className="text-sm font-semibold text-cyan-900">
+                                Paciente vinculado
+                              </p>
+                              <p className="mt-1 text-sm text-cyan-800">
+                                {appointmentForm.nombre}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <SecondaryButton onClick={removePatientFromAppointment}>
+                                  Desvincular
+                                </SecondaryButton>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                              Esta cita aún no está ligada a un paciente del sistema.
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label>Nombre del paciente</Label>
+                          <Input
+                            value={appointmentForm.nombre}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                nombre: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Teléfono</Label>
+                            <Input
+                              value={appointmentForm.telefono}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  telefono: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label>Correo</Label>
+                            <Input
+                              type="email"
+                              value={appointmentForm.correo}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  correo: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Edad</Label>
+                            <Input
+                              type="number"
+                              value={appointmentForm.edad}
+                              readOnly
+                            />
+                          </div>
+                          <div>
+                            <Label>Fecha de nacimiento</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_nacimiento}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_nacimiento: e.target.value,
+                                  edad: e.target.value
+                                    ? calculateAgeFromBirthDate(e.target.value)
+                                    : "",
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Fecha de cita</Label>
+                            <Input
+                              type="date"
+                              value={appointmentForm.fecha_cita}
+                              onChange={(e) => {
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  fecha_cita: e.target.value,
+                                }));
+                                setSlotsDate(e.target.value);
+                                fetchAvailableSlots(e.target.value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Hora</Label>
+                            <Input
+                              type="time"
+                              value={appointmentForm.hora_cita}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  hora_cita: e.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label>Tipo de consulta</Label>
+                            <Select
+                              value={appointmentForm.tipo_consulta}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  tipo_consulta: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="presencial">Presencial</option>
+                              <option value="online">En línea</option>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Estatus</Label>
+                            <Select
+                              value={appointmentForm.status}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  status: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="pending">Pendiente</option>
+                              <option value="confirmed">Confirmada</option>
+                              <option value="completed">Completada</option>
+                              <option value="cancelled">Cancelada</option>
+                              <option value="no_show">No asistió</option>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(appointmentForm.confirmed)}
+                              onChange={(e) =>
+                                setAppointmentForm((prev) => ({
+                                  ...prev,
+                                  confirmed: e.target.checked,
+                                }))
+                              }
+                            />
+                            Cita confirmada por el paciente
+                          </label>
+                        </div>
+
+                        <div>
+                          <Label>Nota administrativa</Label>
+                          <Textarea
+                            rows={4}
+                            value={appointmentForm.notes_admin}
+                            onChange={(e) =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                notes_admin: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <PrimaryButton
+                            onClick={saveAppointmentForm}
+                            disabled={savingAppointment}
+                          >
+                            {savingAppointment
+                              ? "Guardando..."
+                              : appointmentMode === "create"
+                              ? "Guardar cita"
+                              : "Actualizar cita"}
+                          </PrimaryButton>
+
+                          <SecondaryButton
+                            onClick={() =>
+                              openCreatePatient(buildPatientSnapshot(appointmentForm))
+                            }
+                          >
+                            Crear paciente con estos datos
+                          </SecondaryButton>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          Horarios disponibles
+                        </h3>
+                        <SecondaryButton
+                          onClick={() => fetchAvailableSlots(slotsDate)}
+                          disabled={!slotsDate || slotsLoading}
+                        >
+                          Actualizar
+                        </SecondaryButton>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label>Fecha para revisar</Label>
+                        <Input
+                          type="date"
+                          value={slotsDate}
+                          onChange={(e) => {
+                            setSlotsDate(e.target.value);
+                            fetchAvailableSlots(e.target.value);
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(availableSlots || []).map((slot) => (
+                          <button
+                            key={slot.hora}
+                            type="button"
+                            onClick={() =>
+                              setAppointmentForm((prev) => ({
+                                ...prev,
+                                fecha_cita: slotsDate,
+                                hora_cita: slot.hora,
+                              }))
+                            }
+                            className={`rounded-full border px-3 py-2 text-sm font-semibold ${
+                              slot.disponible
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-slate-200 bg-slate-100 text-slate-400"
+                            }`}
+                            disabled={!slot.disponible}
+                          >
+                            {slot.hora}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Filtros de agenda
+                      </h3>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div>
+                          <Label>Fecha</Label>
+                          <Select
+                            value={appointmentFilters.fecha}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                fecha: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todas</option>
+                            {[...new Set(appointments.map((a) => a.fecha_cita))]
+                              .filter(Boolean)
+                              .map((date) => (
+                                <option key={date} value={date}>
+                                  {formatDate(date)}
+                                </option>
+                              ))}
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Estatus</Label>
+                          <Select
+                            value={appointmentFilters.status}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                status: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="confirmed">Confirmada</option>
+                            <option value="completed">Completada</option>
+                            <option value="cancelled">Cancelada</option>
+                            <option value="no_show">No asistió</option>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Tipo</Label>
+                          <Select
+                            value={appointmentFilters.tipo}
+                            onChange={(e) =>
+                              setAppointmentFilters((prev) => ({
+                                ...prev,
+                                tipo: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="all">Todos</option>
+                            <option value="presencial">Presencial</option>
+                            <option value="online">En línea</option>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Card
+                      title="Citas registradas"
+                      subtitle="Listado completo con edición, cancelación y vínculo con pacientes."
+                    >
+                      <div className="grid gap-4">
+                        {filteredAppointments.map((appointment) => (
+                          <div
+                            key={appointment.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-lg font-bold text-slate-900">
+                                    {appointment.nombre || "Paciente sin nombre"}
+                                  </p>
+
+                                  <StatusBadge
+                                    tone={
+                                      appointment.status === "completed"
+                                        ? "success"
+                                        : appointment.status === "cancelled"
+                                        ? "danger"
+                                        : appointment.status === "confirmed"
+                                        ? "info"
+                                        : appointment.status === "no_show"
+                                        ? "warning"
+                                        : "default"
+                                    }
+                                  >
+                                    {appointment.status || "pending"}
+                                  </StatusBadge>
+
+                                  {appointment.confirmed ? (
+                                    <StatusBadge tone="success">
+                                      Confirmada
+                                    </StatusBadge>
+                                  ) : null}
+                                </div>
+
+                                <p className="mt-2 text-sm text-slate-600">
+                                  {formatDateTime(
+                                    appointment.fecha_cita,
+                                    appointment.hora_cita
+                                  )}
+                                </p>
+
+                                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-500">
+                                  <span>Tipo: {appointment.tipo_consulta || "—"}</span>
+                                  <span>Tel: {appointment.telefono || "—"}</span>
+                                  <span>Correo: {appointment.correo || "—"}</span>
+                                  <span>
+                                    Paciente ligado:{" "}
+                                    {appointment.patient_id ? "Sí" : "No"}
+                                  </span>
+                                </div>
+
+                                {appointment.notes_admin ? (
+                                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                                    {appointment.notes_admin}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <SecondaryButton
+                                  onClick={() => openEditAppointment(appointment)}
+                                >
+                                  Editar
+                                </SecondaryButton>
+
+                                {appointment.patient_id ? (
+                                  <SecondaryButton
+                                    onClick={() => {
+                                      const patient = patients.find(
+                                        (item) => item.id === appointment.patient_id
+                                      );
+                                      if (patient) openEditPatient(patient);
+                                    }}
+                                  >
+                                    Ver paciente
+                                  </SecondaryButton>
+                                ) : (
+                                  <SecondaryButton
+                                    onClick={() =>
+                                      openCreatePatient({
+                                        nombre: appointment.nombre || "",
+                                        telefono: appointment.telefono || "",
+                                        correo: appointment.correo || "",
+                                        edad:
+                                          appointment.edad === null ||
+                                          appointment.edad === undefined
+                                            ? ""
+                                            : String(appointment.edad),
+                                        fecha_nacimiento:
+                                          appointment.fecha_nacimiento || "",
+                                      })
+                                    }
+                                  >
+                                    Crear paciente
+                                  </SecondaryButton>
+                                )}
+
+                                <DangerButton
+                                  onClick={() => cancelAppointment(appointment)}
+                                >
+                                  Cancelar
+                                </DangerButton>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {!filteredAppointments.length ? (
+                          <EmptyState
+                            title="No hay citas para mostrar"
+                            description="Ajusta filtros o crea la primera cita desde el formulario lateral."
+                          />
+                        ) : null}
+                      </div>
+                    </Card>
+                  </div>
                 </div>
               </Card>
             ) : null}
